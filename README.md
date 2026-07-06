@@ -1,2 +1,3 @@
-# demo-janke-lab
+# Demo Janke Lab
+
 Demo
