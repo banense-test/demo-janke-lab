@@ -1,0 +1,96 @@
+# CI Pipeline for Employee Portal — Cuba Corp
+# Stack: .NET 10 | Razor Pages | PostgreSQL | xUnit
+#
+# Build Frequency Target: >=1 build/day toward iteration end (RUP Integrator Heuristic 3)
+#
+# Dependency Hierarchy (bottom-up integration order per SAD):
+# @startuml
+# package "Presentation Layer" {
+#   [Razor Pages UI] as UI
+# }
+# package "Application Layer" {
+#   [Clock In/Out Service] as CLK
+#   [News Service] as NEWS
+#   [Directory Service] as DIR
+# }
+# package "Infrastructure Layer" {
+#   [AD Auth Provider] as AD
+#   [PostgreSQL Data Access] as PG
+#   [Offline Sync Queue] as SYNC
+# }
+# package "Cross-Cutting" {
+#   [Audit Trail] as AUDIT
+# }
+# UI --> CLK
+# UI --> NEWS
+# UI --> DIR
+# CLK --> PG
+# NEWS --> PG
+# DIR --> PG
+# CLK --> AD
+# NEWS --> AD
+# DIR --> AD
+# CLK --> SYNC
+# CLK --> AUDIT
+# NEWS --> AUDIT
+# DIR --> AUDIT
+# @enduml
+#
+# Integration order: Infrastructure -> Application -> Presentation (bottom-up)
+
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'iteration/**'
+      - 'poc/**'
+      - 'chore/**'
+      - 'feature/**'
+      - 'hotfix/**'
+  pull_request:
+    branches:
+      - main
+      - 'iteration/**'
+      - 'poc/**'
+      - 'chore/**'
+      - 'feature/**'
+      - 'hotfix/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Regenerate solution from src/ and tests/ tree
+        run: |
+          dotnet new sln --force -n EmployeePortal
+          find src -name "*.csproj" -exec dotnet sln add {} \;
+          find tests -name "*.csproj" -exec dotnet sln add {} \;
+      - name: Restore dependencies
+        run: dotnet restore EmployeePortal.sln
+      - name: Build
+        run: dotnet build EmployeePortal.sln --no-restore --configuration Release
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Regenerate solution from src/ and tests/ tree
+        run: |
+          dotnet new sln --force -n EmployeePortal
+          find src -name "*.csproj" -exec dotnet sln add {} \;
+          find tests -name "*.csproj" -exec dotnet sln add {} \;
+      - name: Restore dependencies
+        run: dotnet restore EmployeePortal.sln
+      - name: Test
+        run: dotnet test EmployeePortal.sln --no-restore --configuration Release --logger trx --collect:"XPlat Code Coverage"
