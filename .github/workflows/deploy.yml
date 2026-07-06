@@ -1,0 +1,38 @@
+# Employee Portal — Deploy Workflow Skeleton
+# Inception baseline: skeleton only. Deploy steps will be filled in during
+# Elaboration (prototype) and Construction (iterative builds).
+#
+# Deployment mode: Custom-Built (internal Windows Server, intranet-only)
+# No cloud deployment — this workflow handles build, test, and artifact packaging.
+
+name: Build and Package
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+      - name: Run tests
+        run: dotnet test --configuration Release --no-build --verbosity normal
+      - name: Publish self-contained deployment
+        run: dotnet publish --configuration Release --self-contained true -o ./publish
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: employee-portal-build
+          path: ./publish

@@ -1,0 +1,14 @@
+# Employee Portal — IaC Base (Placeholder)
+# Inception baseline: skeleton only.
+# The portal deploys to a single Windows Server (no Kubernetes, no cloud).
+# This file is a placeholder for future containerization if a CR approves it.
+#
+# Current deployment: manual installation by IT on Windows Server.
+# See docs/DEPLOYMENT_STRATEGY.md for details.
+
+apiVersion: v2
+name: employee-portal
+description: Employee Portal for Cuba Corp — IaC placeholder (not yet used)
+type: application
+version: 0.1.0
+appVersion: "0.1.0-inception"
