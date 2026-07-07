@@ -1429,6 +1429,221 @@ All interfaces are DI-injectable, enabling unit testing with mock implementation
 | INetworkHealth | Mock with controllable HealthStatus and callback trigger | HealthStatus.UP/DOWN transitions |
 | IAuditLogger | Capture Log calls in test list | AuditEntry records (entityType, action, user) |
 ## Traceability
+### Navigation Topology (UI Designer Contribution)
+
+The following state machine defines the formal navigation topology of the Employee Portal — all screens, transitions, and guard conditions. Every screen is reachable from Login; no dead-end screens exist without explicit intent (Logout, Session Expired). The navigation bar (REQ-042) provides consistent cross-screen transitions on all pages.
+
+**Screens modeled (11 states + 1 terminal):** Login, Home/Clock, Clocking History, News List, News Detail, Directory Search, Admin Clockings, Admin News, Admin Directory, Offline Mode (transient), Session Expired (error), Logout (terminal).
+
+**Verification results:**
+- ✅ All 9 primary screens reachable from Login via authenticated navigation
+- ✅ No dead-end screens — every screen has nav bar transitions to Home, News, Directory, Logout
+- ✅ HR-only screens (Admin Clockings, Admin News, Admin Directory) guarded by `[HR role]` condition
+- ✅ Offline Mode is transient — exits to Home (network restored) or Session Expired (>5min)
+- ✅ Session Expired exits to Login (network restored) — no orphaned error state
+- ✅ Logout is terminal — returns to initial state
+
+```plantuml
+@startuml
+title Employee Portal — Navigation Topology (State Machine)
+
+skinparam state {
+  BackgroundColor #ecf0f1
+  BorderColor #2c3e50
+  FontName "Segoe UI"
+}
+skinparam note {
+  BackgroundColor #fffde7
+  BorderColor #f57f17
+}
+
+[*] --> Login
+
+state "Login Page\n(CLS-001b)" as Login {
+  Login : AD authentication
+  Login : <<include>> from all UCs
+}
+
+state "Home / Clock Page\n(CLS-001)" as Home {
+  Home : Clock In/Out button
+  Home : Status label
+  Home : Offline indicator (REQ-035)
+}
+
+state "Clocking History Page\n(CLS-002)" as History {
+  History : Current month table
+  History : Date, time, type columns
+}
+
+state "News List Page\n(CLS-005)" as NewsList {
+  NewsList : Featured banner
+  NewsList : Category filter
+  NewsList : Sorted by date desc
+}
+
+state "News Detail Page\n(CLS-006)" as NewsDetail {
+  NewsDetail : Full article view
+  NewsDetail : Back to list
+}
+
+state "Directory Search Page\n(CLS-007)" as Directory {
+  Directory : Real-time search
+  Directory : Name/dept/office filter
+}
+
+state "Admin Clockings Page\n(CLS-003)" as AdminClockings {
+  AdminClockings : All employees' clockings
+  AdminClockings : Export CSV button
+  AdminClockings : [HR only]
+}
+
+state "Admin News Page\n(CLS-004)" as AdminNews {
+  AdminNews : Publish form
+  AdminNews : Title, body, category, featured
+  AdminNews : [HR only]
+}
+
+state "Admin Directory Page\n(CLS-008)" as AdminDirectory {
+  AdminDirectory : Entry list
+  AdminDirectory : Edit/Deactivate/Create
+  AdminDirectory : AD sync conflict dialog
+  AdminDirectory : [HR only]
+}
+
+state "Session Expired\n(Error State)" as SessionExpired {
+  SessionExpired : "Session expired —\nnetwork connection required"
+  SessionExpired : (REQ-036)
+}
+
+state "Offline Mode\n(Transient State)" as OfflineMode {
+  OfflineMode : "Offline mode — clocking\nwill sync when restored"
+  OfflineMode : (REQ-035)
+  OfflineMode : Cached session active
+}
+
+state "Logout" as Logout
+
+Login --> Home : [auth success] / load clocking status
+Login --> Login : [auth failure] / show error message
+
+Home --> History : [click "My History"]
+Home --> NewsList : [click "News" in nav bar]
+Home --> Directory : [click "Directory" in nav bar]
+Home --> AdminClockings : [HR role + click "Admin"]
+Home --> Home : [click Clock In/Out] / record timestamp, show confirmation (REQ-031)
+Home --> OfflineMode : [network drop ≤5min] / show offline banner (REQ-035)
+Home --> SessionExpired : [network drop >5min] / show expiry message (REQ-036)
+Home --> Logout : [click "Logout"]
+
+History --> Home : [click "Home" in nav bar]
+History --> NewsList : [click "News" in nav bar]
+History --> Directory : [click "Directory" in nav bar]
+History --> Logout : [click "Logout"]
+
+NewsList --> Home : [click "Home" in nav bar]
+NewsList --> NewsDetail : [click news item]
+NewsList --> Directory : [click "Directory" in nav bar]
+NewsList --> AdminNews : [HR role + click "Admin"]
+NewsList --> Logout : [click "Logout"]
+
+NewsDetail --> NewsList : [click "Back" or "News" in nav bar]
+NewsDetail --> Home : [click "Home" in nav bar]
+NewsDetail --> Directory : [click "Directory" in nav bar]
+NewsDetail --> Logout : [click "Logout"]
+
+Directory --> Home : [click "Home" in nav bar]
+Directory --> NewsList : [click "News" in nav bar]
+Directory --> AdminDirectory : [HR role + click "Admin"]
+Directory --> Logout : [click "Logout"]
+
+AdminClockings --> Home : [click "Home" in nav bar]
+AdminClockings --> NewsList : [click "News" in nav bar]
+AdminClockings --> Directory : [click "Directory" in nav bar]
+AdminClockings --> AdminNews : [HR role + click "Publish News"]
+AdminClockings --> AdminDirectory : [HR role + click "Manage Directory"]
+AdminClockings --> AdminClockings : [click "Export CSV"] / download file (REQ-038)
+AdminClockings --> Logout : [click "Logout"]
+
+AdminNews --> Home : [click "Home" in nav bar]
+AdminNews --> NewsList : [click "News" in nav bar]
+AdminNews --> Directory : [click "Directory" in nav bar]
+AdminNews --> AdminClockings : [HR role + click "Review Clockings"]
+AdminNews --> AdminDirectory : [HR role + click "Manage Directory"]
+AdminNews --> AdminNews : [click "Publish"] / validate + save + show confirmation
+AdminNews --> Logout : [click "Logout"]
+
+AdminDirectory --> Home : [click "Home" in nav bar]
+AdminDirectory --> NewsList : [click "News" in nav bar]
+AdminDirectory --> Directory : [click "Directory" in nav bar]
+AdminDirectory --> AdminClockings : [HR role + click "Review Clockings"]
+AdminDirectory --> AdminNews : [HR role + click "Publish News"]
+AdminDirectory --> AdminDirectory : [click "Edit"] / show edit form
+AdminDirectory --> AdminDirectory : [click "Deactivate"] / confirm dialog
+AdminDirectory --> AdminDirectory : [click "Create New"] / show create form
+AdminDirectory --> Logout : [click "Logout"]
+
+OfflineMode --> Home : [network restored] / sync queued data, show sync confirmation
+OfflineMode --> OfflineMode : [click Clock In/Out] / record locally, queue for sync
+OfflineMode --> SessionExpired : [offline >5min] / cached session expires
+
+SessionExpired --> Login : [network restored] / redirect to login
+
+Logout --> [*]
+
+note right of Home
+  **Primary screen** — UC-001
+  Clock In/Out is the dominant
+  action (REQ-030).
+  Nav bar present on all pages
+  (REQ-042).
+end note
+
+note right of OfflineMode
+  **Transient state** — only
+  reachable from Home during
+  active clocking session.
+  UC-001 AF-1.
+end note
+
+note right of AdminClockings
+  **HR-only screens** share
+  nav bar with "Admin" section
+  visible only to HR role
+  (REQ-037).
+end note
+
+@enduml
+```
+
+#### Login Page Wireframe (Salt)
+
+```plantuml
+@startuml
+salt
+title Wireframe: Login Page (AD Authentication)
+
+{
+  {+ Employee Portal — Cuba Corp +}
+  --
+  {
+    Login
+    --
+    {
+      Username: | "corporate.username"
+      Password: | "********"
+    }
+    [Sign In] | [Cancel]
+    --
+    Authenticate using your corporate
+    Active Directory credentials.
+  }
+  --
+  {+ © Cuba Corp — Internal Use Only +}
+}
+
+@enduml
+```
+
 | Element | Traces From | Link Type | Traces To |
 |---|---|---|---|
 | **Analysis Classes** | | | |
@@ -1513,3 +1728,6 @@ All interfaces are DI-injectable, enabling unit testing with mock implementation
 | UC-005 Interaction Flow | UC-005 Main Flow | Realizes | NewsListPage, NewsDetailPage, NewsController |
 | UC-006 Interaction Flow | UC-006 Main Flow | Realizes | DirectoryPage, DirectoryController |
 | UC-007 Interaction Flow | UC-007 Main Flow, S3 | Realizes | AdminDirectoryPage, DirectoryController |
+| **Navigation Topology (UI Designer)** | | | |
+| NAV-001 (Navigation Topology State Machine) | REQ-042, All UCs of UI significance | Realizes | All view classes (CLS-001 through CLS-008) |
+| NAV-002 (Login Page Wireframe) | REQ-001, UC-001 through UC-007 (<<include>>) | Derives | Login Page |
