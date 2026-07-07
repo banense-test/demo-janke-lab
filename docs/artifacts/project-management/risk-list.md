@@ -1,13 +1,11 @@
 ## Document Control
-
 | Field | Value |
 |---|---|
 | Phase | Inception |
 | Status | Draft |
 | Milestone Target | End of Inception (LCO) |
-| Iteration | 1 (Cycle 1) |
+| Iteration | 2 (Cycle 1) |
 | Author | Project Manager |
-
 ## Risk Classification
 
 Risks are classified using FMEA methodology: **Probability (P)** × **Impact (I)** = **Risk Priority Number (RPN)**. Detection capability is tracked as part of mitigation effectiveness.
