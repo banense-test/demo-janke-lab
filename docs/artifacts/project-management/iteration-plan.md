@@ -1,13 +1,12 @@
 ## Document Control
-
 | Field | Value |
 |---|---|
 | Phase | Inception |
 | Status | Draft |
 | Milestone Target | End of Inception (LCO) |
-| Iteration | 1 (Cycle 1) |
+| Iteration | 2 (Cycle 1) |
 | Author | Project Manager |
-
+| Prior Iteration | 1 (Cycle 1) — LCO verdict: iteration REQUIRED (4 open Major findings) |
 ## Iteration Objectives
 
 1. **Establish project scope and boundaries** — Confirm the 4 declared use cases (UC-001 Clock In/Out, UC-002 Read News, UC-003 Employee Directory, AD Authentication) and 4 NFRs as the complete scope ceiling
