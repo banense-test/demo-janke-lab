@@ -1749,20 +1749,73 @@ All interfaces are DI-injectable, enabling unit testing with mock implementation
 | INetworkHealth | Mock with controllable HealthStatus and callback trigger | HealthStatus.UP/DOWN transitions |
 | IAuditLogger | Capture Log calls in test list | AuditEntry records (entityType, action, user) |
 ## Traceability
-
 | Element | Traces From | Link Type | Traces To |
 |---|---|---|---|
-| HomePage (<<view>>) | UC-001, UC-005, COMP-P1 | Derives | ClockingController, NewsController |
-| HistoryPage (<<view>>) | UC-002, COMP-P1 | Derives | ClockingController |
-| NewsListPage (<<view>>) | UC-005, COMP-P2 | Derives | NewsController |
-| NewsDetailPage (<<view>>) | UC-005, COMP-P2 | Derives | NewsController |
-| DirectoryPage (<<view>>) | UC-006, COMP-P3 | Derives | DirectoryController |
-| AdminClockingsPage (<<view>>) | UC-003, COMP-P4 | Derives | ClockingController |
-| AdminNewsPage (<<view>>) | UC-004, COMP-P2 | Derives | NewsController |
-| AdminDirectoryPage (<<view>>) | UC-007, COMP-P3 | Derives | DirectoryController |
-| ClockingController (<<controller>>) | UC-001, UC-002, UC-003 | Derives | (Designer: domain classes) |
-| NewsController (<<controller>>) | UC-004, UC-005 | Derives | (Designer: domain classes) |
-| DirectoryController (<<controller>>) | UC-006, UC-007 | Derives | (Designer: domain classes) |
+| **Analysis Classes** | | | |
+| ACL-001 (HomePage) | UC-001 | Derives | CLS-001 |
+| ACL-002 (HistoryPage) | UC-002 | Derives | CLS-002 |
+| ACL-003 (AdminClockingsPage) | UC-003 | Derives | CLS-003 |
+| ACL-004 (AdminNewsPage) | UC-004 | Derives | CLS-004 |
+| ACL-005 (NewsListPage) | UC-005 | Derives | CLS-005 |
+| ACL-006 (NewsDetailPage) | UC-005 | Derives | CLS-006 |
+| ACL-007 (DirectoryPage) | UC-006 | Derives | CLS-007 |
+| ACL-008 (AdminDirectoryPage) | UC-007 | Derives | CLS-008 |
+| ACL-009 (TimeTrackingService) | UC-001, UC-002, UC-003 | Derives | CLS-012 |
+| ACL-010 (NewsService) | UC-004, UC-005 | Derives | CLS-013 |
+| ACL-011 (DirectoryService) | UC-006, UC-007 | Derives | CLS-014 |
+| ACL-012 (AuditInterceptor) | UC-004, UC-007, REQ-004, REQ-005, REQ-006 | Derives | CLS-015 |
+| ACL-013 (SyncQueue) | UC-001, REQ-014 | Derives | CLS-016 |
+| ACL-014 (Clocking) | UC-001, UC-002, UC-003 | Derives | CLS-017 |
+| ACL-015 (NewsItem) | UC-004, UC-005 | Derives | CLS-018 |
+| ACL-016 (Employee) | UC-006, UC-007 | Derives | CLS-019 |
+| ACL-017 (AuditEntry) | UC-004, UC-007, REQ-004, REQ-005, REQ-006 | Derives | CLS-020 |
+| ACL-018 (SyncRecord) | UC-001, REQ-014 | Derives | CLS-021 |
+| **Use-Case Realizations** | | | |
+| SEQ-001 (UC-001 Clock In/Out) | UC-001, REQ-014, RISK-T01 | Realizes | CLS-012, CLS-016, CLS-017, INT-002, INT-003, INT-005 |
+| SEQ-002 (UC-004 Publish News) | UC-004, REQ-004, REQ-006 | Realizes | CLS-013, CLS-018, CLS-015, INT-002, INT-006 |
+| SEQ-003 (UC-006 Search Directory) | UC-006, REQ-018 | Realizes | CLS-014, CLS-019, INT-002 |
+| SEQ-004 (UC-002 View History) | UC-002 | Realizes | CLS-012, CLS-017, INT-002 |
+| SEQ-005 (UC-003 Export Clockings) | UC-003 | Realizes | CLS-012, CLS-017, INT-004 |
+| SEQ-006 (UC-005 Read News) | UC-005 | Realizes | CLS-013, CLS-018, INT-002 |
+| SEQ-007 (UC-007 Manage Directory) | UC-007, REQ-005, REQ-006, RISK-R01 | Realizes | CLS-014, CLS-019, CLS-015, INT-001, INT-002, INT-006 |
+| **Design Classes** | | | |
+| CLS-001 through CLS-008 (Views) | COMP-P1 through COMP-P4 | Derives | ACL-001 through ACL-008 |
+| CLS-009 (ClockingController) | UC-001, UC-002, UC-003 | Derives | CLS-012 |
+| CLS-010 (NewsController) | UC-004, UC-005 | Derives | CLS-013 |
+| CLS-011 (DirectoryController) | UC-006, UC-007 | Derives | CLS-014 |
+| CLS-012 (TimeTrackingService) | UC-001, UC-002, UC-003, REQ-014, REQ-017 | Derives | INT-002, INT-003, INT-004, INT-005 |
+| CLS-013 (NewsService) | UC-004, UC-005, REQ-004 | Derives | INT-002, INT-006 |
+| CLS-014 (DirectoryService) | UC-006, UC-007, REQ-018, REQ-023 | Derives | INT-001, INT-002, INT-006 |
+| CLS-015 (AuditInterceptor) | REQ-004, REQ-005, REQ-006 | Derives | INT-006 |
+| CLS-016 (SyncQueue) | UC-001, REQ-014, RISK-T01 | Derives | INT-002, INT-003 |
+| CLS-017 (Clocking) | UC-001, UC-002, UC-003 | Derives | — |
+| CLS-018 (NewsItem) | UC-004, UC-005 | Derives | — |
+| CLS-019 (Employee) | UC-006, UC-007, RISK-R01 | Derives | — |
+| CLS-020 (AuditEntry) | REQ-004, REQ-005, REQ-006 | Derives | — |
+| CLS-021 (SyncRecord) | UC-001, REQ-014 | Derives | — |
+| CLS-026 (PostgresRepository<T>) | COMP-I2, INT-002 | Realizes | INT-002 |
+| CLS-027 (SqliteLocalStore) | COMP-I3, INT-003 | Realizes | INT-003 |
+| CLS-028 (LdapAuthProvider) | COMP-I1, INT-001, RISK-T02 | Realizes | INT-001 |
+| CLS-029 (CsvExporter) | INT-004 | Realizes | INT-004 |
+| CLS-030 (TcpHealthMonitor) | COMP-I5, INT-005 | Realizes | INT-005 |
+| CLS-031 (EfAuditLogger) | INT-006 | Realizes | INT-006 |
+| **Interfaces** | | | |
+| INT-001 (IAuthProvider) | CON-004, REQ-001, RISK-T02 | Derives | CLS-028 |
+| INT-002 (IRepository<T>) | REQ-017, REQ-018 | Derives | CLS-026 |
+| INT-003 (ILocalStore) | REQ-014, RISK-T01 | Derives | CLS-027 |
+| INT-004 (IExportService) | UC-003 | Derives | CLS-029 |
+| INT-005 (INetworkHealth) | REQ-014, RISK-T01 | Derives | CLS-030 |
+| INT-006 (IAuditLogger) | REQ-004, REQ-005, REQ-006 | Derives | CLS-031 |
+| **State Machines** | | | |
+| SM-001 (Clocking Sync) | CLS-017, REQ-014 | Realizes | CLS-016, INT-003, INT-002 |
+| SM-002 (SyncRecord Queue) | CLS-021, REQ-014 | Realizes | CLS-016, INT-003, INT-002 |
+| SM-003 (Employee Directory) | CLS-019, RISK-R01, REQ-005 | Realizes | CLS-014, INT-001, INT-006 |
+| **Design Subsystems** | | | |
+| SUB-PRES (Presentation) | COMP-P1 through COMP-P4 | Derives | CLS-001 through CLS-011 |
+| SUB-APP (Application) | COMP-A1 through COMP-A4 | Derives | CLS-012 through CLS-016, INT-001 through INT-006 |
+| SUB-DOM (Domain) | COMP-D1 through COMP-D4 | Derives | CLS-017 through CLS-025 |
+| SUB-INFRA (Infrastructure) | COMP-I1 through COMP-I5 | Derives | CLS-026 through CLS-033, INT-001 through INT-006 |
+| **UI Patterns (UI Designer)** | | | |
 | P-001 (Nav Bar) | REQ-042 | Derives | All view classes |
 | P-002 (Primary Button) | REQ-030, REQ-038, REQ-039 | Derives | HomePage, AdminNewsPage, AdminClockingsPage |
 | P-003 (Confirmation) | REQ-031, REQ-035 | Derives | HomePage, AdminNewsPage, AdminDirectoryPage |
@@ -1772,6 +1825,7 @@ All interfaces are DI-injectable, enabling unit testing with mock implementation
 | P-007 (Table List) | REQ-032, REQ-038, REQ-040 | Derives | HistoryPage, AdminClockingsPage, AdminDirectoryPage |
 | P-008 (Loading Indicator) | REQ-045 | Derives | BasePage (all) |
 | P-009 (Keyboard Accessibility) | REQ-044 | Derives | BasePage (all) |
+| **UI Interaction Flows (UI Designer)** | | | |
 | UC-001 Interaction Flow | UC-001 Main Flow, AF-1, EF-1 | Realizes | HomePage, ClockingController |
 | UC-002 Interaction Flow | UC-002 Main Flow | Realizes | HistoryPage, ClockingController |
 | UC-003 Interaction Flow | UC-003 Main Flow | Realizes | AdminClockingsPage, ClockingController |
