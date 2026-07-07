@@ -212,15 +212,18 @@ This iteration addresses the **rework** of the Use-Case Model to resolve Review 
 | NFR coverage | **Decide:** Whether all constraints are formalized | % of declared NFRs in Supplementary Spec | Per iteration |
 | Iteration velocity | **Decide:** Whether to adjust next iteration scope | Tasks completed vs. planned | Per iteration |
 ## Traceability
-
 | Element | Traces From | Link Type | Traces To |
 |---|---|---|---|
-| Iteration Plan | Development Case | Derives | Risk List, Elaboration Iteration Plan |
-| LCO Milestone | RUP Phase Exit Criteria | Derives | Elaboration Phase Entry |
+| Iteration Plan (Iter 2) | Iteration Assessment (Iter 1), Review Record | Derives | Risk List, Elaboration Iteration Plan |
+| LCO Milestone (Re-Review) | RUP Phase Exit Criteria, Review Record Findings | Derives | Elaboration Phase Entry |
 | Coarse Roadmap | Rubber Profile Heuristic, 6±3 Rule | Derives | All subsequent Iteration Plans |
-| Iteration Objectives | Stakeholder Scope, Business Goals | Derives | Iteration Assessment (end of iteration) |
-| Evaluation Criteria | Acceptance Criteria (stakeholder) | Derives | LCO Milestone Review |
+| Iteration Objectives (Iter 2) | Review Record F1–F3, S2, F4–F5 | Derives | Iteration Assessment (end of iteration 2) |
+| Evaluation Criteria | Acceptance Criteria (stakeholder), Review Record | Derives | LCO Milestone Re-Review |
 | UC-001 (Clock In/Out) | Declared Scope | Derives | RISK-T01, RISK-T03, RISK-T04 |
-| UC-002 (Read News) | Declared Scope | Derives | RISK-S01 (scope creep guard) |
-| UC-003 (Employee Directory) | Declared Scope | Derives | RISK-R01 (AD schema) |
-| AD Authentication | Declared Constraint | Derives | RISK-T02, RISK-R01 |
+| UC-002 (Read News) | Declared Scope, Stakeholder Confirmation S1 | Derives | RISK-S01 (scope creep guard) |
+| UC-003 (Employee Directory) | Declared Scope, Stakeholder Confirmation S1 | Derives | RISK-R01 (AD schema) |
+| AD Authentication | Declared Constraint, Scope Guard Rule 7 | Derives | RISK-T02, RISK-R01, Supplementary Spec |
+| RISK-T05 | Review Record S2 (Stakeholder design file) | Derives | Design Model, SAD, Use Case Model |
+| Task T1–T4 | Review Record F1, F2, F3 | Derives | Use Case Model (rework) |
+| Task T5–T6 | Review Record S2 | Derives | Design Model, SAD (design impact) |
+| Task T9 | Review Record F4 | Derives | Test Evaluation Summary (coverage update) |
