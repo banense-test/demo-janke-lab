@@ -1,5 +1,4 @@
 ## Document Control
-
 | Field | Value |
 |---|---|
 | Phase | Elaboration |
@@ -13,9 +12,9 @@
 - Design Model created with UI view/controller classes, UI Patterns, and Use-Case Realizations (interaction flows) for all 7 UCs of UI significance.
 - UI class diagram defines 9 view classes (stereotyped `<<view>>`) and 3 controller classes (stereotyped `<<controller>>`) aligned with SAD component decomposition (COMP-P1 through COMP-P4).
 - UI Patterns section published as coordination artifact for Designer, Implementer, and Technical Writer.
-- Salt wireframes produced for 3 primary screens: Home/Clock, Directory Search, Admin News Publishing.
+- Salt wireframes produced for 4 primary screens: Login, Home/Clock, Directory Search, Admin News Publishing.
 - Interaction flow activity diagrams for all 7 UCs trace to use-case flow steps and apply measurable usability requirements (REQ-008 through REQ-045).
-
+- **Navigation Topology state machine added** — formal model of all 11 screens (9 view pages + Login + error states), transitions with guard conditions, verified for reachability and no dead-end screens. Traces to REQ-042 (consistent navigation) and all UCs of UI significance.
 ## Design Overview
 This Design Model captures the complete design of the Employee Portal, combining UI design (view/controller classes, UI patterns, interaction flows) and component design (domain classes, service classes, use-case realizations, state machines, subsystem definitions).
 
