@@ -1,20 +1,23 @@
 ## Document Control
-
 | Field | Value |
 |---|---|
 | Phase | Elaboration |
 | Status | Draft |
 | Iteration | 1 (Cycle 1) |
 | Milestone Target | End of Elaboration |
-| Author | System Analyst |
+| Author | System Analyst / Requirements Specifier |
 
 ### Elaboration Iteration 1 Changes
 
 - Phase transition from Inception (LCO approved). FURPS+ categories confirmed complete.
 - **REQ-018 [ASSUMPTION] resolved:** Directory search response time threshold quantified at ≤2 seconds (derived from acceptance criteria: 10-second total target includes navigation + search; 2s for search leaves 8s for navigation and reading — conservative).
-- All NFR thresholds now testable. No gold-plating: every NFR justified by declared business value or constraints.
-- Content preserved from Inception baseline; only Document Control and REQ-018 updated.
-
+- **REQ-024 [ASSUMPTION] resolved:** Backup strategy confirmed by stakeholder. Nightly full backup (pg_dump, 30-day retention), RPO ≤ 24h for general portal data. No longer an assumption.
+- **REQ-025 [ASSUMPTION] resolved:** 50 concurrent users during peak clock-in window confirmed by stakeholder. No longer an assumption.
+- **REQ-026 added:** PostgreSQL WAL archiving for PITR of clocking data — RPO ≤ 15 min (payroll-critical).
+- **REQ-027 added:** Off-server backup copy (NAS or Office 2) — no cloud per CON-005.
+- **REQ-028 added:** Monthly test-restore verification of backup integrity.
+- **REQ-029 added:** Monthly full backup retained 12 months for payroll audit support.
+- All NFR thresholds now testable with no remaining [ASSUMPTION] markers. No gold-plating: every threshold justified by declared business value, constraints, or stakeholder confirmation.
 ## Functionality
 
 ### Security
