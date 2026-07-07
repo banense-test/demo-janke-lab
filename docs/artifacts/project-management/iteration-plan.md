@@ -154,27 +154,27 @@ stop
 | T13 | LCO Re-assessment | ProjectManager | 1d | Jul 14 | Jul 14 | T4, T6, T7, T9 | — |
 | T14 | LCO Milestone Re-Review | ReviewCoordinator | 1d | Jul 17 | Jul 17 | T13 | — |
 ## Resources
+### Agent Role Assignments — Inception Iteration 2
 
-### Agent Role Assignments — Inception Iteration 1
-
-| Agent Role | Assigned Tasks | Effort Allocation |
-|---|---|---|
-| ProjectManager | T1, T2, T3, T9, T10 | 40% — risk identification, planning, finalization |
-| SystemAnalyst | T4, T5, T6 | 35% — Vision, Use Case Model, Supplementary Spec |
-| SoftwareArchitect | T7 | 15% — architecture candidate addressing offline + AD |
-| Designer | T8 | 10% — initial analysis classes from UC model |
-| ReviewCoordinator | T11 | LCO milestone review at iteration end |
+| Agent Role | Assigned Tasks | Effort Allocation | Finding Focus |
+|---|---|---|---|
+| SystemAnalyst | T1, T2, T3, T4 | 35% — UC Model rework (F1–F3) | F1, F2, F3 |
+| UIDesigner | T5, T6 | 20% — Design file review & impact assessment | S2 |
+| SoftwareArchitect | T7, T8 | 15% — SAD impact assessment & artifact type verification | S2, F5 |
+| TestManager | T9 | 5% — TES coverage table update | F4 |
+| ProjectManager | T10, T11, T12, T13 | 20% — Risk List update, plan evolution, assessment, LCO re-assessment | — |
+| ReviewCoordinator | T14 | LCO milestone re-review at iteration end | — |
 
 ### Infrastructure Resources
 
 | Resource | Status | Notes |
 |---|---|---|
-| Git/SCM repository | Available | Project repository initialized |
+| Git/SCM repository | Available | Project repository initialized; IARI branching strategy on main |
 | .NET 10 SDK | Available | Per stakeholder constraint |
 | PostgreSQL | Available | On Windows Server (internal) |
 | PlantUML tooling | Available | Via process tooling |
 | CI/CD pipeline | To configure | Deferred to Elaboration per Development Case |
-
+| Design file | Available | `docs/inputs/employee-portal-design.html` — stakeholder-provided (S2) |
 ## Use Cases and Scenarios Addressed
 
 This iteration addresses ALL declared use cases at the **analysis and planning** level — no implementation occurs in Inception.
