@@ -2,17 +2,18 @@
 | Field | Value |
 |---|---|
 | Phase | Elaboration |
-| Status | Draft — Findings updated |
-| Iteration | 1 (Cycle 1) |
-| Milestone Target | End of Elaboration (LCA) |
+| Status | Draft — Findings resolved (Iteration 2) |
+| Iteration | 2 (Cycle 1) |
+| Milestone Target | LCA (Lifecycle Architecture) |
 | Author | Test Designer (catalog) — Tester (execution findings) |
 | Execution Date | 2026-07-07 |
 | Build ID (main) | CI run 28860381346 — success (2026-07-07 10:46:47Z) |
 | Build ID (PoC) | CI run 28860807083 — success (2026-07-07 10:54:52Z) |
 | PoC Branch | `poc/E1-risk-t01-offline-sync` |
-| Prior Iteration | Inception 2 (LCO approved — GO verdict, 2026-07-07) |
+| Prior Iteration | Elaboration 1 (Draft — findings TC-F1, RL-F1 open) |
 | Test Verdict Summary | 7 PASS, 1 PASS (partial), 1 NOT EXECUTABLE, 11 BLOCKED |
 | CRs Logged | #5 (Major — PoC tests excluded from CI), #6 (Minor — placeholder smoke test), #7 (Major — sync-over-async), #8 (Minor — reflection) |
+| Findings Resolved (Iter 2) | TC-F1 (Minor — Blocking Reason column added to execution summary); RL-F1 (Major — RISK-T01 RPN corrected 40→63, RISK-T02 RPN corrected 35→30 per authoritative Risk List) |
 ## Test Scope
 ### Purpose
 
