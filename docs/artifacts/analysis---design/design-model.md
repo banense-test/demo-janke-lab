@@ -29,9 +29,231 @@ This Design Model captures the user-interface design of the Employee Portal. The
 **Technology constraint:** Razor Pages (CON-001) — no SPA. View classes extend a BasePage abstraction; controllers handle business logic delegation.
 
 ## Domain Model
+### Analysis Classes
 
-*Section reserved for Designer contribution — domain entity classes, relationships, and business rules will be populated by the Designer role.*
+The analysis class model identifies boundary, control, and entity classes for all 7 use cases. Boundary classes are referenced from the UI Designer's contribution (view/controller classes in the Design Overview section); control and entity classes are the Designer's contribution.
 
+**Three-Level Mechanism Resolution:**
+
+| Analysis Mechanism | Design Mechanism | Implementation Mechanism | Risk |
+|---|---|---|---|
+| Persistence | Repository pattern with `IRepository<T>` | EF Core 10.0 + Npgsql (PostgreSQL) | — |
+| Offline persistence | Local store with `ILocalStore` | EF Core 10.0 + SQLite | RISK-T01 |
+| Authentication | `IAuthProvider` interface | LDAP/OAuth2 adapter (spike deferred to Construction) | RISK-T02 |
+| Audit trail | `IAuditLogger` interface | Append-only AuditEntry table via EF Core | — |
+| Network detection | `INetworkHealth` interface | TcpHealthMonitor (TCP probe to pg:5432 every 5s) | RISK-T01 |
+| Export | `IExportService` interface | CsvExporter (RFC 4180 compliant) | — |
+
+```plantuml
+@startuml
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam class {
+  BackgroundColor<<boundary>> #e8f5e9
+  BackgroundColor<<control>> #e3f2fd
+  BackgroundColor<<entity>> #fff3e0
+  BackgroundColor<<infrastructure>> #fce4ec
+  BorderColor #37474f
+}
+
+title Analysis Classes — Employee Portal (All UCs)
+
+' === Boundary Classes (from UI Designer, referenced not redefined) ===
+package "Boundary (Presentation)" {
+  class "HomePage\n(ACL-001)" as ACL_001 <<boundary>> {
+    + OnGet() : Task<PageResult>
+    + OnPostClockIn() : Task<PageResult>
+    + OnPostClockOut() : Task<PageResult>
+  }
+  class "HistoryPage\n(ACL-002)" as ACL_002 <<boundary>> {
+    + OnGet(month: int) : Task<PageResult>
+  }
+  class "AdminClockingsPage\n(ACL-003)" as ACL_003 <<boundary>> {
+    + OnGet(month: int) : Task<PageResult>
+    + OnPostExport(month: int) : Task<FileResult>
+  }
+  class "AdminNewsPage\n(ACL-004)" as ACL_004 <<boundary>> {
+    + OnGet() : Task<PageResult>
+    + OnPostPublish(newsItem: NewsItem) : Task<PageResult>
+  }
+  class "NewsListPage\n(ACL-005)" as ACL_005 <<boundary>> {
+    + OnGet(category: string?) : Task<PageResult>
+  }
+  class "NewsDetailPage\n(ACL-006)" as ACL_006 <<boundary>> {
+    + OnGet(id: Guid) : Task<PageResult>
+  }
+  class "DirectoryPage\n(ACL-007)" as ACL_007 <<boundary>> {
+    + OnGet(query: string, dept: string?, office: string?) : Task<PageResult>
+  }
+  class "AdminDirectoryPage\n(ACL-008)" as ACL_008 <<boundary>> {
+    + OnGet() : Task<PageResult>
+    + OnPostUpdate(emp: Employee) : Task<PageResult>
+    + OnPostSyncAD() : Task<PageResult>
+  }
+}
+
+' === Control Classes (Application Layer) ===
+package "Control (Application)" {
+  class "TimeTrackingService\n(ACL-009)" as ACL_009 <<control>> {
+    + ClockIn(employeeId: Guid) : Result<Clocking>
+    + ClockOut(employeeId: Guid) : Result<Clocking>
+    + GetClockings(employeeId: Guid, month: DateTime) : List<Clocking>
+    + GetAllClockings(month: DateTime) : List<Clocking>
+    + ExportClockings(month: DateTime) : byte[]
+  }
+  class "NewsService\n(ACL-010)" as ACL_010 <<control>> {
+    + PublishNews(item: NewsItem) : Result<NewsItem>
+    + GetNewsList(category: string?) : List<NewsItem>
+    + GetNewsDetail(id: Guid) : NewsItem
+  }
+  class "DirectoryService\n(ACL-011)" as ACL_011 <<control>> {
+    + Search(query: string, dept: string?, office: string?) : List<Employee>
+    + UpdateEmployee(emp: Employee) : Result<Employee>
+    + SyncFromAD() : SyncResult
+  }
+  class "AuditInterceptor\n(ACL-012)" as ACL_012 <<control>> {
+    + Log(entityType: string, entityId: string, action: string, user: string) : void
+  }
+  class "SyncQueue\n(ACL-013)" as ACL_013 <<control>> {
+    + Enqueue(clocking: Clocking) : Result<int>
+    + Flush() : SyncResult
+    + GetPendingCount() : int
+  }
+}
+
+' === Entity Classes (Domain Layer) ===
+package "Entity (Domain)" {
+  class "Clocking\n(ACL-014)" as ACL_014 <<entity>> {
+    + id: Guid
+    + employeeId: Guid
+    + type: ClockingType
+    + timestamp: DateTime
+    + syncStatus: SyncStatus
+  }
+  class "NewsItem\n(ACL-015)" as ACL_015 <<entity>> {
+    + id: Guid
+    + title: string
+    + body: string
+    + publishedDate: DateTime
+    + category: Category
+    + isFeatured: bool
+  }
+  class "Employee\n(ACL-016)" as ACL_016 <<entity>> {
+    + id: Guid
+    + adId: string
+    + fullName: string
+    + jobTitle: string
+    + department: string
+    + office: string
+    + email: string
+    + extension: string
+    + isActive: bool
+    + overrideFlag: bool
+  }
+  class "AuditEntry\n(ACL-017)" as ACL_017 <<entity>> {
+    + id: Guid
+    + entityType: string
+    + entityId: string
+    + action: string
+    + user: string
+    + timestamp: DateTime
+  }
+  class "SyncRecord\n(ACL-018)" as ACL_018 <<entity>> {
+    + localId: int
+    + clockingId: Guid
+    + status: SyncStatus
+    + queuedAt: DateTime
+    + syncedAt: DateTime?
+  }
+}
+
+' === Enumerations ===
+enum "ClockingType" as CT {
+  IN
+  OUT
+}
+enum "SyncStatus" as SS {
+  PENDING
+  SYNCED
+  SKIPPED
+}
+enum "Category" as CAT {
+  General
+  HR
+  IT
+  Events
+}
+
+' === Relationships ===
+' Boundary -> Control
+ACL_001 --> ACL_009 : delegates
+ACL_002 --> ACL_009 : delegates
+ACL_003 --> ACL_009 : delegates
+ACL_004 --> ACL_010 : delegates
+ACL_005 --> ACL_010 : delegates
+ACL_006 --> ACL_010 : delegates
+ACL_007 --> ACL_011 : delegates
+ACL_008 --> ACL_011 : delegates
+
+' Control -> Entity
+ACL_009 ..> ACL_014 : creates/reads
+ACL_009 --> ACL_013 : delegates offline
+ACL_013 ..> ACL_014 : syncs
+ACL_013 ..> ACL_018 : manages
+ACL_010 ..> ACL_015 : creates/reads
+ACL_010 --> ACL_012 : logs
+ACL_011 ..> ACL_016 : reads/updates
+ACL_011 --> ACL_012 : logs
+ACL_012 ..> ACL_017 : creates
+
+' Entity -> Enum
+ACL_014 --> CT
+ACL_014 --> SS
+ACL_018 --> SS
+ACL_015 --> CAT
+
+note bottom of ACL_013
+  **Offline Sync Mechanism (Design)**
+  Analysis: "persist clockings offline"
+  Design: SyncQueue + ILocalStore (SQLite)
+  Implementation: SemaphoreSlim(1,1) single-writer lock
+  Resolves RISK-T01 (RPN 63)
+end note
+
+note bottom of ACL_012
+  **Audit Mechanism (Design)**
+  Analysis: "log directory/news changes"
+  Design: IAuditLogger interface + AuditInterceptor
+  Implementation: Append-only AuditEntry table via EF Core
+  Resolves REQ-004, REQ-005, REQ-006
+end note
+
+@enduml
+```
+
+### Analysis Class to Use-Case Traceability
+
+| Analysis Class | ID | Participates In UCs | Stereotype |
+|---|---|---|---|
+| HomePage | ACL-001 | UC-001 | <<boundary>> |
+| HistoryPage | ACL-002 | UC-002 | <<boundary>> |
+| AdminClockingsPage | ACL-003 | UC-003 | <<boundary>> |
+| AdminNewsPage | ACL-004 | UC-004 | <<boundary>> |
+| NewsListPage | ACL-005 | UC-005 | <<boundary>> |
+| NewsDetailPage | ACL-006 | UC-005 | <<boundary>> |
+| DirectoryPage | ACL-007 | UC-006 | <<boundary>> |
+| AdminDirectoryPage | ACL-008 | UC-007 | <<boundary>> |
+| TimeTrackingService | ACL-009 | UC-001, UC-002, UC-003 | <<control>> |
+| NewsService | ACL-010 | UC-004, UC-005 | <<control>> |
+| DirectoryService | ACL-011 | UC-006, UC-007 | <<control>> |
+| AuditInterceptor | ACL-012 | UC-004, UC-007 | <<control>> |
+| SyncQueue | ACL-013 | UC-001 | <<control>> |
+| Clocking | ACL-014 | UC-001, UC-002, UC-003 | <<entity>> |
+| NewsItem | ACL-015 | UC-004, UC-005 | <<entity>> |
+| Employee | ACL-016 | UC-006, UC-007 | <<entity>> |
+| AuditEntry | ACL-017 | UC-004, UC-007 | <<entity>> |
+| SyncRecord | ACL-018 | UC-001 | <<entity>> |
 ## Use-Case Realizations
 
 ### UI Interaction Flows
