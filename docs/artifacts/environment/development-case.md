@@ -72,7 +72,6 @@ Per canonical matrix — no deviations. All 7 always-active disciplines confirme
 **No intensity deviations requested.** The canonical matrix levels match the project's risk profile and phase objectives.
 
 ## Artifacts and Templates
-
 ### CORE Artifacts (16) — All Active
 
 All 16 CORE artifacts are produced per IARI baseline ownership. No CORE artifacts omitted. No ownership reassignments.
@@ -81,15 +80,14 @@ All 16 CORE artifacts are produced per IARI baseline ownership. No CORE artifact
 
 | Optional Artifact | §5.2 Trigger Condition | Fired? | Justification |
 |---|---|---|---|
-| Architectural Proof-of-Concept | Elaboration phase + at least one technical risk requiring empirical validation (per Risk List) | **YES** | Elaboration phase active. RISK-T01 (offline sync, RPN 35) and RISK-T02 (AD integration, RPN 30) are Significant technical risks requiring empirical validation. SAD references PoC-1 (Offline Sync) and PoC-2 (AD Integration) plans. |
+| Architectural Proof-of-Concept | Elaboration phase + at least one technical risk requiring empirical validation (per Risk List) | **YES** | Elaboration phase active. RISK-T01 (offline sync, RPN 63 — High) and RISK-T02 (AD integration, RPN 35 — Significant) are technical risks requiring empirical validation. PoC-1 (Offline Sync) produced in Iteration 1 — CI Green 3/3. PoC-2 (AD Integration) deferred to Construction per IAuthProvider isolation. |
 | Data Model | Data-centric system OR >10 entities OR data-migration in scope | NO | Standard CRUD intranet portal. ~8 entities (Employees, Clockings, News, NewsCategories, DirectoryEntries, AuditLogs, etc.). Not data-centric, no migration. Data schema lives in SAD Data View. |
 | Deployment Model | Distributed / multi-node topology, OR multi-environment non-trivial | NO | Single Windows Server, single node, internal network only. Physical View in SAD is sufficient. |
 | Glossary | Domain uses specialist vocabulary (technical/regulated/legal/medical/financial jargon) | NO | Standard intranet domain — no specialist vocabulary requiring stakeholder-validated definitions. |
 | User-Interface Prototype | UX-critical OR UI complexity requiring stakeholder validation before implementation | NO | Razor Pages intranet with standard CRUD UI. Not UX-critical. No prototype needed before implementation. |
 | Test Plan | Formal delivery / regulatory audit / contractual test reporting | NO | Internal tool, no regulatory or contractual test reporting requirements. Iteration Plan defines per-iteration testing scope. |
 
-**Change from Inception:** Architectural Proof-of-Concept trigger newly FIRED (Inception was not in Elaboration phase — trigger condition requires Elaboration phase). All other triggers unchanged.
-
+**Change from Inception:** Architectural Proof-of-Concept trigger newly FIRED in Elaboration Iteration 1 (trigger condition requires Elaboration phase). PoC-1 produced. All other triggers unchanged. Iteration 2 re-confirmation: trigger conditions unchanged, PoC artifact already exists.
 ## Optional Artifact Triggers
 
 Recorded via `record_optional_artifact_triggers`:
