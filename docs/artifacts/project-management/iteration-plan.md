@@ -189,27 +189,28 @@ This iteration addresses the **rework** of the Use-Case Model to resolve Review 
 
 **Design file impact (S2):** The stakeholder-provided `employee-portal-design.html` must be reviewed by the UI Designer for impact on the UC Model, Design Model, and SAD. If the design implies scope changes beyond the declared ceiling, a Change Request is required.
 ## Evaluation Criteria
-
-### LCO Milestone Exit Criteria
+### LCO Milestone Re-Review Exit Criteria
 
 | Criterion | Measurement Method | Target |
 |---|---|---|
-| Scope agreement | Vision Document reviewed by stakeholders | Laura Gómez confirms scope |
-| Risk identification | Risk List completeness review | All 8 identified risks classified with mitigation |
-| Architecture candidate | Software Architect delivers candidate architecture | Addresses offline fault tolerance approach |
-| Use case coverage | Use Case Model contains all 4 declared UCs | 100% of declared scope modeled |
-| NFR specification | Supplementary Specification contains all 4 NFRs | 100% of declared NFRs specified |
-| Project viability | Coarse roadmap + iteration plan reviewed | 6-iteration plan within schedule |
+| F1–F3 resolved | UC Model rework verified by Review Coordinator | All 3 Major findings closed |
+| S2 resolved | Design file reviewed; impact assessed on UC Model, Design Model, SAD | Design file incorporated or CR raised |
+| F4 resolved | TES coverage table updated post-UC renumbering | Coverage table references correct UC IDs |
+| F5 resolved | SAD artifact type verified | Artifact type registration confirmed |
+| Scope agreement | Vision Document + UC Model reviewed by stakeholders | Laura Gómez confirms scope (unchanged) |
+| Risk identification | Risk List updated with RISK-T05 status | All risks classified with current status |
+| Architecture candidate | SAD validated against design file impact | Architecture remains viable post-design review |
+| Project viability | Coarse roadmap + iteration plan reviewed | 7-iteration plan within schedule |
 
 ### Measurement Goals
 
 | Metric | Goal (Decision Enabled) | Primitive Measure | Frequency |
 |---|---|---|---|
+| Finding closure rate | **Decide:** Whether LCO can pass this iteration | % of open findings resolved | Per iteration |
 | Risk count by magnitude | **Decide:** Which risks require active mitigation in Elaboration | Count of risks per magnitude tier | Per iteration |
 | Use case coverage | **Decide:** Whether scope is fully captured before Elaboration | % of declared UCs in Use Case Model | Per iteration |
 | NFR coverage | **Decide:** Whether all constraints are formalized | % of declared NFRs in Supplementary Spec | Per iteration |
 | Iteration velocity | **Decide:** Whether to adjust next iteration scope | Tasks completed vs. planned | Per iteration |
-
 ## Traceability
 
 | Element | Traces From | Link Type | Traces To |
