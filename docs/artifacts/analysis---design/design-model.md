@@ -1373,9 +1373,142 @@ end note
 | CLS-032 | AuthResult | Infrastructure | Infrastructure | — |
 | CLS-033 | PortalUser | Infrastructure | Infrastructure | — |
 ## Interface Contracts
+### Interface Contracts
 
-*Section reserved for Designer contribution — service interfaces, API contracts, and data transfer objects will be populated by the Designer role.*
+All subsystem boundaries are defined by interfaces. No concrete class is referenced across a layer boundary. Each interface specifies operation signatures with pre/postconditions. The Implementer translates these directly into C# interface definitions.
 
+```plantuml
+@startuml
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam interface {
+  BackgroundColor #fffde7
+  BorderColor #f57f17
+}
+
+title Interface Contracts — Subsystem Boundary Specifications
+
+interface "IAuthProvider\n(INT-001)" as INT_001 {
+  + Authenticate(username: string, password: string) : Task<AuthResult>
+  + GetCurrentUser(claims: ClaimsPrincipal) : PortalUser
+  + FetchAllEmployeesAsync() : Task<List<ADEmployeeRecord>>
+  --
+  Pre: username and password not null
+  Post: AuthResult.IsSuccess == true iff AD bind succeeds
+  Post: PortalUser.IsHrAdmin determined by AD group membership
+}
+
+interface "IRepository<T>\n(INT-002)" as INT_002 {
+  + GetByIdAsync(id: Guid) : Task<T?>
+  + QueryAsync(predicate: Expression<Func<T, bool>>) : Task<List<T>>
+  + SaveAsync(entity: T) : Task<Result<T>>
+  + DeleteAsync(id: Guid) : Task<bool>
+  --
+  Pre: entity != null for SaveAsync
+  Post: SaveAsync returns Result.Ok with persisted entity (Id assigned)
+  Post: QueryAsync never returns null (empty list if no matches)
+}
+
+interface "ILocalStore\n(INT-003)" as INT_003 {
+  + SaveClockingAsync(clocking: Clocking) : Task<int>
+  + SaveSyncRecordAsync(localId: int, status: SyncStatus) : Task
+  + GetPendingSyncRecords() : Task<List<SyncRecord>>
+  + GetClockingByLocalId(localId: int) : Task<Clocking?>
+  + UpdateSyncStatus(localId: int, status: SyncStatus) : Task
+  --
+  Pre: SQLite file exists and is writable
+  Post: SaveClockingAsync returns auto-incremented localId
+  Post: GetPendingSyncRecords returns only status == PENDING records
+}
+
+interface "IExportService\n(INT-004)" as INT_004 {
+  + GenerateCSV(clockings: List<Clocking>) : byte[]
+  --
+  Pre: clockings list not null
+  Post: Returns RFC 4180 compliant CSV byte array
+  Post: Columns: employee, date, time-in, time-out, duration
+}
+
+interface "INetworkHealth\n(INT-005)" as INT_005 {
+  + CheckHealth() : HealthStatus
+  + SubscribeHealthChanges(callback: Action<HealthStatus>) : IDisposable
+  --
+  Post: CheckHealth returns current cached status (no blocking I/O)
+  Post: SubscribeHealthChanges invokes callback on status transitions
+  Post: Probe interval = 5 seconds (configurable)
+}
+
+interface "IAuditLogger\n(INT-006)" as INT_006 {
+  + Log(entityType: string, entityId: string, action: string, user: string) : Task
+  --
+  Pre: all parameters non-null, non-empty
+  Post: AuditEntry persisted with immutable timestamp (DateTime.UtcNow)
+  Post: Audit entries are append-only — no update or delete
+}
+
+note bottom of INT_001
+  **Provided by:** Infrastructure (LdapAuthProvider, CLS-025)
+  **Consumed by:** DirectoryService (CLS-011)
+  **Subsystem boundary:** Application ↔ Infrastructure
+end note
+
+note bottom of INT_002
+  **Provided by:** Infrastructure (PostgresRepository<T>, CLS-023)
+  **Consumed by:** TimeTrackingService, NewsService, DirectoryService, SyncQueue
+  **Subsystem boundary:** Application ↔ Infrastructure
+end note
+
+note bottom of INT_003
+  **Provided by:** Infrastructure (SqliteLocalStore, CLS-024)
+  **Consumed by:** SyncQueue (CLS-013)
+  **Subsystem boundary:** Application ↔ Infrastructure
+end note
+
+note bottom of INT_004
+  **Provided by:** Infrastructure (CsvExporter, CLS-026)
+  **Consumed by:** TimeTrackingService (CLS-009)
+  **Subsystem boundary:** Application ↔ Infrastructure
+end note
+
+note bottom of INT_005
+  **Provided by:** Infrastructure (TcpHealthMonitor, CLS-027)
+  **Consumed by:** TimeTrackingService (CLS-009)
+  **Subsystem boundary:** Application ↔ Infrastructure
+end note
+
+note bottom of INT_006
+  **Provided by:** Infrastructure (EfAuditLogger, CLS-028)
+  **Consumed by:** NewsService, DirectoryService, AuditInterceptor
+  **Subsystem boundary:** Application ↔ Infrastructure
+end note
+
+@enduml
+```
+
+### Interface Summary
+
+| Interface | ID | Provider | Consumers | Operations | NFR Addressed |
+|---|---|---|---|---|---|
+| IAuthProvider | INT-001 | LdapAuthProvider (CLS-025) | DirectoryService (CLS-011) | Authenticate, GetCurrentUser, FetchAllEmployeesAsync | REQ-001 (AD auth), RISK-T02 |
+| IRepository<T> | INT-002 | PostgresRepository<T> (CLS-023) | TimeTrackingService, NewsService, DirectoryService, SyncQueue | GetByIdAsync, QueryAsync, SaveAsync, DeleteAsync | REQ-017 (<1s clock), REQ-018 (<2s search) |
+| ILocalStore | INT-003 | SqliteLocalStore (CLS-024) | SyncQueue (CLS-013) | SaveClockingAsync, SaveSyncRecordAsync, GetPendingSyncRecords, GetClockingByLocalId, UpdateSyncStatus | REQ-014 (offline, zero data loss) |
+| IExportService | INT-004 | CsvExporter (CLS-026) | TimeTrackingService (CLS-009) | GenerateCSV | UC-003 (CSV export) |
+| INetworkHealth | INT-005 | TcpHealthMonitor (CLS-027) | TimeTrackingService (CLS-009) | CheckHealth, SubscribeHealthChanges | REQ-014 (5-min offline tolerance) |
+| IAuditLogger | INT-006 | EfAuditLogger (CLS-028) | NewsService, DirectoryService, AuditInterceptor | Log | REQ-004, REQ-005, REQ-006 (audit trail) |
+
+### Testability Entry Points
+
+All interfaces are DI-injectable, enabling unit testing with mock implementations:
+
+| Interface | Test Double Strategy | Observable State |
+|---|---|---|
+| IAuthProvider | Mock with predefined AuthResult and ADEmployeeRecord list | AuthResult.IsSuccess, PortalUser.IsHrAdmin |
+| IRepository<T> | In-memory list with LINQ-based QueryAsync | Entity.Id assigned on Save, list contents |
+| ILocalStore | In-memory dictionary keyed by localId | SyncRecord.Status transitions (PENDING→SYNCED/SKIPPED) |
+| IExportService | Mock returning predefined byte[] | CSV byte array content |
+| INetworkHealth | Mock with controllable HealthStatus and callback trigger | HealthStatus.UP/DOWN transitions |
+| IAuditLogger | Capture Log calls in test list | AuditEntry records (entityType, action, user) |
 ## Traceability
 
 | Element | Traces From | Link Type | Traces To |
