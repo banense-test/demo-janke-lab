@@ -7,6 +7,16 @@
 | Milestone Target | LCA (Lifecycle Architecture) |
 | Author | User-Interface Designer, Designer (Analysis & Design), Database Designer |
 
+### Elaboration Iteration 2 — Database Designer Changes
+
+- **Data Model trigger NOT fired** (Development Case §5.2: system has <10 entities, no data migration in scope). Persistence mapping contributed inline in the Design Model per Database Designer protocol.
+- **Persistent Data Model** contributed: 5 tables mapped from design entity classes (CLS-014 Clocking → clockings, CLS-015 NewsItem → news_items, CLS-016 Employee → employees, CLS-017 AuditEntry → audit_entries, CLS-018 SyncRecord → sync_records).
+- **ORM Mapping** contributed: table-to-class mapping, column types, nullability, PK/FK constraints, identity strategy, loading policy, cascade behavior for all 5 persistent entities.
+- **Index Strategy** contributed: 9 indexes justified by specific NFRs (REQ-017 <1s clock, REQ-018 <2s search, REQ-019 <3s page load, REQ-004/005/006 audit trail, REQ-014 offline sync).
+- **Persistence Context Diagram** contributed: PortalDbContext (PostgreSQL, online) vs LocalDbContext (SQLite, offline buffer) schema organization.
+- **Baseline Migration Strategy** contributed: EF Core migration sequence (v1 baseline + v2 offline support), forward-only, rollback specification for critical tables.
+- No findings from Review Record (Elaboration Iter 1) specifically target Database Designer content. DM-F1 (author field) already resolved by UI Designer/Designer.
+
 ### Elaboration Iteration 2 — Designer (Analysis & Design) Changes
 
 - **DM-F1 co-owner resolution:** Verified author field includes all three co-owners. Designer (Analysis & Design) sections confirmed present and properly attributed: Domain Model (Analysis Classes ACL-001–ACL-018, mechanism resolution, state machines), Use-Case Realizations (SEQ-001–SEQ-007 sequence diagrams), Design Packages and Classes (CLS-009–CLS-031 full signatures), Interface Contracts (INT-001–INT-006 with pre/postconditions), Testability Entry Points.
