@@ -1362,21 +1362,13 @@ end note
 | UC-006 | Search Directory | SB-003 | WF-003 | VP-2 |
 | UC-007 | Manage Directory | (covered by Navigation Topology) | — | — |
 ## Design Packages and Classes
-### Data Classes — O/R Mapping (Database Designer Contribution)
+### Design Class Diagrams — Per Package (Designer Contribution)
 
-> **Contributed by Database Designer** — Physical persistence mapping of domain entity classes to database tables. The Data Model optional artifact trigger did NOT fire (system has ≤10 entities, not data-migration-centric); therefore persistence lives inline in the Design Model per Development Case §5.2.
+> **Contributed by Designer (Analysis & Design)** — Concrete design classes with full signatures, visibility modifiers, relationships, and interface realizations. These refine the analysis classes (ACL-001 through ACL-018) from the Domain Model section into implementable design classes (CLS-009 through CLS-031).
 
-#### Three-Level Persistence Mechanism Chain
+#### Design Class Diagram — Application, Domain & Infrastructure Packages
 
-| Level | Mechanism | Concrete Realization |
-|---|---|---|
-| Analysis | "Objects need to be stored between sessions" | Identified in Inception SAD |
-| Design | Repository pattern + EF Core ORM + PostgreSQL 16 (primary) / SQLite (offline) | CLS-026 `PostgresRepository<T>`, CLS-032 `PortalDbContext`, CLS-033 `LocalDbContext` |
-| Implementation | EF Core 10.0.9 + Npgsql 10.0.2, code-first migrations, `EnsureCreated()` for SQLite | Migration scripts in `src/Infrastructure/Migrations/` |
-
-#### PostgreSQL Primary Store — O/R Mapping Diagram
-
-The following class diagram shows the complete physical schema with `<<table>>` stereotypes, column types, PK/FK markers, and inline ORM mapping annotations for each persistent class:
+The following class diagram defines all design classes across three packages with full operation signatures, private fields, constructor parameters, and interface realizations. The Presentation package (UI Designer contribution) is referenced but not redefined here.
 
 ```plantuml
 @startuml
@@ -1384,316 +1376,488 @@ skinparam classAttributeIconSize 0
 skinparam shadowing false
 skinparam defaultFontName "Segoe UI"
 skinparam class {
-  BackgroundColor<<table>> #e8f5e9
+  BackgroundColor<<view>> #e8f5e9
+  BackgroundColor<<controller>> #e3f2fd
+  BackgroundColor<<service>> #fff3e0
+  BackgroundColor<<entity>> #fce4ec
+  BackgroundColor<<infrastructure>> #f3e5f5
+  BackgroundColor<<enum>> #e0f7fa
   BorderColor #37474f
 }
-skinparam note {
-  BackgroundColor #fffde7
-  BorderColor #f57f17
+
+title Design Classes — Application & Domain Packages (Full Signatures)
+
+' === Application Package ===
+package "Application (SUB-APP)" {
+  class "TimeTrackingService\n(CLS-009)" as CLS_009 <<service>> {
+    - _repo: IRepository<Clocking>
+    - _localStore: ILocalStore
+    - _networkHealth: INetworkHealth
+    - _exportService: IExportService
+    - _logger: ILogger<TimeTrackingService>
+    + TimeTrackingService(repo, localStore, networkHealth, exportService, logger)
+    + ClockIn(employeeId: Guid) : Result<Clocking>
+    + ClockOut(employeeId: Guid) : Result<Clocking>
+    + GetClockings(employeeId: Guid, month: DateTime) : List<Clocking>
+    + GetAllClockings(month: DateTime) : List<Clocking>
+    + ExportClockings(month: DateTime) : byte[]
+    - TryOnlineSave(clocking: Clocking) : Result<Clocking>
+    - TryOfflineSave(clocking: Clocking) : Result<Clocking>
+  }
+
+  class "NewsService\n(CLS-010)" as CLS_010 <<service>> {
+    - _repo: IRepository<NewsItem>
+    - _auditLogger: IAuditLogger
+    - _logger: ILogger<NewsService>
+    + NewsService(repo, auditLogger, logger)
+    + PublishNews(item: NewsItem) : Result<NewsItem>
+    + GetNewsList(category: string?) : List<NewsItem>
+    + GetNewsDetail(id: Guid) : NewsItem?
+    - ValidateNewsItem(item: NewsItem) : ValidationResult
+  }
+
+  class "DirectoryService\n(CLS-011)" as CLS_011 <<service>> {
+    - _repo: IRepository<Employee>
+    - _authProvider: IAuthProvider
+    - _auditLogger: IAuditLogger
+    - _logger: ILogger<DirectoryService>
+    + DirectoryService(repo, authProvider, auditLogger, logger)
+    + Search(query: string, dept: string?, office: string?) : List<Employee>
+    + UpdateEmployee(emp: Employee) : Result<Employee>
+    + SyncFromAD() : SyncResult
+    - ResolveConflict(local: Employee, adRecord: ADEmployeeRecord) : Employee
+  }
+
+  class "SyncQueue\n(CLS-013)" as CLS_013 <<service>> {
+    - _localStore: ILocalStore
+    - _repo: IRepository<Clocking>
+    - _semaphore: SemaphoreSlim
+    - _logger: ILogger<SyncQueue>
+    + SyncQueue(localStore, repo, logger)
+    + Enqueue(clocking: Clocking) : Result<int>
+    + Flush() : SyncResult
+    + GetPendingCount() : int
+    - FlushSingle(record: SyncRecord) : SyncStatus
+  }
+
+  class "AuditInterceptor\n(CLS-012)" as CLS_012 <<service>> {
+    - _auditLogger: IAuditLogger
+    + AuditInterceptor(auditLogger)
+    + Log(entityType: string, entityId: string, action: string, user: string) : Task
+  }
 }
 
-title Data Classes — O/R Mapping (PostgreSQL Primary Store)
+' === Domain Package ===
+package "Domain (SUB-DOMAIN)" {
+  class "Clocking\n(CLS-014)" as CLS_014 <<entity>> {
+    + Id: Guid { get; set; }
+    + EmployeeId: Guid { get; set; }
+    + Type: ClockingType { get; set; }
+    + Timestamp: DateTime { get; set; }
+    + Source: string { get; set; }
+    + SyncStatus: SyncStatus { get; set; }
+    + Clocking(employeeId: Guid, type: ClockingType, timestamp: DateTime)
+    + IsOnline() : bool
+  }
 
-class "clockings\n<<table>>" as T_CLOCKINGS <<table>> {
-  + id : UUID <<PK>>
-  + employee_id : UUID <<FK>>
-  + timestamp : TIMESTAMPTZ
-  + type : ENUM(IN, OUT)
-  + source : VARCHAR(ONLINE, OFFLINE)
-  ..
-  **ORM Mapping:**
-  CLS-017 Clocking → clockings
-  id → Clocking.Id (Guid)
-  employee_id → Clocking.EmployeeId (Guid)
-  timestamp → Clocking.Timestamp (DateTime)
-  type → Clocking.Type (ClockingType enum)
-  source → Clocking.Source (string)
-  **Identity:** Identity column (auto-generated UUID)
-  **Loading:** Eager on read (UC-002, UC-003)
+  class "NewsItem\n(CLS-015)" as CLS_015 <<entity>> {
+    + Id: Guid { get; set; }
+    + Title: string { get; set; }
+    + Body: string { get; set; }
+    + PublishedDate: DateTime { get; set; }
+    + Category: NewsCategory { get; set; }
+    + IsFeatured: bool { get; set; }
+    + NewsItem(title: string, body: string, category: NewsCategory, isFeatured: bool)
+  }
+
+  class "Employee\n(CLS-016)" as CLS_016 <<entity>> {
+    + Id: Guid { get; set; }
+    + AdId: string { get; set; }
+    + FullName: string { get; set; }
+    + JobTitle: string { get; set; }
+    + Department: string { get; set; }
+    + Office: string { get; set; }
+    + Email: string { get; set; }
+    + Extension: string { get; set; }
+    + IsActive: bool { get; set; }
+    + OverrideFlag: bool { get; set; }
+    + Employee(adId: string, fullName: string)
+    + Deactivate() : void
+    + Reactivate() : void
+    + SetOverride(field: string) : void
+    + ClearOverride() : void
+  }
+
+  class "AuditEntry\n(CLS-017)" as CLS_017 <<entity>> {
+    + Id: Guid { get; set; }
+    + EntityType: string { get; set; }
+    + EntityId: string { get; set; }
+    + Action: string { get; set; }
+    + User: string { get; set; }
+    + Timestamp: DateTime { get; set; }
+    + AuditEntry(entityType: string, entityId: string, action: string, user: string)
+  }
+
+  class "SyncRecord\n(CLS-018)" as CLS_018 <<entity>> {
+    + LocalId: int { get; set; }
+    + ClockingId: Guid { get; set; }
+    + Status: SyncStatus { get; set; }
+    + QueuedAt: DateTime { get; set; }
+    + SyncedAt: DateTime? { get; set; }
+    + SyncRecord(clockingId: Guid)
+  }
+
+  class "SyncResult\n(CLS-020)" as CLS_020 <<entity>> {
+    + TotalRecords: int
+    + Synced: int
+    + Skipped: int
+    + Failed: int
+    + Errors: List<string>
+    + SyncResult(total: int, synced: int, skipped: int, failed: int)
+    + IsSuccess() : bool
+  }
+
+  class "PortalUser\n(CLS-021)" as CLS_021 <<entity>> {
+    + AdId: string { get; set; }
+    + FullName: string { get; set; }
+    + IsHrAdmin: bool { get; set; }
+    + PortalUser(adId: string, fullName: string, isHrAdmin: bool)
+  }
+
+  class "AuthResult\n(CLS-022)" as CLS_022 <<entity>> {
+    + IsSuccess: bool { get; set; }
+    + User: PortalUser? { get; set; }
+    + Error: string? { get; set; }
+    + AuthResult(success: bool, user: PortalUser?, error: string?)
+    + static Ok(user: PortalUser) : AuthResult
+    + static Fail(error: string) : AuthResult
+  }
+
+  class "ADEmployeeRecord\n(CLS-023)" as CLS_023 <<entity>> {
+    + AdId: string { get; set; }
+    + FullName: string { get; set; }
+    + JobTitle: string { get; set; }
+    + Department: string { get; set; }
+    + Email: string { get; set; }
+  }
 }
 
-class "news\n<<table>>" as T_NEWS <<table>> {
-  + id : UUID <<PK>>
-  + title : VARCHAR(200)
-  + body : TEXT
-  + date : DATE
-  + category : ENUM(General, HR, IT, Events)
-  + featured : BOOLEAN DEFAULT false
-  + published_by : UUID <<FK>>
-  ..
-  **ORM Mapping:**
-  CLS-018 NewsItem → news
-  id → NewsItem.Id (Guid)
-  title → NewsItem.Title (string)
-  body → NewsItem.Body (string)
-  date → NewsItem.PublishedDate (DateTime)
-  category → NewsItem.Category (Category enum)
-  featured → NewsItem.IsFeatured (bool)
-  published_by → NewsItem.PublishedBy (Guid)
-  **Identity:** Identity column (auto-generated UUID)
-  **Loading:** Eager (UC-005 list + detail)
+' === Infrastructure Package ===
+package "Infrastructure (SUB-INFRA)" {
+  class "PostgresRepository<T>\n(CLS-024)" as CLS_024 <<infrastructure>> {
+    - _context: PortalDbContext
+    - _dbSet: DbSet<T>
+    + PostgresRepository(context: PortalDbContext)
+    + GetByIdAsync(id: Guid) : Task<T?>
+    + QueryAsync(predicate: Expression<Func<T, bool>>) : Task<List<T>>
+    + SaveAsync(entity: T) : Task<Result<T>>
+    + DeleteAsync(id: Guid) : Task<bool>
+  }
+
+  class "SqliteLocalStore\n(CLS-025)" as CLS_025 <<infrastructure>> {
+    - _context: LocalDbContext
+    + SqliteLocalStore(context: LocalDbContext)
+    + SaveClockingAsync(clocking: Clocking) : Task<int>
+    + SaveSyncRecordAsync(localId: int, status: SyncStatus) : Task
+    + GetPendingSyncRecords() : Task<List<SyncRecord>>
+    + GetClockingByLocalId(localId: int) : Task<Clocking?>
+    + UpdateSyncStatus(localId: int, status: SyncStatus) : Task
+  }
+
+  class "LdapAuthProvider\n(CLS-026)" as CLS_026 <<infrastructure>> {
+    - _ldapConfig: LdapConfig
+    + LdapAuthProvider(config: LdapConfig)
+    + Authenticate(username: string, password: string) : Task<AuthResult>
+    + GetCurrentUser(claims: ClaimsPrincipal) : PortalUser
+    + FetchAllEmployeesAsync() : Task<List<ADEmployeeRecord>>
+    - BindToAD(username: string, password: string) : bool
+  }
+
+  class "CsvExporter\n(CLS-027)" as CLS_027 <<infrastructure>> {
+    + GenerateCSV(clockings: List<Clocking>) : byte[]
+    - FormatRow(c: Clocking) : string
+  }
+
+  class "TcpHealthMonitor\n(CLS-028)" as CLS_028 <<infrastructure>> {
+    - _host: string
+    - _port: int
+    - _interval: TimeSpan
+    - _currentStatus: HealthStatus
+    - _subscribers: List<Action<HealthStatus>>
+    - _timer: Timer
+    + TcpHealthMonitor(host: string, port: int, interval: TimeSpan)
+    + CheckHealth() : HealthStatus
+    + SubscribeHealthChanges(callback: Action<HealthStatus>) : IDisposable
+    - Probe() : Task<HealthStatus>
+    - NotifySubscribers(status: HealthStatus) : void
+  }
+
+  class "EfAuditLogger\n(CLS-029)" as CLS_029 <<infrastructure>> {
+    - _context: PortalDbContext
+    + EfAuditLogger(context: PortalDbContext)
+    + Log(entityType: string, entityId: string, action: string, user: string) : Task
+  }
+
+  class "PortalDbContext\n(CLS-030)" as CLS_030 <<infrastructure>> {
+    + Clockings: DbSet<Clocking>
+    + NewsItems: DbSet<NewsItem>
+    + Employees: DbSet<Employee>
+    + AuditEntries: DbSet<AuditEntry>
+    + SyncRecords: DbSet<SyncRecord>
+    + PortalDbContext(options: DbContextOptions)
+    + OnModelCreating(modelBuilder: ModelBuilder) : void
+  }
+
+  class "LocalDbContext\n(CLS-031)" as CLS_031 <<infrastructure>> {
+    + Clockings: DbSet<Clocking>
+    + SyncRecords: DbSet<SyncRecord>
+    + LocalDbContext(options: DbContextOptions)
+    + OnModelCreating(modelBuilder: ModelBuilder) : void
+  }
 }
 
-class "employees\n<<table>>" as T_EMPLOYEES <<table>> {
-  + id : UUID <<PK>>
-  + ad_id : VARCHAR UNIQUE
-  + name : VARCHAR(200)
-  + job_title : VARCHAR(200)
-  + department : VARCHAR(100)
-  + office : VARCHAR(100)
-  + email : VARCHAR(320)
-  + phone : VARCHAR(20)
-  + active : BOOLEAN DEFAULT true
-  + override_flag : BOOLEAN DEFAULT false
-  ..
-  **ORM Mapping:**
-  CLS-019 Employee → employees
-  id → Employee.Id (Guid)
-  ad_id → Employee.AdId (string)
-  name → Employee.FullName (string)
-  job_title → Employee.JobTitle (string)
-  department → Employee.Department (string)
-  office → Employee.Office (string)
-  email → Employee.Email (string)
-  phone → Employee.Extension (string)
-  active → Employee.IsActive (bool)
-  override_flag → Employee.OverrideFlag (bool)
-  **Identity:** Identity column (auto-generated UUID)
-  **Loading:** Eager (UC-006 search, UC-007 admin)
+' === Enumerations ===
+enum "ClockingType" as CT {
+  IN
+  OUT
+}
+enum "SyncStatus" as SS {
+  PENDING
+  SYNCED
+  SKIPPED
+}
+enum "NewsCategory" as NC {
+  General
+  HR
+  IT
+  Events
+}
+enum "HealthStatus" as HS {
+  UP
+  DOWN
 }
 
-class "audit_entries\n<<table>>" as T_AUDIT <<table>> {
-  + id : UUID <<PK>>
-  + entity_type : VARCHAR(50)
-  + entity_id : VARCHAR(100)
-  + action : VARCHAR(50)
-  + user : VARCHAR(200)
-  + timestamp : TIMESTAMPTZ
-  ..
-  **ORM Mapping:**
-  CLS-020 AuditEntry → audit_entries
-  id → AuditEntry.Id (Guid)
-  entity_type → AuditEntry.EntityType (string)
-  entity_id → AuditEntry.EntityId (string)
-  action → AuditEntry.Action (string)
-  user → AuditEntry.User (string)
-  timestamp → AuditEntry.Timestamp (DateTime)
-  **Identity:** Identity column (auto-generated UUID)
-  **Loading:** Write-only from app (append-only)
-  **Constraint:** REVOKE UPDATE, DELETE
-}
+' === Interface declarations (referenced) ===
+interface "IRepository<T>\n(INT-002)" as INT_002
+interface "ILocalStore\n(INT-003)" as INT_003
+interface "IAuthProvider\n(INT-001)" as INT_001
+interface "IExportService\n(INT-004)" as INT_004
+interface "INetworkHealth\n(INT-005)" as INT_005
+interface "IAuditLogger\n(INT-006)" as INT_006
 
-class "sync_records\n<<table>>" as T_SYNC <<table>> {
-  + id : UUID <<PK>>
-  + local_id : INTEGER
-  + remote_id : UUID NULL
-  + status : ENUM(PENDING, SYNCED, SKIPPED)
-  + synced_at : TIMESTAMPTZ NULL
-  ..
-  **ORM Mapping:**
-  CLS-021 SyncRecord → sync_records
-  id → SyncRecord.Id (Guid)
-  local_id → SyncRecord.LocalId (int)
-  remote_id → SyncRecord.ClockingId (Guid?)
-  status → SyncRecord.Status (SyncStatus enum)
-  synced_at → SyncRecord.SyncedAt (DateTime?)
-  **Identity:** Identity column (auto-generated UUID)
-  **Loading:** Eager (SyncQueue.Flush reads pending)
-}
+' === Interface Realizations (Infrastructure implements interfaces) ===
+CLS_024 ..|> INT_002 : IRepository<T>
+CLS_025 ..|> INT_003 : ILocalStore
+CLS_026 ..|> INT_001 : IAuthProvider
+CLS_027 ..|> INT_004 : IExportService
+CLS_028 ..|> INT_005 : INetworkHealth
+CLS_029 ..|> INT_006 : IAuditLogger
 
-T_CLOCKINGS --> T_EMPLOYEES : employee_id <<FK>>
-T_NEWS --> T_EMPLOYEES : published_by <<FK>>
-T_SYNC --> T_CLOCKINGS : remote_id <<FK>>
+' === Dependencies (Application depends on interfaces) ===
+CLS_009 --> INT_002 : uses
+CLS_009 --> INT_003 : uses
+CLS_009 --> INT_005 : uses
+CLS_009 --> INT_004 : uses
+CLS_010 --> INT_002 : uses
+CLS_010 --> INT_006 : uses
+CLS_011 --> INT_002 : uses
+CLS_011 --> INT_001 : uses
+CLS_011 --> INT_006 : uses
+CLS_013 --> INT_003 : uses
+CLS_013 --> INT_002 : uses
+CLS_012 --> INT_006 : uses
 
-note right of T_CLOCKINGS
-  **Indexes:**
-  idx_clock_emp_date (employee_id, timestamp DESC)
-  idx_clock_month (date_trunc('month', timestamp))
-  **NFR:** clock in/out < 1s (REQ-009)
-  **NFR:** 50 concurrent users (REQ-025)
+' === Domain relationships ===
+CLS_014 --> CT
+CLS_014 --> SS
+CLS_015 --> NC
+CLS_018 --> SS
+CLS_022 --> CLS_021 : contains
+
+' === Infrastructure context relationships ===
+CLS_030 --> CLS_014 : manages
+CLS_030 --> CLS_015 : manages
+CLS_030 --> CLS_016 : manages
+CLS_030 --> CLS_017 : manages
+CLS_030 --> CLS_018 : manages
+CLS_031 --> CLS_014 : manages
+CLS_031 --> CLS_018 : manages
+
+note bottom of CLS_009
+  **Offline Strategy:**
+  ClockIn/Out checks INetworkHealth first.
+  If UP -> IRepository<Clocking> (PostgreSQL).
+  If DOWN -> SyncQueue.Enqueue -> ILocalStore (SQLite).
+  Flush runs on network restore event.
+  NFR: REQ-014 (5-min offline, zero data loss)
+  NFR: REQ-017 (<1s response)
 end note
 
-note right of T_EMPLOYEES
-  **Indexes:**
-  idx_emp_name (name GIN trigram)
-  idx_emp_dept (department)
-  idx_emp_office (office)
-  idx_emp_ad_id (ad_id)
-  **NFR:** search ≤ 2s (REQ-018)
+note bottom of CLS_011
+  **AD Sync Conflict Resolution:**
+  If Employee.OverrideFlag == true,
+  AD field is NOT overwritten.
+  HR must explicitly clear override
+  to re-enable AD sync for that field.
+  Resolves RISK-T02 (RPN 30)
 end note
 
-note right of T_NEWS
-  **Indexes:**
-  idx_news_date (date DESC)
-  idx_news_category (category)
-  **NFR:** page load < 3s (REQ-008)
-end note
-
-note bottom of T_SYNC
-  **Partial Index:**
-  idx_sync_status (status) WHERE status = 'PENDING'
-  Supports SyncQueue.GetPendingCount()
+note bottom of CLS_013
+  **Concurrency Control:**
+  SemaphoreSlim(1,1) ensures
+  single-writer access to SQLite
+  during flush operations.
+  Resolves RISK-T06 (RPN 16)
 end note
 
 @enduml
 ```
 
-#### SQLite Offline Buffer Store — O/R Mapping Diagram
+#### Design Class Summary
 
-The offline store uses SQLite as a transient buffer for clocking operations during network drops (up to 5 minutes per REQ-013). Schema is created via `EnsureCreated()` — no migration history needed for a buffer store.
-
-```plantuml
-@startuml
-skinparam classAttributeIconSize 0
-skinparam shadowing false
-skinparam defaultFontName "Segoe UI"
-skinparam class {
-  BackgroundColor<<table>> #e3f2fd
-  BorderColor #37474f
-}
-skinparam note {
-  BackgroundColor #fffde7
-  BorderColor #f57f17
-}
-
-title Data Classes — O/R Mapping (SQLite Offline Store)
-
-class "clockings_local\n<<table>>" as T_CLK_LOCAL <<table>> {
-  + local_id : INTEGER AUTOINCREMENT <<PK>>
-  + employee_id : UUID
-  + timestamp : TIMESTAMPTZ
-  + type : TEXT(IN, OUT)
-  ..
-  **ORM Mapping:**
-  CLS-017 Clocking → clockings_local
-  local_id → Clocking.LocalId (int, auto-increment)
-  employee_id → Clocking.EmployeeId (Guid)
-  timestamp → Clocking.Timestamp (DateTime)
-  type → Clocking.Type (ClockingType enum, stored as TEXT)
-  **Identity:** Auto-increment integer
-  **Loading:** Write-only during offline
-  **No FK constraints** (standalone buffer)
-}
-
-class "sync_records_local\n<<table>>" as T_SYNC_LOCAL <<table>> {
-  + id : UUID <<PK>>
-  + local_id : INTEGER
-  + status : TEXT DEFAULT 'PENDING'
-  + synced_at : TEXT NULL
-  ..
-  **ORM Mapping:**
-  CLS-021 SyncRecord → sync_records_local
-  id → SyncRecord.Id (Guid)
-  local_id → SyncRecord.LocalId (int)
-  status → SyncRecord.Status (SyncStatus enum, stored as TEXT)
-  synced_at → SyncRecord.SyncedAt (DateTime?, stored as TEXT)
-  **Identity:** UUID generated by app
-  **Loading:** Eager (SyncQueue reads pending)
-}
-
-T_SYNC_LOCAL --> T_CLK_LOCAL : local_id (logical ref, no FK)
-
-note bottom of T_CLK_LOCAL
-  **Offline Buffer Store**
-  Created via EnsureCreated() — no migration history
-  Schema mirrors clockings (subset)
-  Flushed to PostgreSQL by SyncQueue.Flush()
-  Resolves RISK-T01 (offline fault tolerance)
-end note
-
-note bottom of T_SYNC_LOCAL
-  **Sync State Tracking**
-  Tracks each local clocking's sync status
-  PENDING → SYNCED or SKIPPED
-  Read by SyncQueue.GetPendingCount()
-end note
-
-@enduml
-```
-
-#### ORM Mapping Summary
-
-| Design Class | ID | Table | Store | Identity Strategy | Loading Policy |
+| Design Class | ID | Package | Stereotype | Analysis Class Origin | Key Responsibilities |
 |---|---|---|---|---|---|
-| Clocking | CLS-017 | `clockings` | PostgreSQL | UUID auto-generated | Eager (UC-002, UC-003 reads) |
-| Clocking | CLS-017 | `clockings_local` | SQLite | Auto-increment int | Write-only (offline buffer) |
-| NewsItem | CLS-018 | `news` | PostgreSQL | UUID auto-generated | Eager (UC-005 list + detail) |
-| Employee | CLS-019 | `employees` | PostgreSQL | UUID auto-generated | Eager (UC-006, UC-007) |
-| AuditEntry | CLS-020 | `audit_entries` | PostgreSQL | UUID auto-generated | Write-only (append-only) |
-| SyncRecord | CLS-021 | `sync_records` | PostgreSQL | UUID auto-generated | Eager (SyncQueue.Flush) |
-| SyncRecord | CLS-021 | `sync_records_local` | SQLite | UUID app-generated | Eager (SyncQueue reads) |
+| TimeTrackingService | CLS-009 | Application | <<service>> | ACL-009 | Clock in/out with online/offline routing, history retrieval, CSV export |
+| NewsService | CLS-010 | Application | <<service>> | ACL-010 | News publishing with audit, list/detail retrieval with category filter |
+| DirectoryService | CLS-011 | Application | <<service>> | ACL-011 | Directory search, employee update with audit, AD sync with conflict resolution |
+| SyncQueue | CLS-013 | Application | <<service>> | ACL-013 | Offline clocking enqueue, flush to PostgreSQL on network restore, concurrency control |
+| AuditInterceptor | CLS-012 | Application | <<service>> | ACL-012 | Cross-cutting audit logging for news and directory operations |
+| Clocking | CLS-014 | Domain | <<entity>> | ACL-014 | Time entry entity with type, timestamp, source, sync status |
+| NewsItem | CLS-015 | Domain | <<entity>> | ACL-015 | News article entity with category, featured flag, publish date |
+| Employee | CLS-016 | Domain | <<entity>> | ACL-016 | Directory entry entity with AD sync override mechanism |
+| AuditEntry | CLS-017 | Domain | <<entity>> | ACL-017 | Immutable audit record with entity type, action, user, timestamp |
+| SyncRecord | CLS-018 | Domain | <<entity>> | ACL-018 | Offline sync tracking record with status lifecycle |
+| SyncResult | CLS-020 | Domain | <<entity>> | (new) | Sync operation outcome with counts and error list |
+| PortalUser | CLS-021 | Domain | <<entity>> | (new) | Authenticated user context with HR admin flag |
+| AuthResult | CLS-022 | Domain | <<entity>> | (new) | Authentication outcome with success/failure and user |
+| ADEmployeeRecord | CLS-023 | Domain | <<entity>> | (new) | AD-sourced employee data for sync operations |
+| PostgresRepository<T> | CLS-024 | Infrastructure | <<infrastructure>> | (new) | EF Core repository implementing IRepository<T> for PostgreSQL |
+| SqliteLocalStore | CLS-025 | Infrastructure | <<infrastructure>> | (new) | SQLite offline store implementing ILocalStore |
+| LdapAuthProvider | CLS-026 | Infrastructure | <<infrastructure>> | (new) | AD/LDAP authentication implementing IAuthProvider |
+| CsvExporter | CLS-027 | Infrastructure | <<infrastructure>> | (new) | RFC 4180 CSV export implementing IExportService |
+| TcpHealthMonitor | CLS-028 | Infrastructure | <<infrastructure>> | (new) | TCP probe health monitor implementing INetworkHealth |
+| EfAuditLogger | CLS-029 | Infrastructure | <<infrastructure>> | (new) | EF Core audit logger implementing IAuditLogger |
+| PortalDbContext | CLS-030 | Infrastructure | <<infrastructure>> | (new) | EF Core DbContext for PostgreSQL primary store |
+| LocalDbContext | CLS-031 | Infrastructure | <<infrastructure>> | (new) | EF Core DbContext for SQLite offline store |
 
-#### Enum Mapping
+#### Package Organization & Layer Dependencies
 
-| Domain Enum | PostgreSQL Type | SQLite Storage | Values |
-|---|---|---|---|
-| `ClockingType` | Native ENUM | TEXT | `IN`, `OUT` |
-| `SyncStatus` | Native ENUM | TEXT | `PENDING`, `SYNCED`, `SKIPPED` |
-| `Category` | Native ENUM | N/A (not stored offline) | `General`, `HR`, `IT`, `Events` |
+The following package diagram shows the design model organization with layer boundaries enforced by interfaces. No concrete class crosses a layer boundary — the Application layer depends solely on interfaces, and the Infrastructure layer provides implementations.
 
-#### Naming Convention
+```plantuml
+@startuml
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam package {
+  BorderColor #37474f
+  BackgroundColor #f5f5f5
+}
 
-| Convention | Rule | Example |
+title Design Model — Package Organization & Layer Dependencies
+
+package "Presentation (SUB-PRES)" as PRES {
+  class "HomePage (CLS-001)" as HP
+  class "HistoryPage (CLS-002)" as HIST
+  class "AdminClockingsPage (CLS-003)" as ACLK
+  class "AdminNewsPage (CLS-004)" as ANEWS
+  class "NewsListPage (CLS-005)" as NLIST
+  class "NewsDetailPage (CLS-006)" as NDET
+  class "DirectoryPage (CLS-007)" as DIR
+  class "AdminDirectoryPage (CLS-008)" as ADIR
+  class "ClockingController (CLS-002b)" as CC
+  class "NewsController (CLS-005b)" as NC
+  class "DirectoryController (CLS-007b)" as DC
+}
+
+package "Application (SUB-APP)" as APP {
+  class "TimeTrackingService (CLS-009)" as TTS
+  class "NewsService (CLS-010)" as NS
+  class "DirectoryService (CLS-011)" as DS
+  class "SyncQueue (CLS-013)" as SQ
+  class "AuditInterceptor (CLS-012)" as AI
+}
+
+package "Domain (SUB-DOMAIN)" as DOM {
+  class "Clocking (CLS-014)" as CLK
+  class "NewsItem (CLS-015)" as NI
+  class "Employee (CLS-016)" as EMP
+  class "AuditEntry (CLS-017)" as AE
+  class "SyncRecord (CLS-018)" as SR
+  class "SyncResult (CLS-020)" as SRES
+  class "PortalUser (CLS-021)" as PU
+  class "AuthResult (CLS-022)" as AR
+  class "ADEmployeeRecord (CLS-023)" as ADR
+}
+
+package "Infrastructure (SUB-INFRA)" as INFRA {
+  class "PostgresRepository<T> (CLS-024)" as PR
+  class "SqliteLocalStore (CLS-025)" as SL
+  class "LdapAuthProvider (CLS-026)" as LDAP
+  class "CsvExporter (CLS-027)" as CSV
+  class "TcpHealthMonitor (CLS-028)" as THM
+  class "EfAuditLogger (CLS-029)" as EAL
+  class "PortalDbContext (CLS-030)" as PDB
+  class "LocalDbContext (CLS-031)" as LDB
+}
+
+package "Interfaces (Boundary Contracts)" as IFACES {
+  interface "IAuthProvider (INT-001)" as I1
+  interface "IRepository<T> (INT-002)" as I2
+  interface "ILocalStore (INT-003)" as I3
+  interface "IExportService (INT-004)" as I4
+  interface "INetworkHealth (INT-005)" as I5
+  interface "IAuditLogger (INT-006)" as I6
+}
+
+PRES --> APP : delegates via controllers
+APP --> IFACES : depends on
+INFRA --> IFACES : implements
+APP --> DOM : uses entities
+
+PR ..|> I2
+SL ..|> I3
+LDAP ..|> I1
+CSV ..|> I4
+THM ..|> I5
+EAL ..|> I6
+
+note right of IFACES
+  **Interface-First Boundary**
+  No concrete class crosses a layer boundary.
+  Application depends on interfaces only.
+  Infrastructure provides implementations.
+  This enables unit testing with mocks
+  and future technology substitution.
+end note
+
+note bottom of PRES
+  **UI Designer Contribution**
+  View/controller classes defined
+  in UI sections of Design Model.
+  Razor Pages pattern (CON-001).
+end note
+
+note bottom of DOM
+  **Pure domain — no dependencies**
+  Entity classes have no infrastructure
+  or application dependencies.
+  POCO classes with domain logic only.
+end note
+
+@enduml
+```
+
+#### Design Decisions
+
+| Decision | Rationale | NFR / Risk Addressed |
 |---|---|---|
-| Table names | snake_case, plural | `clockings`, `employees`, `audit_entries` |
-| Column names | snake_case | `employee_id`, `published_by` |
-| Index names | `idx_{table}_{purpose}` | `idx_clock_emp_date`, `idx_news_category` |
-| Primary keys | UUID surrogate, column named `id` | `id : UUID <<PK>>` |
-| Foreign keys | `{referenced_table_singular}_id` | `employee_id`, `published_by` |
-| Enum storage | PostgreSQL native ENUM type | `type : ENUM(IN, OUT)` |
-
-#### Normalization Assessment
-
-All five tables are in **3NF** — no transitive dependencies, no repeating groups. No denormalization is required for this scale (200 employees, ~50 concurrent users). The `source` column on `clockings` (ONLINE/OFFLINE) is a derived attribute that could be computed from the presence of a `sync_records` entry, but is stored directly for query simplicity and to avoid a JOIN on the hot path (clock-in/out < 1s per REQ-009). This is a justified, documented denormalization.
-
-#### Index Strategy — NFR Justification
-
-| Index | Table | Query Served | NFR |
-|---|---|---|---|
-| `idx_clock_emp_date` | clockings | UC-002: employee views own history by month | REQ-009 (<1s clock), REQ-025 (50 concurrent) |
-| `idx_clock_month` | clockings | UC-003: HR views all clockings for a month | REQ-009, REQ-025 |
-| `idx_emp_name` (GIN trigram) | employees | UC-006: directory search by name (fuzzy) | REQ-018 (search ≤2s) |
-| `idx_emp_dept` | employees | UC-006: filter by department | REQ-018 |
-| `idx_emp_office` | employees | UC-006: filter by office | REQ-018 |
-| `idx_emp_ad_id` | employees | UC-007: AD sync lookup by AD identifier | Internal (AD sync) |
-| `idx_news_date` | news | UC-005: news list sorted by date (default view) | REQ-008 (page load <3s) |
-| `idx_news_category` | news | UC-005: filter news by category | REQ-008 |
-| `idx_audit_entity` | audit_entries | Audit query by entity type + ID | REQ-004, REQ-005, REQ-006 |
-| `idx_audit_date` | audit_entries | Audit query by date range | REQ-004, REQ-005, REQ-006 |
-| `idx_sync_status` (partial) | sync_records | SyncQueue.GetPendingCount() — WHERE status='PENDING' | REQ-014 (offline sync) |
-
-#### Constraint Specification
-
-| Table | Constraint | Type | Cascade Behavior |
-|---|---|---|---|
-| clockings | `UNIQUE(employee_id, timestamp)` | UNIQUE | Prevents duplicate clockings (conflict detection) |
-| clockings | `employee_id NOT NULL` | NOT NULL | — |
-| clockings | `type IN ('IN', 'OUT')` | CHECK (ENUM) | — |
-| news | `title IS NOT NULL AND length(title) <= 200` | CHECK | — |
-| news | `category IN ('General','HR','IT','Events')` | CHECK (ENUM) | — |
-| news | `published_by` → employees(id) | FK | RESTRICT (cannot delete employee with news) |
-| employees | `UNIQUE(ad_id)` | UNIQUE | — |
-| employees | `active IN (true, false)` | CHECK | — |
-| audit_entries | `REVOKE UPDATE, DELETE FROM portal_user` | DCL | Append-only enforcement at DB level |
-| sync_records | `status IN ('PENDING','SYNCED','SKIPPED')` | CHECK (ENUM) | — |
-| sync_records | `remote_id` → clockings(id) | FK | SET NULL (clocking may be skipped) |
-| clockings | `employee_id` → employees(id) | FK | RESTRICT (cannot delete employee with clockings) |
-
-#### Migration Strategy
-
-**Baseline migration (Elaboration → Construction):**
-
-1. **PostgreSQL (EF Core migrations):** Initial migration `InitialCreate` creates all 5 tables with constraints, indexes, and ENUM types. Migration is idempotent and forward-only. Rollback via `dotnet ef database update <previous>` if needed.
-2. **SQLite (EnsureCreated):** No migration framework — `LocalDbContext.Database.EnsureCreated()` creates the 2-table schema on first run. Acceptable for a transient buffer store that can be recreated without data loss (data is synced to PostgreSQL before deletion).
-3. **Version sequence:** `001_InitialCreate` (baseline). Future migrations numbered sequentially (`002_AddX`, `003_ModifyY`).
-4. **Idempotency:** EF Core migrations are idempotent by design — `dotnet ef database update` can be run multiple times safely.
-
-#### Schema Stability Assessment
-
-The core schema (5 tables, PKs, FKs, key indexes) is **stable** for Construction. New tables may be added in Construction iterations, but existing tables should not require structural changes. The schema is designed for extension:
-- `employees.override_flag` supports future AD-sync conflict resolution without schema change
-- `audit_entries.entity_type` + `entity_id` pattern supports auditing any future entity without schema change
-- `sync_records.status` enum can be extended (e.g., `CONFLICT`) without breaking existing queries
+| Constructor injection for all services | Enables unit testing with mock interfaces; no hidden dependencies | Testability (all UCs) |
+| SemaphoreSlim(1,1) in SyncQueue | Single-writer lock prevents SQLite concurrency corruption during flush | RISK-T06 (RPN 16) |
+| OverrideFlag on Employee | HR local edits protected from AD sync overwrite; explicit clear required | RISK-T02 (RPN 30) |
+| TcpHealthMonitor with subscriber pattern | Decouples health detection from business logic; enables reactive flush on restore | REQ-014 (offline tolerance) |
+| Result<T> pattern for operations | Explicit success/failure without exceptions for expected business errors | Reliability (all UCs) |
+| Separate LocalDbContext from PortalDbContext | SQLite schema is subset (clockings + sync_records only); no accidental cross-store queries | REQ-014 (zero data loss) |
+| EF Core code-first with EnsureCreated for SQLite | Transient buffer store — can be recreated without data loss (data synced before deletion) | Operational simplicity |
 ## Interface Contracts
 ### Interface Contracts
 
