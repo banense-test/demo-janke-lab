@@ -1,11 +1,10 @@
 ## Document Control
-
 | Field | Value |
 |---|---|
 | Phase | Elaboration |
 | Status | Draft |
-| Iteration | 1 (Cycle 1) |
-| Milestone Target | End of Elaboration (LAM) |
+| Iteration | 2 (Cycle 1) |
+| Milestone Target | LCA (Lifecycle Architecture) |
 | Author | Software Architect |
 
 ### Elaboration Iteration 1 Changes
@@ -18,9 +17,14 @@
 - **New interface IAuditLogger:** Formalizes the audit mechanism as an interface, enabling the Audit Interceptor to be a cross-cutting concern.
 - **Technology stack reconciled** against enterprise version policy (empty — no pins). Latest stable versions confirmed: EF Core 10.0.9, Npgsql 10.0.2, EF Core Sqlite 10.0.9.
 - **ADRs preserved** from Inception; no new ADRs needed — architecture validated as stable.
-- **PoC Plan:** Optional artifact trigger NOT fired for Architectural Proof-of-Concept. PoC plan preserved from Inception as risk mitigation reference; formal PoC artifact omitted per Development Case.
 - **Deployment Model:** Optional artifact trigger NOT fired. Physical View within SAD is sufficient for single-node topology.
 
+### Elaboration Iteration 2 Changes (Findings SAD-F2, SAD-F3)
+
+- **SAD-F3 RESOLVED:** Milestone Target corrected from "LAM" to "LCA (Lifecycle Architecture)" throughout the SAD.
+- **SAD-F2 RESOLVED:** Stale PoC trigger note corrected. The Architectural Proof-of-Concept artifact was produced by the Implementer (PoC-1: Offline Sync, branch `poc/E1-risk-t01-offline-sync`, CI Green 3/3). The SAD now cross-references the PoC artifact and reflects empirical validation results. The `get_optional_artifact_triggers` oracle reports the trigger as not fired for THIS iteration (Cycle 2), but the PoC artifact from Iteration 1 exists and is referenced.
+- **LCA Review section updated:** Criterion #3 (executable prototype) upgraded from PARTIAL to YES based on PoC-1 results. "LAM Verdict" heading corrected to "LCA Verdict".
+- **Risk resolution status updated:** RISK-T01 and RISK-T03 now reflect PoC-1 empirical validation results.
 ## Architectural Representation
 
 This document presents the **baseline architecture** for the Employee Portal using the Kruchten 4+1 View Model. In Elaboration, all five views are baselined — the architecture is stable and validated through sequence diagrams for the top 3 architecturally significant use cases.
