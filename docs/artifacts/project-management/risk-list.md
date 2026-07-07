@@ -183,6 +183,7 @@ end note
 | **Mitigation** | Design a conflict resolution strategy: timestamp-based merge with server-side validation. Each queued entry carries a client timestamp; server reconciles by accepting the earliest timestamp per employee. No overwrites — append-only log. |
 | **Contingency** | If conflict resolution is too complex, implement a "last-write-wins" with HR manual review of flagged conflicts. HR sees a conflict report and resolves manually. |
 | **Detection** | Sync process logs conflicts; HR dashboard shows unresolved sync conflicts. |
+| **Status Update (Iter 2)** | SAD addresses sync conflict strategy (timestamp-based merge, append-only log). Status: Identified → **Mitigation Planned**. |
 
 ### RISK-T02: AD/LDAP Integration (RPN 35 — SIGNIFICANT)
 
@@ -202,6 +203,7 @@ end note
 | **Mitigation** | During Elaboration, audit the actual AD schema with Miguel Torres. Map AD attributes to portal fields. For missing attributes, use a local supplement table in PostgreSQL keyed by AD user GUID. HR maintains supplemental data via the admin panel. |
 | **Contingency** | If AD cannot provide key attributes, all employee directory data is maintained locally in PostgreSQL with manual HR entry. AD is used for authentication only, not data sourcing. |
 | **Detection** | Data quality report comparing AD entries to portal directory entries. |
+| **Status Update (Iter 2)** | Mitigation plan defined (AD schema audit, local supplement table). Status: Identified → **Mitigation Planned**. |
 
 ### RISK-S02: Low Employee Adoption (RPN 24 — SIGNIFICANT)
 
@@ -211,8 +213,9 @@ end note
 | **Mitigation** | Prioritize UX simplicity in design — clock in/out must be one click from main screen. Laura Gómez to communicate launch via internal channels. Provide a brief on-screen guide for first-time users. Track adoption metrics (active logins, clocking usage) from day one. |
 | **Contingency** | If adoption is below 60% at 6 weeks, escalate to Laura Gómez for mandatory usage directive. Conduct a user feedback survey to identify barriers. |
 | **Detection** | Weekly adoption dashboard: unique logins, clocking events per day, directory searches. |
+| **Status Update (Iter 2)** | Mitigation plan defined (UX simplicity, adoption tracking, communication plan). Design file (S2) provides UX baseline for adoption risk reduction. Status: Identified → **Mitigation Planned**. |
 
-### RISK-T05: Design File Impact on Architecture and UC Model (RPN 24 — SIGNIFICANT) — NEW
+### RISK-T05: Design File Impact on Architecture and UC Model (RPN 24 — SIGNIFICANT)
 
 | Attribute | Value |
 |---|---|
@@ -221,6 +224,7 @@ end note
 | **Contingency** | If the design file requires significant architectural changes, extend Elaboration by 1 iteration or reduce Construction scope to accommodate rework. If the design is purely cosmetic (CSS/layout), no architectural impact — incorporate in Construction. |
 | **Detection** | Design review report comparing design file to current SAD and UC Model; gap analysis documented. |
 | **Source** | Review Record finding S2 (stakeholder input, 2026-07-07) |
+| **Status Update (Iter 2)** | UI Designer tasks T5/T6 assigned; design file review in progress. Status: Identified → **Active**. |
 
 ### RISK-S01: Scope Creep (RPN 20 — MODERATE)
 
