@@ -46,32 +46,30 @@ stop
 | 5 | Evolve Iteration Plan | **ACHIEVED** | Iteration Plan updated for Iteration 2 with 14 tasks, Gantt schedule, agent role assignments, and LCO re-review evaluation criteria. |
 | 6 | LCO re-assessment | **PENDING** | Awaits closure of F1–F3, S2 by owning roles. LCO re-review scheduled 2026-07-17. |
 ## Adherence to Plan
-
-### Planned vs. Actual
+### Planned vs. Actual — Iteration 2
 
 | Plan Element | Planned | Actual | Variance |
 |---|---|---|---|
-| Artifacts produced | 8 (per Iteration Plan) | 9 (including Review Record) | +1 (Review Record added by review process) |
-| Use Case Model status | Complete, no findings | 3 Major findings open | Negative — rework required |
-| Risk List status | Complete | Complete, 0 findings | On plan |
-| Architecture candidate | Delivered | Delivered, 1 Info finding | On plan (minor) |
-| LCO milestone | Target: 2026-07-17 | NOT achieved | Blocked by 4 Major findings |
-| Token budget | — | 1,298,654 tokens spent | Within Inception allocation |
+| Risk List update (T10) | 1d, Jul 8 | Completed Jul 8 | On plan |
+| Iteration Plan evolution (T11) | 2d, Jul 8–9 | Completed Jul 8–9 | On plan |
+| F1–F3 resolution (T1–T4) | 4d, Jul 8–10 | In progress — System Analyst owns | Pending — depends on other role |
+| S2 design file review (T5–T6) | 3d, Jul 8–10 | In progress — UI Designer owns | Pending — depends on other role |
+| F4 TES update (T9) | 1d, Jul 11 | Blocked on T4 | Schedule risk — dependency chain |
+| F5 SAD verification (T8) | 1d, Jul 10 | In progress — Software Architect owns | Pending — depends on other role |
+| Iteration Assessment (T12) | 1d, Jul 11 | In progress (this update) | On plan |
+| LCO re-assessment (T13) | 1d, Jul 14 | Scheduled | Pending — awaits T4, T6, T9 |
+| LCO re-review (T14) | 1d, Jul 17 | Scheduled | Pending — awaits T13 |
 
 ### Root Cause of Variance
 
-The primary variance is the **Use Case Model** carrying 3 Major findings:
+The variance pattern in Iteration 2 is **dependency-driven**, not productivity-driven. The Project Manager's own tasks (T10, T11, T12) are on plan. The pending items are all owned by other roles (System Analyst, UI Designer, Software Architect, Test Manager). The critical path runs through:
 
-1. **F1 (UC-002):** The `[DERIVED — from STK-004]` marker on UC-002 (Read News) should not have been applied — the stakeholder declaration verbatim describes HR publishing news, making this a literal declaration, not a derivation. The System Analyst applied the derivation marker conservatively but incorrectly.
+1. **T1–T4 (System Analyst):** F1–F3 resolution → unblocks T9 (Test Manager) and T12 (PM assessment finalization)
+2. **T5–T6 (UI Designer):** S2 design file review → unblocks T7 (Architect SAD impact) and T13 (LCO re-assessment)
 
-2. **F2 (UC-003):** Same pattern — UC-003 (Employee Directory) carries `[DERIVED — from STK-001]` but the declared scope describes employee searching for colleagues. Literal declaration, not derivation.
+If T1–T4 and T5–T6 complete by Jul 10 as planned, the remaining dependency chain (T9 → T12 → T13 → T14) completes by Jul 17 — on schedule for LCO.
 
-3. **F3 (UC-004/UC-007):** Active Directory authentication was decomposed as standalone use cases (UC-004, UC-007), violating Scope Guard Rule 7 — cross-cutting technical mechanisms (auth, sync, logging) belong in the Supplementary Specification with `<<include>>` from dependent UCs, never as separate UCs.
-
-4. **S2 (Design file):** Stakeholder identified `docs/inputs/employee-portal-design.html` mid-iteration. This design file was not in the initial scope inputs and was not incorporated into UI/UX artifacts. This is a scope input gap, not a production defect.
-
-**Stakeholder confirmation (S1):** The stakeholder confirmed on 2026-07-07 that the 4 declared processes are correct, which resolves the `[DERIVED]` confirmation requirement for F1 and F2. The markers can be removed.
-
+**Schedule risk:** If F1–F3 rework or S2 design review slips beyond Jul 10, the LCO re-review (Jul 17) is at risk. Contingency: extend Iteration 2 by 3 days (Jul 20) and compress Elaboration Iteration 1 start. This is preferable to passing LCO with unresolved Major findings.
 ## Use Cases and Scenarios Implemented
 
 No use cases were implemented in code this iteration — Inception phase produces analysis and design artifacts, not executable increments. The Use Case Model (UC-001 through UC-007) was authored but requires rework per findings F1-F3.
