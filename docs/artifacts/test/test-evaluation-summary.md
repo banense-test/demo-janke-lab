@@ -177,7 +177,6 @@ state Closed {
 No defects reported in Inception — no code has been produced yet. The CI pipeline is green on the bootstrap skeleton (per project context). Defect tracking will activate in Elaboration when the first functional code is tested.
 
 ## Conclusions
-
 ### Evaluation Mission Verdict
 
 **Status: MISSION PARTIALLY MET — proceeding to Elaboration**
@@ -191,12 +190,13 @@ The Inception Evaluation Mission aimed to establish the test strategy foundation
 | Define initial test strategy | ✅ Met | Phase-based strategy with effort estimates |
 | Assess test infrastructure | ⚠️ Partially Met | Core needs identified; AD test env and offline simulation deferred to Elaboration |
 | Define defect lifecycle | ✅ Met | State machine published; severity classification defined |
+| AD auth cross-cutting test strategy | ✅ Met | ACT-003 identified as cross-cutting `<<include>>` from all UCs; test coverage integrated into every UC scenario |
 
 ### Recommendations for Elaboration
 
-1. **AD Test Environment:** Coordinate with Miguel Torres to establish a test AD instance or mock LDAP server for integration testing (RISK-T02 mitigation)
+1. **AD Test Environment:** Coordinate with Miguel Torres to establish a test AD instance or mock LDAP server for integration testing (RISK-T02 mitigation). AD auth (ACT-003) is cross-cutting — test within each UC scenario, not as a standalone test item.
 2. **Offline Test Scenario:** Collaborate with Software Architect on the offline PoC to define testable acceptance criteria for the 5-minute network drop scenario (RISK-T01 mitigation)
-3. **Test Case Design:** Begin detailed test case design for UC-001 (P1) in early Elaboration
+3. **Test Case Design:** Begin detailed test case design for UC-001 (P1) in early Elaboration; include AD auth validation as part of each UC test scenario
 4. **Performance Baseline:** Establish baseline measurements for page load and clock in/out response times once the first functional prototype is available
 5. **Test Data Strategy:** Define test data requirements for 200-employee simulation, including AD schema mapping validation
 
@@ -204,12 +204,11 @@ The Inception Evaluation Mission aimed to establish the test strategy foundation
 
 | Acceptance Criterion | Test Coverage Plan | Phase |
 |---|---|---|
-| Employee clocks in/out without HR help | UC-001 P1 test cases; usability testing | Construction |
-| HR publishes news without technical assistance | UC-004 P2 test cases; usability testing | Construction |
-| Employee finds colleague in <10 seconds | UC-006 P2 test cases; performance test (REQ-008, REQ-018) | Construction |
-| 80% complete clocking with no training | UC-001 P1 usability test; user acceptance testing | Transition |
-| System works offline 5 min, syncs on restore | UC-001 P1 offline test scenario; RISK-T01 mitigation | Elaboration (PoC) + Construction |
-
+| Employee clocks in/out without HR help | UC-001 P1 test cases; usability testing; AD auth via ACT-003 `<<include>>` | Construction |
+| HR publishes news without technical assistance | UC-004 P2 test cases; usability testing; AD auth via ACT-003 `<<include>>` | Construction |
+| Employee finds colleague in <10 seconds | UC-006 P2 test cases; performance test (REQ-008, REQ-018); AD auth via ACT-003 `<<include>>` | Construction |
+| 80% complete clocking with no training | UC-001 P1 usability test; user acceptance testing; AD auth via ACT-003 `<<include>>` | Transition |
+| System works offline 5 min, syncs on restore | UC-001 P1 offline test scenario; RISK-T01 mitigation; AD auth via ACT-003 `<<include>>` | Elaboration (PoC) + Construction |
 ## Traceability
 
 | Element | Traces From | Link Type | Traces To |
