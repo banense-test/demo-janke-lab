@@ -47,7 +47,6 @@
 | NFRs addressed with design decisions | PASS | Supplementary Spec complete, all thresholds quantified and testable |
 
 ## Findings
-
 ### Compliance Matrix
 
 ```plantuml
@@ -152,7 +151,7 @@ RL --> POC : mitigates
 
 ```plantuml
 @startuml
-title LCA Review — Defect Distribution: Severity × Artifact
+title LCA Review — Defect Distribution: Severity x Artifact
 
 object "SAD" as SAD {
   Major: 2
@@ -267,6 +266,75 @@ end note
 | SAD | F1: Artifact type registration (DesignModel) | Info | Resolved (prior iter) | Acknowledged in Document Control — verified |
 | Test Evaluation Summary | F1: UC decomposition hierarchy note | Minor | Resolved (prior iter) | Cross-cutting AD auth update addresses decomposition mapping — verified |
 
+### Business Modeling Discipline (Reviewer: Business Reviewer)
+
+**Verdict: [BR-OK-INACTIVE] — Discipline NOT APPLICABLE per DC §4**
+
+DC §4 trigger evaluation at LCA: project does not exhibit business-process-led characteristics. No BM sections were produced during Elaboration. The Inception INACTIVE verdict is sustained.
+
+**DC §4 Classification (confirmed 2026-07-07):**
+- `isBusinessProcessLed: false`
+- Rationale: Cuba Corp Employee Portal is a standard internal intranet application replacing Excel sheets, mass emails, and a PDF directory. The project is requirements-driven (4 declared use cases, 4 NFRs) with no business process modeling, workflow reengineering, or business transformation scope.
+- Criteria triggered: (1) No BPR or transformation in scope; (2) Requirements declared directly as functional UCs; (3) No business object model or workflow modeling needed.
+
+**BM Artifact Inventory at LCA:**
+
+| Expected Artifact (BPL=true) | Status | Notes |
+|---|---|---|
+| Business Use-Case Model | ABSENT | Not applicable — system UCs are directly declared |
+| Business Workers | ABSENT | Not applicable — no business process modeling |
+| Business Entities | ABSENT | Not applicable — no business object model |
+| Business Realizations | ABSENT | Not applicable — no BUCs to realize |
+| Business Rules (standalone) | ABSENT | Business constraints captured in Supplementary Specification NFRs |
+
+| Present Artifact (BPL=false) | Status | Discipline |
+|---|---|---|
+| System Use-Case Model | PRESENT | Requirements (not BM) |
+| Supplementary Specification | PRESENT | Requirements (not BM) |
+
+**Prior BR Findings Reconciliation:** Zero prior BusinessReviewer findings exist on any artifact. All findings in the Review Record were emitted by the Reviewer (technical lens). No reconciliation required.
+
+**Conclusion:** BM discipline remains correctly INACTIVE. No findings, no recommendations. The LCA milestone may proceed without BM contributions. The Requirements discipline's Use-Case Model (7 UCs with full specifications, activity diagrams, correct AD auth modeling) serves as the direct derivation source for downstream disciplines — no business-to-system derivation bridge is needed because the project is requirements-driven, not business-process-driven.
+
+```plantuml
+@startuml
+title Business Modeling Discipline - LCA Status
+
+class "DC Section 4" as DC {
+  isBusinessProcessLed: false
+  --
+  No BPR or transformation in scope
+  Requirements declared as functional UCs
+  No business object model needed
+}
+
+class "BM Artifact Inventory" as INV {
+  Expected (BPL=true): ALL ABSENT
+  --
+  Business Use-Case Model: ABSENT
+  Business Workers: ABSENT
+  Business Entities: ABSENT
+  Business Realizations: ABSENT
+  Business Rules: ABSENT
+  --
+  Present (BPL=false):
+  System Use-Case Model: PRESENT
+}
+
+class "BR Verdict" as VR {
+  Verdict: BR-OK-INACTIVE
+  --
+  Discipline NOT APPLICABLE per DC 4
+  No BM sections in Elaboration
+  Inception INACTIVE verdict sustained
+  LCA may proceed without BM
+}
+
+DC --> INV
+INV --> VR
+
+@enduml
+```
 ## Resolutions and Actions
 
 ### Open Action Items
