@@ -226,8 +226,12 @@ end note
 | REQ-021 | CON-003, STK-004 | Refines | — |
 | REQ-022 | STK-003 | Refines | UC-006, UC-007 |
 | REQ-023 | CON-004, STK-001 | Refines | UC-007 |
-| REQ-024 | Implied NFR (backup/recovery) | Refines | UC-001, UC-002, UC-003 |
-| REQ-025 | Implied NFR (concurrent capacity) | Refines | UC-001, All UCs |
+| REQ-024 | Stakeholder confirmation (Elaboration Iter 1) | Refines | UC-004, UC-005, UC-006, UC-007 |
+| REQ-025 | Stakeholder confirmation (Elaboration Iter 1) | Refines | UC-001, All UCs |
+| REQ-026 | Stakeholder confirmation (Elaboration Iter 1) | Refines | UC-001, UC-002, UC-003 |
+| REQ-027 | Stakeholder confirmation (Elaboration Iter 1), CON-005 | Refines | UC-001, UC-002, UC-003, UC-004, UC-007 |
+| REQ-028 | Stakeholder confirmation (Elaboration Iter 1) | Refines | UC-001, UC-002, UC-003 |
+| REQ-029 | Stakeholder confirmation (Elaboration Iter 1) | Refines | UC-001, UC-002, UC-003 |
 | DC-001 through DC-007 | CON-001 through CON-007 | Refines | Architecture Document |
 | INT-001 | CON-004 | Refines | Architecture Document |
 | INT-002 | CON-007 | Refines | Architecture Document |
