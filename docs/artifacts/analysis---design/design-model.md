@@ -17,8 +17,11 @@
 - Interaction flow activity diagrams for all 7 UCs trace to use-case flow steps and apply measurable usability requirements (REQ-008 through REQ-045).
 
 ## Design Overview
+This Design Model captures the complete design of the Employee Portal, combining UI design (view/controller classes, UI patterns, interaction flows) and component design (domain classes, service classes, use-case realizations, state machines, subsystem definitions).
 
-This Design Model captures the user-interface design of the Employee Portal. The UI Designer contributes the view/controller class structure, UI interaction patterns, and use-case realizations in the form of interaction flow activity diagrams. The Designer (Analysis & Design) will contribute domain model classes, business logic design classes, and sequence diagrams in subsequent iterations.
+**Contributors:**
+- **UI Designer:** View/controller class structure, UI interaction patterns, use-case realizations (interaction flow activity diagrams)
+- **Designer (Analysis & Design):** Analysis classes, design class diagrams per package, sequence diagrams, state machines, design subsystems, interface contracts
 
 **Architecture alignment:** UI classes align with the SAD's component decomposition:
 - COMP-P1 (Home/Clock) → HomePage, HistoryPage + ClockingController
@@ -28,6 +31,242 @@ This Design Model captures the user-interface design of the Employee Portal. The
 
 **Technology constraint:** Razor Pages (CON-001) — no SPA. View classes extend a BasePage abstraction; controllers handle business logic delegation.
 
+### Design Subsystems
+
+The design model is organized into four subsystems corresponding to the SAD's layered architecture. Each subsystem is a package that offers interfaces — no concrete class is referenced across a subsystem boundary.
+
+| Subsystem | ID | Provided Interfaces | Required Interfaces | Contains |
+|---|---|---|---|---|
+| Presentation | SUB-PRES | (none — consumed by ASP.NET pipeline) | ClockingController, NewsController, DirectoryController (concrete) | HomePage, HistoryPage, AdminClockingsPage, AdminNewsPage, NewsListPage, NewsDetailPage, DirectoryPage, AdminDirectoryPage, BasePage |
+| Application | SUB-APP | TimeTrackingService, NewsService, DirectoryService, AuditInterceptor, SyncQueue (concrete services) | INT-001 (IAuthProvider), INT-002 (IRepository<T>), INT-003 (ILocalStore), INT-004 (IExportService), INT-005 (INetworkHealth), INT-006 (IAuditLogger) | Service classes orchestrating business logic |
+| Domain | SUB-DOM | Clocking, NewsItem, Employee, AuditEntry, SyncRecord, value objects | (none — pure domain, no dependencies) | Domain entities, enumerations, value objects |
+| Infrastructure | SUB-INFRA | INT-001 through INT-006 (all interfaces implemented here) | (none — depends on external: PostgreSQL, SQLite, AD/LDAP) | PostgresRepository<T>, SqliteLocalStore, LdapAuthProvider, CsvExporter, TcpHealthMonitor, EfAuditLogger, PortalDbContext, LocalDbContext |
+
+**Dependency direction (top-down, strictly enforced):**
+
+```plantuml
+@startuml
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam package {
+  BackgroundColor<<presentation>> #e8f5e9
+  BackgroundColor<<application>> #e3f2fd
+  BackgroundColor<<domain>> #fff3e0
+  BackgroundColor<<infrastructure>> #fce4ec
+  BorderColor #37474f
+}
+skinparam interface {
+  BackgroundColor #fffde7
+  BorderColor #f57f17
+}
+
+title Design Model — Package Organization & Subsystem Dependencies
+
+package "Presentation Layer" <<presentation>> {
+  [HomePage\n(CLS-001)] as CLS_001
+  [HistoryPage\n(CLS-002)] as CLS_002
+  [AdminClockingsPage\n(CLS-003)] as CLS_003
+  [AdminNewsPage\n(CLS-004)] as CLS_004
+  [NewsListPage\n(CLS-005)] as CLS_005
+  [NewsDetailPage\n(CLS-006)] as CLS_006
+  [DirectoryPage\n(CLS-007)] as CLS_007
+  [AdminDirectoryPage\n(CLS-008)] as CLS_008
+  [ClockingController\n(CLS-009)] as CLS_009
+  [NewsController\n(CLS-010)] as CLS_010
+  [DirectoryController\n(CLS-011)] as CLS_011
+}
+
+package "Application Layer" <<application>> {
+  [TimeTrackingService\n(CLS-012)] as CLS_012
+  [NewsService\n(CLS-013)] as CLS_013
+  [DirectoryService\n(CLS-014)] as CLS_014
+  [AuditInterceptor\n(CLS-015)] as CLS_015
+  [SyncQueue\n(CLS-016)] as CLS_016
+}
+
+package "Domain Layer" <<domain>> {
+  [Clocking\n(CLS-017)] as CLS_017
+  [NewsItem\n(CLS-018)] as CLS_018
+  [Employee\n(CLS-019)] as CLS_019
+  [AuditEntry\n(CLS-020)] as CLS_020
+  [SyncRecord\n(CLS-021)] as CLS_021
+  [ADEmployeeRecord\n(CLS-022)] as CLS_022
+  [SyncResult\n(CLS-023)] as CLS_023
+  [Result<T>\n(CLS-024)] as CLS_024
+  [ValidationResult\n(CLS-025)] as CLS_025
+}
+
+package "Infrastructure Layer" <<infrastructure>> {
+  [PostgresRepository<T>\n(CLS-026)] as CLS_026
+  [SqliteLocalStore\n(CLS-027)] as CLS_027
+  [LdapAuthProvider\n(CLS-028)] as CLS_028
+  [CsvExporter\n(CLS-029)] as CLS_029
+  [TcpHealthMonitor\n(CLS-030)] as CLS_030
+  [EfAuditLogger\n(CLS-031)] as CLS_031
+  [PortalDbContext\n(CLS-032)] as CLS_032
+  [LocalDbContext\n(CLS-033)] as CLS_033
+}
+
+interface "IAuthProvider\n(INT-001)" as INT_001
+interface "IRepository<T>\n(INT-002)" as INT_002
+interface "ILocalStore\n(INT-003)" as INT_003
+interface "IExportService\n(INT-004)" as INT_004
+interface "INetworkHealth\n(INT-005)" as INT_005
+interface "IAuditLogger\n(INT-006)" as INT_006
+
+CLS_009 --> CLS_012
+CLS_010 --> CLS_013
+CLS_011 --> CLS_014
+
+CLS_012 --> INT_002
+CLS_012 --> INT_003
+CLS_012 --> INT_004
+CLS_012 --> INT_005
+CLS_013 --> INT_002
+CLS_013 --> INT_006
+CLS_014 --> INT_002
+CLS_014 --> INT_001
+CLS_014 --> INT_006
+CLS_015 --> INT_006
+CLS_016 --> INT_003
+CLS_016 --> INT_002
+
+CLS_026 ..|> INT_002
+CLS_027 ..|> INT_003
+CLS_028 ..|> INT_001
+CLS_029 ..|> INT_004
+CLS_030 ..|> INT_005
+CLS_031 ..|> INT_006
+
+CLS_026 ..> CLS_017
+CLS_026 ..> CLS_018
+CLS_026 ..> CLS_019
+CLS_026 ..> CLS_020
+CLS_027 ..> CLS_017
+CLS_027 ..> CLS_021
+
+note bottom of INT_002
+  All cross-layer communication
+  is via interfaces.
+  No concrete class is referenced
+  across a layer boundary.
+end note
+
+@enduml
+```
+
+**Integration order (bottom-up per SAD):** Infrastructure → Application → Presentation. Domain has no dependencies and is integrated alongside Infrastructure.
+
+### State Machines
+
+Three design classes have complex lifecycle behavior (3+ distinct states) requiring state machine diagrams.
+
+#### Clocking (CLS-017) — Sync Lifecycle
+
+The Clocking entity transitions through sync states as it moves from local offline storage to PostgreSQL. This state machine is the design realization of the offline fault tolerance requirement (REQ-014).
+
+```plantuml
+@startuml
+title State Machine: Clocking (CLS-017) Sync Lifecycle
+
+[*] --> PENDING : new Clocking()
+PENDING --> SYNCED : Flush succeeds
+PENDING --> SKIPPED : Conflict detected
+PENDING --> PENDING : Network still DOWN
+SYNCED --> [*]
+SKIPPED --> [*]
+
+PENDING : syncStatus = PENDING
+PENDING : Stored in ILocalStore
+SYNCED : syncStatus = SYNCED
+SYNCED : Persisted in PostgreSQL
+SKIPPED : syncStatus = SKIPPED
+SKIPPED : Duplicate retained
+
+note right of PENDING
+  Trigger to SYNCED:
+  IRepository.SaveAsync() returns Ok
+  Guard: (employeeId, timestamp) unique
+  Action: UpdateSyncStatus(SYNCED)
+end note
+
+note right of SKIPPED
+  Trigger: SaveAsync returns
+  duplicate key error
+  Action: UpdateSyncStatus(SKIPPED)
+  Rationale: No data loss -
+  original clocking retained
+end note
+
+@enduml
+```
+
+#### SyncRecord (CLS-021) — Queue Entry Lifecycle
+
+SyncRecord tracks each queued clocking through the sync process. The single-writer lock (SemaphoreSlim(1,1)) ensures no concurrent flush operations.
+
+```plantuml
+@startuml
+title State Machine: SyncRecord (CLS-021) Queue Lifecycle
+
+[*] --> QUEUED : Enqueue(clocking)
+QUEUED --> SYNCING : NetworkHealth UP
+SYNCING --> COMPLETED : SaveAsync succeeds
+SYNCING --> CONFLICT : Duplicate key
+SYNCING --> QUEUED : Transient failure
+COMPLETED --> [*]
+CONFLICT --> [*]
+
+QUEUED : status = PENDING
+QUEUED : queuedAt = UtcNow
+SYNCING : SemaphoreSlim(1,1) held
+COMPLETED : status = SYNCED
+COMPLETED : syncedAt = UtcNow
+CONFLICT : status = SKIPPED
+
+note right of SYNCING
+  Single-writer lock ensures
+  no concurrent flush operations.
+  Transient failures retry on
+  next flush cycle.
+end note
+
+@enduml
+```
+
+#### Employee (CLS-019) — Directory Lifecycle
+
+The Employee entity tracks active/inactive status and AD sync override state. The overrideFlag mechanism resolves the AD sync conflict risk (RISK-R01, RPN 30).
+
+```plantuml
+@startuml
+title State Machine: Employee (CLS-019) Directory Lifecycle
+
+[*] --> ACTIVE : Created from AD sync
+ACTIVE --> OVERRIDDEN : HR edits local field
+OVERRIDDEN --> ACTIVE : HR clears override
+ACTIVE --> INACTIVE : HR deactivates
+INACTIVE --> ACTIVE : HR reactivates
+INACTIVE --> [*]
+
+ACTIVE : isActive=true, overrideFlag=false
+OVERRIDDEN : isActive=true, overrideFlag=true
+INACTIVE : isActive=false
+
+note right of OVERRIDDEN
+  overrideFlag=true means
+  AD sync will not overwrite
+  local HR changes
+end note
+
+note right of INACTIVE
+  Not visible in directory search
+  AuditEntry created on transition
+end note
+
+@enduml
+```
 ## Domain Model
 ### Analysis Classes
 
