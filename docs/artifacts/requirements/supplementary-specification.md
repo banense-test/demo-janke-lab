@@ -69,14 +69,53 @@ end note
 | REQ-007 | No per-user licensing costs (internal open-source or included runtime) | .NET 10 (free), PostgreSQL (free) | CON-001, CON-003 | — |
 
 ## Usability
+### Usability Requirements by User Role
+
+The following measurable usability requirements apply to the Employee Portal UI. Each requirement is testable with a specific threshold and traces to use cases and acceptance criteria. Requirements are organized by user role to ensure coverage across all interaction contexts.
+
+#### Employee (ACT-001) — All Employees
 
 | ID | Requirement | Threshold | Source | Traces To |
 |---|---|---|---|---|
-| REQ-008 | Employee finds colleague's phone/email in under 10 seconds | ≤10 seconds from directory page load to result | Acceptance Criteria | UC-006 |
-| REQ-009 | 80% of employees complete at least one clocking with no prior training | Zero-training usability for clock in/out | Acceptance Criteria, OBJ-003 | UC-001 |
-| REQ-010 | Portal is responsive and accessible from Chrome and Edge | Compatible with current Chrome and Edge versions | CON-007 | All UCs |
-| REQ-011 | News page shows featured banner and category filter intuitively | No training required to filter news | STK-003 | UC-005 |
+| REQ-008 | Employee finds colleague's phone/email in under 10 seconds | ≤10 seconds from directory page load to result display | Acceptance Criteria | UC-006 |
+| REQ-009 | 80% of employees complete at least one clocking with no prior training | ≥80% first-use success rate without training; task completion in ≤3 clicks from home page | Acceptance Criteria, OBJ-003 | UC-001 |
+| REQ-010 | Portal is responsive and accessible from Chrome and Edge | Renders correctly on current Chrome and Edge versions at ≥1280px and ≥768px viewport widths | CON-007 | All UCs |
+| REQ-011 | News page shows featured banner and category filter intuitively | 100% of test users identify category filter without instruction; featured banner visually distinct from regular news list | STK-003 | UC-005 |
+| REQ-030 | Clock In/Out button is the primary visual element on the home page | Button occupies top-center position, minimum 200px width, high-contrast color; status label ("Clocked In" / "Clocked Out") visible above button | Acceptance Criteria (UC-001), REQ-009 | UC-001 |
+| REQ-031 | Clocking confirmation is immediately visible | Confirmation message appears within 1 second of click (per performance threshold); includes exact recorded timestamp | Acceptance Criteria, Performance NFR | UC-001 |
+| REQ-032 | Clocking history displays current month in chronological order | History table shows date, time, and type (In/Out) sorted by date descending; no pagination needed for single month (≤31 rows × 2 entries) | UC-002 flow | UC-002 |
+| REQ-033 | Directory search provides real-time filtering | Search results update within 2 seconds of query input; results show name, title, department, office, email, extension | REQ-008, UC-006 flow | UC-006 |
+| REQ-034 | News list is sorted by date descending with category filter visible | Default view shows most recent news first; category filter (General, HR, IT, Events) visible above list; featured news banner at top | UC-005 flow, REQ-011 | UC-005 |
+| REQ-035 | Offline status indicator is visible when network drops | Banner or icon appears within 3 seconds of network loss; message: "Offline mode — clocking will sync when connection is restored" | UC-001 AF-1, Offline NFR | UC-001 |
+| REQ-036 | Session expiry message is clear and actionable | Message: "Session expired — network connection required"; no ambiguous error codes; employee knows to wait for network restore | UC-001 EF-1 | UC-001 |
 
+#### HR Administrator (ACT-002)
+
+| ID | Requirement | Threshold | Source | Traces To |
+|---|---|---|---|---|
+| REQ-037 | HR admin panel is accessible from a visible navigation element | Admin link visible in navigation bar for HR role only; not visible to regular employees | REQ-002, UC-003/UC-004/UC-007 | UC-003, UC-004, UC-007 |
+| REQ-038 | CSV export button is clearly labeled and produces download within 3 seconds | Button labeled "Export CSV"; click triggers file download; progress indicator if >1 second | UC-003 flow, Performance NFR | UC-003 |
+| REQ-039 | News publishing form has all required fields visible on one screen | Title, body, date (auto-filled), category dropdown, featured checkbox — no multi-step wizard | UC-004 flow, Acceptance Criteria | UC-004 |
+| REQ-040 | Directory management panel shows entry list with edit/deactivate actions | Table view with name, department, office columns; Edit and Deactivate buttons per row; Create New button at top | UC-007 flow | UC-007 |
+| REQ-041 | AD sync conflict warning is clear and offers override choice | Warning dialog: "This field is synced with Active Directory. Override will prevent future AD updates for this field." with Confirm/Cancel buttons | UC-007 S3 scenario | UC-007 |
+
+#### Cross-Cutting Usability Criteria
+
+| ID | Requirement | Threshold | Source | Traces To |
+|---|---|---|---|---|
+| REQ-042 | Consistent navigation bar across all pages | Same navigation structure (Home, News, Directory, [Admin]) on every page; active page highlighted | Nielsen Heuristic #4 (Consistency) | All UCs |
+| REQ-043 | Error messages use plain language with recovery guidance | No raw exception codes; every error includes a suggested action (e.g., "Try again" or "Contact HR") | Nielsen Heuristic #9 (Error recovery) | All UCs |
+| REQ-044 | All interactive elements have visible focus indicators for keyboard navigation | Focus outline visible on all buttons, links, inputs, and form controls; tab order follows visual order | Nielsen Heuristic #6 (Recognition over recall) | All UCs |
+| REQ-045 | Page load provides visual feedback | Loading indicator (spinner or progress bar) visible within 500ms of navigation; no blank screen for >1 second | Performance NFR (3s page load), Nielsen Heuristic #1 (System status visibility) | All UCs |
+
+### Usability Measurement Plan
+
+| Criterion | Measurement Method | Target | When |
+|---|---|---|---|
+| Zero-training clocking (REQ-009) | Usability test with 5 untrained employees; measure task completion and time | ≥80% complete clocking without help; ≤30 seconds | Elaboration prototype validation |
+| Directory search speed (REQ-008) | Timed task: "Find Juan Pérez's phone number" from portal home | ≤10 seconds (navigation + search + result) | Elaboration prototype validation |
+| News filter intuitiveness (REQ-011) | Observation: ask user to "show only IT news" without instruction | 100% identify filter without help | Elaboration prototype validation |
+| Error recovery (REQ-043) | Inject error states (offline, session expired); observe user response | User takes correct action without external help | Elaboration prototype validation |
 ## Reliability
 | ID | Requirement | Threshold | Source | Traces To |
 |---|---|---|---|---|
