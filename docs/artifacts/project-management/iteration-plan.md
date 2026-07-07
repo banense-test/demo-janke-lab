@@ -176,18 +176,18 @@ stop
 | CI/CD pipeline | To configure | Deferred to Elaboration per Development Case |
 | Design file | Available | `docs/inputs/employee-portal-design.html` — stakeholder-provided (S2) |
 ## Use Cases and Scenarios Addressed
+This iteration addresses the **rework** of the Use-Case Model to resolve Review Record findings F1–F3 and incorporate the stakeholder design file (S2). No new use cases are added — scope ceiling remains the 4 declared processes + 4 NFRs.
 
-This iteration addresses ALL declared use cases at the **analysis and planning** level — no implementation occurs in Inception.
-
-| Use Case | ID | Iteration Activity | Status at LCO |
+| Use Case | ID | Iteration 2 Activity | Status at LCO Re-Review |
 |---|---|---|---|
-| Clock In/Out | UC-001 | Captured in Use Case Model; analyzed for offline tolerance risk | Analyzed |
-| Read News | UC-002 | Captured in Use Case Model | Analyzed |
-| Employee Directory | UC-003 | Captured in Use Case Model | Analyzed |
-| Active Directory Authentication | (cross-cutting) | Captured in Supplementary Spec as constraint; NOT a separate UC | Specified |
+| Clock In/Out | UC-001 | No rework needed — UC-001 was not flagged in findings | Analyzed (stable) |
+| Read News | UC-002 | Remove `[DERIVED]` marker (F1) — stakeholder confirmed process per S1 | Reworked |
+| Employee Directory | UC-003 | Remove `[DERIVED]` marker (F2) — stakeholder confirmed process per S1 | Reworked |
+| Active Directory Authentication | (cross-cutting) | Refactor from UC-004/UC-007 to Supplementary Spec constraint with `<<include>>` (F3) | Refactored |
 
 **Scope boundary:** The 4 declared use cases + 4 NFRs constitute the complete scope ceiling. Any additions require a Change Request approved by the CCM. The following are explicitly EXCLUDED: native mobile app, push notifications, payroll integration, vacation/sick-leave management, biometric clocking, external access.
 
+**Design file impact (S2):** The stakeholder-provided `employee-portal-design.html` must be reviewed by the UI Designer for impact on the UC Model, Design Model, and SAD. If the design implies scope changes beyond the declared ceiling, a Change Request is required.
 ## Evaluation Criteria
 
 ### LCO Milestone Exit Criteria
