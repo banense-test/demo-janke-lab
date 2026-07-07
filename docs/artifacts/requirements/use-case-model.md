@@ -87,25 +87,25 @@ end note
 | ACT-003 | Active Directory | External system | Corporate identity provider. Authenticates all users via LDAP/OAuth2. Provides employee data for directory synchronization. Cross-cutting mechanism — not a use case actor in the traditional sense; included by all UCs. | <<include>> from all UCs |
 
 ## Use-Case Survey
-
-| ID | Use Case | Primary Actor | Trigger | Outcome (Value) | MoSCoW | Stability | Architecturally Significant? | Stakeholder Source |
-|---|---|---|---|---|---|---|---|---|
-| UC-001 | Clock In/Out | Employee | Employee accesses portal to record work time | Timestamp recorded with confirmation; works offline | Must | Low | **Yes** — offline fault tolerance drives architectural decisions | "Employee logs in with corporate credentials (Active Directory). Main screen shows Clock In or Clock Out button depending on current status. System records exact time and shows confirmation." |
-| UC-002 | View Clocking History | Employee | Employee wants to review own clockings | Current month clocking history displayed | Must | High | No | "Employee can view their clocking history for the current month." |
-| UC-003 | Review and Export Clockings | HR Administrator | HR needs monthly clocking report | All employees' clockings viewable; CSV export generated | Must | Medium | No | "HR can view all employees' clockings and export a monthly report in CSV." |
-| UC-004 | Publish News | HR Administrator | HR has announcement to distribute | News item published with title, body, date, category, featured flag | Must | Medium | No | "HR publishes internal news and announcements (title, body, date, category)." |
-| UC-005 | Read News | Employee | Employee opens portal main page | News list displayed sorted by date with category filter and featured banner | Must | High | No | "Employees see news on main page sorted by date, can filter by category (General, HR, IT, Events). Featured news appears with a banner at the top. Read-only for employees — no comments or reactions." |
-| UC-006 | Search Directory | Employee | Employee needs colleague's contact info | Matching directory entries displayed with name, title, department, office, email, extension | Must | High | No | "Employee searches for colleagues by name, department, or office. Each entry shows: name, job title, department, office, email, and extension phone number." |
-| UC-007 | Manage Directory | HR Administrator | HR needs to update employee directory data | Directory entry created/updated/deactivated via admin panel | Must | Medium | No | "HR keeps data up to date from an administration panel. Directory shows corporate data only — no private personal information." |
+| ID | Use Case | Primary Actor | Trigger | Outcome (Value) | MoSCoW | Stability | Architecturally Significant? | Stakeholder Source | UI Flow Reference |
+|---|---|---|---|---|---|---|---|---|---|
+| UC-001 | Clock In/Out | Employee | Employee accesses portal to record work time | Timestamp recorded with confirmation; works offline | Must | Low | **Yes** — offline fault tolerance drives architectural decisions | "Employee logs in with corporate credentials (Active Directory). Main screen shows Clock In or Clock Out button depending on current status. System records exact time and shows confirmation." | DM §Use-Case Realizations → UC-001 Interaction Flow (activity diagram); Screens: HomePage, Offline Banner, Session Expired; REQ-009, REQ-030, REQ-031, REQ-035, REQ-036 |
+| UC-002 | View Clocking History | Employee | Employee wants to review own clockings | Current month clocking history displayed | Must | High | No | "Employee can view their clocking history for the current month." | DM §Use-Case Realizations → UC-002 Interaction Flow (activity diagram); Screens: HomePage → HistoryPage; REQ-032, REQ-042 |
+| UC-003 | Review and Export Clockings | HR Administrator | HR needs monthly clocking report | All employees' clockings viewable; CSV export generated | Must | Medium | No | "HR can view all employees' clockings and export a monthly report in CSV." | DM §Use-Case Realizations → UC-003 Interaction Flow (activity diagram); Screens: AdminClockingsPage, CSV Export; REQ-037, REQ-038 |
+| UC-004 | Publish News | HR Administrator | HR has announcement to distribute | News item published with title, body, date, category, featured flag | Must | Medium | No | "HR publishes internal news and announcements (title, body, date, category)." | DM §Use-Case Realizations → UC-004 Interaction Flow (activity diagram); Screens: AdminNewsPage, Validation Error; REQ-039, REQ-037; Salt wireframe available |
+| UC-005 | Read News | Employee | Employee opens portal main page | News list displayed sorted by date with category filter and featured banner | Must | High | No | "Employees see news on main page sorted by date, can filter by category (General, HR, IT, Events). Featured news appears with a banner at the top. Read-only for employees — no comments or reactions." | DM §Use-Case Realizations → UC-005 Interaction Flow (activity diagram); Screens: NewsListPage, Featured Banner, NewsDetailPage; REQ-011, REQ-034, REQ-042 |
+| UC-006 | Search Directory | Employee | Employee needs colleague's contact info | Matching directory entries displayed with name, title, department, office, email, extension | Must | High | No | "Employee searches for colleagues by name, department, or office. Each entry shows: name, job title, department, office, email, and extension phone number." | DM §Use-Case Realizations → UC-006 Interaction Flow (activity diagram); Screens: DirectoryPage, Search Results; REQ-008, REQ-033; Salt wireframe available |
+| UC-007 | Manage Directory | HR Administrator | HR needs to update employee directory data | Directory entry created/updated/deactivated via admin panel | Must | Medium | No | "HR keeps data up to date from an administration panel. Directory shows corporate data only — no private personal information." | DM §Use-Case Realizations → UC-007 Interaction Flow (activity diagram); Screens: AdminDirectoryPage, Entry Form, AD Conflict Dialog; REQ-040, REQ-041, REQ-037 |
 
 **ATM Test verification:** All 7 use cases pass — each has (a) a primary actor who initiates, (b) a clear trigger, and (c) a measurable outcome delivering observable value.
+
+**UI Flow Coverage:** All 7 UCs of UI significance have interaction flow activity diagrams in the Design Model (§Use-Case Realizations). Each flow traces to use-case flow steps and applies measurable usability requirements from the Supplementary Specification (REQ-008 through REQ-045). Salt wireframes produced for 3 primary screens (Home/Clock, Directory Search, Admin News Publishing).
 
 **Scope guard notes:**
 - AD authentication is a cross-cutting mechanism included by all UCs — NOT a standalone use case (per Rule 7).
 - No UCs inferred beyond declared scope. All 7 UCs trace verbatim to declared stakeholder requirements.
 - No `[SCOPE_QUESTION]` or `[DERIVED]` markers needed — all UCs are literally declared.
 - Stakeholder confirmation (S1, 2026-07-07): all 4 declared processes confirmed correct.
-
 ## Use-Case Specifications
 ### UC-001: Clock In/Out ⭐ Architecturally Significant
 
