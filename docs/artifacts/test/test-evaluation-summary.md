@@ -1,13 +1,11 @@
 ## Document Control
-
 | Field | Value |
 |---|---|
 | Phase | Inception |
 | Status | Draft |
-| Iteration | 1 (Cycle 1) |
+| Iteration | 2 (Cycle 1) |
 | Milestone Target | End of Inception (LCO) |
 | Author | Test Manager |
-
 ## Test Scope
 
 ### Evaluation Mission
