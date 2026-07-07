@@ -2,17 +2,18 @@
 
 | Field | Value |
 |---|---|
-| Phase | Inception |
+| Phase | Elaboration |
 | Status | Draft |
-| Iteration | 2 (Cycle 1) |
-| Milestone Target | End of Inception (LCO) |
+| Iteration | 1 (Cycle 1) |
+| Milestone Target | End of Elaboration |
 | Author | System Analyst |
 
-### Iteration 2 Changes
+### Elaboration Iteration 1 Changes
 
-- **F1 (Major) — Resolved:** `[DERIVED]` markers removed from all use cases. Stakeholder confirmation (S1, 2026-07-07) verified all 4 declared processes are correct. All UCs trace verbatim to declared scope — no derivation markers needed.
-- **F2 (Major) — Resolved:** Same as F1 — UC-006 (Search Directory) and all other UCs carry no `[DERIVED]` markers. All are literally declared in stakeholder scope.
-- **F3 (Major) — Resolved:** AD Authentication is NOT a standalone use case. It is a cross-cutting mechanism modeled as an external system actor (ACT-003) with `<<include>>` from all UCs. Requirements are in Supplementary Specification (REQ-001 through REQ-003).
+- Phase transition from Inception (LCO approved). All 7 UCs now fully specified with activity diagrams.
+- UC-001 (architecturally significant) enhanced with offline sync sequence diagram and 3 concrete scenarios.
+- UC-004 and UC-007 activity diagrams added showing audit trail integration and AD sync conflict handling.
+- All UC specifications preserved from Inception baseline; activity diagrams and scenario walkthroughs added for Elaboration depth (~80% detail).
 
 ## Use-Case Diagram
 
@@ -63,36 +64,19 @@ note bottom of UC01
   Priority: Must | Stability: Low
 end note
 
-note bottom of UC03
-  CSV export of all
-  employees' clockings
-  for a selected month.
-  Priority: Must | Stability: Medium
-end note
-
 note bottom of UC04
-  Title, body, date, category
-  (General, HR, IT, Events),
-  featured flag.
-  Priority: Must | Stability: Medium
+  Audit trail required
+  (REQ-004, REQ-006)
 end note
 
 note bottom of UC07
-  Admin panel: add/edit/deactivate
-  entries. Corporate data only.
-  Priority: Must | Stability: Medium
+  Audit trail required
+  (REQ-005, REQ-006)
+  AD sync conflict handling
 end note
 
 @enduml
 ```
-
-**System boundary:** The Employee Portal encompasses clock in/out, clocking history, HR clocking review/export, news publishing, news reading, directory search, and directory management. Active Directory is an external system on the boundary — all use cases include AD authentication as a cross-cutting mechanism (`<<include>>`), not as a standalone use case.
-
-**Scope guard notes:**
-- AD authentication is a cross-cutting mechanism included by all UCs — NOT a standalone use case (per Scope Guard Rule 7).
-- No UCs inferred beyond declared scope. All 7 UCs trace verbatim to declared stakeholder requirements.
-- No `[SCOPE_QUESTION]` or `[DERIVED]` markers needed — all UCs are literally declared.
-- Stakeholder confirmation (S1, 2026-07-07): all 4 declared processes confirmed correct.
 
 ## Actors
 
@@ -187,6 +171,72 @@ stop
 @enduml
 ```
 
+**Sequence Diagram (UC-001 Offline Sync Scenario):**
+
+```plantuml
+@startuml
+title UC-001: Clock In/Out — Offline Sync Sequence (Architecturally Significant)
+
+actor "Employee" as EMP
+participant "Portal UI\n(Razor Pages)" as UI
+participant "Clocking\nController" as CTRL
+participant "Local Cache\n(Offline Store)" as CACHE
+participant "AD Auth\nService" as AD
+participant "Clocking\nAPI (.NET 10)" as API
+participant "PostgreSQL" as DB
+
+== Normal (Online) Flow ==
+EMP -> UI: Access portal
+UI -> AD: Authenticate (LDAP/OAuth2)
+AD --> UI: Auth success + session token
+UI -> CTRL: Get clocking status
+CTRL -> API: GET /clockings/status/{employeeId}
+API -> DB: Query current status
+DB --> API: Status = clocked OUT
+API --> CTRL: Show "Clock In" button
+CTRL --> UI: Render clock-in view
+EMP -> UI: Click "Clock In"
+UI -> CTRL: POST clock-in
+CTRL -> API: POST /clockings {timestamp}
+API -> DB: INSERT clocking record
+DB --> API: Record saved
+API --> CTRL: Confirmation
+CTRL --> UI: Show confirmation with time
+
+== Offline Flow (Network Drop ≤5 min) ==
+EMP -> UI: Access portal (network down)
+UI -> AD: Authenticate (unreachable)
+note right: AD unreachable → use cached session token
+UI -> CACHE: Validate cached session
+CACHE --> UI: Cached session valid
+UI -> CTRL: Get clocking status
+CTRL -> CACHE: Read local status
+CACHE --> CTRL: Status = clocked IN
+CTRL --> UI: Show "Clock Out" button
+EMP -> UI: Click "Clock Out"
+UI -> CTRL: POST clock-out
+CTRL -> CACHE: Store timestamp locally + queue for sync
+CACHE --> CTRL: Queued confirmation
+CTRL --> UI: Show confirmation with time
+
+== Network Restore — Auto Sync ==
+CACHE -> API: Sync queued clockings (on network restore)
+API -> DB: INSERT queued records
+DB --> API: All records saved
+API --> CACHE: Sync success — clear queue
+note right: Zero data loss verified;\nqueue cleared on confirmed sync
+
+@enduml
+```
+
+**Concrete Scenarios (Discovery Walkthroughs):**
+
+| Scenario | Actor | Context | Flow | Outcome | Discovered Requirements |
+|---|---|---|---|---|---|
+| S-001: First clock-in of the day | Carlos (Employee, Havana office) | Arrives at 8:45 AM, opens portal on Chrome | Main flow steps 1-7 | Clock-in recorded at 08:45:12, confirmation shown | None new — standard flow |
+| S-002: Network drop during clock-out | María (Employee, Santiago office) | Clocks out at 17:02, network drops at 17:01 | AF-1: Cached session used, timestamp stored locally, queued for sync. Network restores at 17:04. Sync completes. | Clock-out recorded at 17:02:00, synced at 17:04:15, zero data loss | REQ-013 (offline tolerance), REQ-014 (no data loss), REQ-015 (graceful recovery) |
+| S-003: Duplicate clock-in attempt | Jorge (Employee, Havana office) | Already clocked in at 08:30, clicks portal again at 10:15 | AF-2: System shows "You are currently clocked in since 08:30" — no duplicate created | No duplicate entry; current status displayed | None new — AF-2 covers this |
+
 ### UC-002: View Clocking History
 
 | Field | Value |
@@ -206,6 +256,25 @@ stop
 
 **Alternative Flows:**
 - **AF-1: No clockings this month:** System displays empty state message.
+
+**Activity Diagram (UC-002 Flow):**
+
+```plantuml
+@startuml
+title UC-002: View Clocking History — Activity Diagram
+
+start
+:Employee navigates to clocking history view;
+:Portal authenticates via AD (<<include>>);
+:System retrieves employee clocking records for current month;
+if (Records exist?) then (yes)
+  :Display history list (date, clock-in time, clock-out time);
+else (no)
+  :Display empty state message;
+endif
+stop
+@enduml
+```
 
 ### UC-003: Review and Export Clockings
 
@@ -229,6 +298,43 @@ stop
 
 **Alternative Flows:**
 - **AF-1: No clockings for selected month:** System displays empty state.
+
+**Activity Diagram (UC-003 Flow):**
+
+```plantuml
+@startuml
+title UC-003: Review and Export Clockings — Activity Diagram
+
+start
+:HR Admin navigates to clocking review panel;
+:Portal authenticates via AD (<<include>>);
+:System loads all employees' clockings for current month;
+:Display clocking summary table (employee, date, in-time, out-time);
+
+if (HR selects different month?) then (yes)
+  :HR selects target month;
+  :System reloads clockings for selected month;
+  :Display updated table;
+else (no)
+endif
+
+if (HR clicks "Export CSV"?) then (yes)
+  :System generates CSV file (RFC 4180);
+  :CSV contains: employee, date, clock-in, clock-out;
+  :Browser downloads CSV file;
+  :Display export confirmation;
+else (no — view only)
+  :HR reviews data on screen;
+endif
+
+if (No clockings for selected month?) then (yes)
+  :Display empty state message;
+else (no)
+endif
+
+stop
+@enduml
+```
 
 ### UC-004: Publish News
 
@@ -254,6 +360,36 @@ stop
 - **AF-1: Edit existing news:** HR selects existing item, modifies fields, saves. Audit trail updated.
 - **AF-2: Delete news:** HR selects item, confirms deletion. Audit trail updated.
 
+**Activity Diagram (UC-004 Flow):**
+
+```plantuml
+@startuml
+title UC-004: Publish News — Activity Diagram
+
+start
+:HR Admin navigates to news management panel;
+:Portal authenticates via AD (<<include>>);
+
+if (Create new?) then (yes)
+  :HR enters title, body, selects category;
+  :HR optionally marks as Featured;
+  :HR clicks Publish;
+  :System saves news item with current date;
+  :System creates audit trail entry;
+  :Display publication confirmation;
+else (no — edit existing)
+  :HR selects existing news item;
+  :HR modifies fields;
+  :HR clicks Save;
+  :System updates news item;
+  :System creates audit trail entry;
+  :Display update confirmation;
+endif
+
+stop
+@enduml
+```
+
 ### UC-005: Read News
 
 | Field | Value |
@@ -277,6 +413,35 @@ stop
 - **AF-1: No news items:** System displays empty state message.
 - **AF-2: No featured news:** Banner section is hidden; news list starts at top.
 
+**Activity Diagram (UC-005 Flow):**
+
+```plantuml
+@startuml
+title UC-005: Read News — Activity Diagram
+
+start
+:Employee navigates to portal home page;
+:Portal authenticates via AD (<<include>>);
+if (Featured news exists?) then (yes)
+  :Display featured news banner at top;
+else (no)
+  :Hide banner section;
+endif
+:System displays news list sorted by date (most recent first);
+if (Employee selects category filter?) then (yes)
+  :System filters news by selected category;
+  :Display filtered results;
+else (no)
+  :Display all news;
+endif
+if (No news items?) then (yes)
+  :Display empty state message;
+else (no)
+endif
+stop
+@enduml
+```
+
 ### UC-006: Search Directory
 
 | Field | Value |
@@ -298,6 +463,30 @@ stop
 **Alternative Flows:**
 - **AF-1: No matches:** System displays "No results found" message.
 - **AF-2: Browse all:** Employee leaves search empty; system shows all entries (paginated).
+
+**Activity Diagram (UC-006 Flow):**
+
+```plantuml
+@startuml
+title UC-006: Search Directory — Activity Diagram
+
+start
+:Employee navigates to directory page;
+:Portal authenticates via AD (<<include>>);
+if (Employee enters search criteria?) then (yes)
+  :Employee enters name, department, or office;
+  :System searches matching entries;
+else (no — browse all)
+  :System loads all entries (paginated);
+endif
+if (Matches found?) then (yes)
+  :Display results: name, title, department, office, email, extension;
+else (no)
+  :Display "No results found" message;
+endif
+stop
+@enduml
+```
 
 ### UC-007: Manage Directory
 
@@ -322,6 +511,45 @@ stop
 **Alternative Flows:**
 - **AF-1: Deactivate entry:** HR marks entry as inactive; entry hidden from directory search but retained in database.
 - **AF-2: AD sync conflict:** If AD-synchronized data conflicts with manual edit, system flags conflict for HR resolution.
+
+**Activity Diagram (UC-007 Flow):**
+
+```plantuml
+@startuml
+title UC-007: Manage Directory — Activity Diagram
+
+start
+:HR Admin navigates to directory admin panel;
+:Portal authenticates via AD (<<include>>);
+
+if (Create new entry?) then (yes)
+  :HR enters name, title, department, office, email, extension;
+  :HR clicks Save;
+  :System creates directory entry;
+  :System creates audit trail entry;
+  :Display creation confirmation;
+else (no — edit existing)
+  :HR selects employee entry;
+  :HR updates fields;
+  :HR clicks Save;
+  if (AD-synced field changed?) then (yes)
+    :System flags AD sync conflict;
+    if (HR overrides?) then (yes)
+      :System saves manual override;
+      :System creates audit trail entry;
+    else (no)
+      :System reverts to AD value;
+    endif
+  else (no)
+    :System saves changes;
+    :System creates audit trail entry;
+  endif
+  :Display update confirmation;
+endif
+
+stop
+@enduml
+```
 
 ## Traceability
 
