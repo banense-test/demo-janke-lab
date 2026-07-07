@@ -10,215 +10,237 @@
 | Review Type | LCA Milestone Re-Review — Technical Lens |
 | Review Date | 2026-07-07 |
 | Prior Iteration | Elaboration 1 (LCA: CONDITIONAL NO-GO — auto-iterate required) |
-| Verdict | APPROVED WITH CHANGES — 1 Major finding (Iteration Assessment), 4 Minor findings (metadata) |
+| Verdict | **NEEDS REWORK** — 1 Critical (PR #4), 1 Major (Iteration Assessment not updated), 5 Minor (metadata) |
 
 ## Review Scope and Criteria
 
 ### Artifacts Reviewed
 
-| # | Artifact | Discipline | Review Lens | Checklist Applied | Prior Findings of This Lens |
-|---|---|---|---|---|---|
-| 1 | Software Architecture Document | Analysis & Design | Reviewer | Architecture stability, 4+1 views, ADRs, mechanisms, PoC reference, milestone metadata | F2 (Major, RESOLVED), F3 (Major, RESOLVED) |
-| 2 | Design Model | Analysis & Design | Reviewer | UC realizations, class signatures, interfaces, co-ownership, persistence, UI flows | F1 (Minor, RESOLVED) |
-| 3 | Use-Case Model | Requirements | Reviewer | UC flow completeness, actor mapping, scope guard, SRS consolidation | F1-F3 (Major, RESOLVED in Inception 2) |
-| 4 | Supplementary Specification | Requirements | Reviewer | NFR coverage, FURPS+, quantification, traceability, no gold-plating | (none) |
-| 5 | Iteration Plan | Project Management | Reviewer | Feasibility, schedule, risk-to-task mapping, Construction plan | (none) |
-| 6 | Risk List | Project Management | Reviewer | RPN authority, retirement trends, PoC validation | F1 (Major, RESOLVED) |
-| 7 | Development Case | Environment | Reviewer | DC baseline conformance, optional triggers, RPN consistency | F1 (Major, RESOLVED), F2 (Major, RESOLVED) |
-| 8 | Test Case | Test | Reviewer | Execution summary, blocking reason, build IDs | F1 (Minor, RESOLVED) |
-| 9 | Architectural Proof-of-Concept | Analysis & Design | Reviewer | PoC validity, risk mitigation, CI status, traceability | (none) |
-| 10 | Iteration Assessment | Project Management | Reviewer | Iteration objective completion, LCA criteria assessment | (none) |
-| 11 | Vision | Requirements | Reviewer | Stakeholders, features, success criteria, scope adherence | (none) |
-| 12 | Test Evaluation Summary | Test | Reviewer | Mission, PoC results, SCM quality, test schedule | (none) |
-| 13 | Review Record (prior) | Project Management | Reviewer | Prior findings reconciliation, closure verification | (self-referential) |
+| # | Artifact | Discipline | Review Lens | Checklist Applied | Prior Findings of This Lens | New Findings This Iter |
+|---|---|---|---|---|---|---|
+| 1 | Software Architecture Document | Analysis & Design | Reviewer | Architecture stability, 4+1 views, ADRs, mechanisms, PoC reference, SCM state | F1 (Info, RESOLVED), F2 (Major, RESOLVED), F3 (Major, RESOLVED) | F4 (Critical — open PR #4) |
+| 2 | Design Model | Analysis & Design | Reviewer | UC realizations, class signatures, interfaces, co-ownership, persistence, UI flows | F1 (Minor, RESOLVED) | (none) |
+| 3 | Use-Case Model | Requirements | Reviewer | UC flow completeness, actor mapping, scope guard, SRS consolidation | F1-F3 (Major, RESOLVED in Inception 2) | F4 (Minor — milestone metadata, persisting) |
+| 4 | Supplementary Specification | Requirements | Reviewer | NFR coverage, FURPS+, quantification, traceability, no gold-plating | (none) | F2 (Minor — milestone metadata) |
+| 5 | Iteration Plan | Project Management | Reviewer | Feasibility, schedule, risk-to-task mapping, Construction plan | (none) | F1 (Minor — Cycle 2 vs Cycle 1) |
+| 6 | Risk List | Project Management | Reviewer | RPN authority, retirement trends, PoC validation | F1 (Major, RESOLVED) | (none) |
+| 7 | Development Case | Environment | Reviewer | DC baseline conformance, optional triggers, RPN consistency | F1 (Major, RESOLVED), F2 (Major, RESOLVED) | (none) |
+| 8 | Test Case | Test | Reviewer | Execution summary, blocking reason, build IDs | F1 (Minor, RESOLVED) | (none) |
+| 9 | Architectural Proof-of-Concept | Analysis & Design | Reviewer | PoC validity, risk mitigation, CI status, traceability | (none prior) | F1 (Minor — LAM typo + stale iteration, persisting) |
+| 10 | Iteration Assessment | Project Management | Reviewer | Iteration 2 update, objectives status, corrective actions | F1 (Minor, persisting), F2 (Major, persisting) | F1 re-emitted (Minor), F2 re-emitted (Major) |
+| 11 | Vision | Requirements | Reviewer | Content correctness, scope adherence, metadata | F1 (Minor, RESOLVED in Elab 1) | F2 (Minor — stale iteration + milestone, persisting) |
+| 12 | Test Evaluation Summary | Test | Reviewer | PoC results, SCM intelligence, test schedule | (none) | (none) |
+| 13 | SCM State | — | Reviewer | Open PRs, CI status, open issues | (none) | PR #4 REQUEST_CHANGES issued |
 
-### LCA Exit Criteria Evaluated
+### Review Methodology
 
-| # | LCA Criterion | Status | Evidence |
-|---|---|---|---|
-| CR-1 | Architecture baselined (SAD 4+1 views, ADRs, mechanisms) | **MET** | SAD all 6 views complete, 3 ADRs preserved, all mechanisms mapped to design solutions, PoC-1 validates offline sync. Prior findings SAD-F2, SAD-F3 resolved. |
-| CR-2 | Critical risks mitigated (RISK-T01, RISK-T03 PoC validated) | **MET** | RISK-T01 (RPN 63) and RISK-T03 (RPN 48) advanced to "PoC Validated" per Risk List. PoC-1 CI Green 3/3. RPN governance protocol established — all artifacts now reference authoritative Risk List values. |
-| CR-3 | Construction plan credible (integration order, UC prioritization) | **MET** | Iteration Plan defines bottom-up integration order (Infrastructure → Application → Presentation), UC prioritization (UC-001 first), Construction iteration schedule with task breakdown. |
-| CR-4 | Stakeholder sanction for LCA | **PENDING** | Stakeholder explicitly refused to advance past LCA in Iteration 1. Re-consultation required after corrective actions. This is outside the Reviewer's technical lens — flagged for PM/stakeholder action. |
+This review applies the **LCA exit criteria lens** (RUP Ch.4): "Do the artifacts collectively satisfy the conditions for phase transition from Elaboration to Construction?" The four LCA exit criteria are:
+
+1. **CR-1: Architecture baselined** — SAD 4+1 views complete, ADRs stable, mechanisms resolved
+2. **CR-2: Critical risks mitigated** — RISK-T01 (RPN 63) validated via PoC-1, RISK-T05 retired
+3. **CR-3: Construction plan credible** — Iteration Plan has Construction schedule, integration order
+4. **CR-4: Stakeholder sanction** — Stakeholder must approve LCA transition
 
 ## Findings
 
-### Prior Findings Reconciliation (S_RECONCILE)
+### Finding Summary
 
-All 6 prior findings of this lens (Reviewer) with resolution==null have been resolved via `resolve_artifact_finding` in this iteration:
-
-| Finding Key | Artifact | Severity | Disposition | Resolution Evidence |
+| ID | Artifact | Severity | Status | Description |
 |---|---|---|---|---|
-| F2 | Software Architecture Document | Major | Resolved | SAD Document Control: "SAD-F2 RESOLVED: Stale PoC trigger note corrected" |
-| F3 | Software Architecture Document | Major | Resolved | SAD Document Control: Milestone Target = "LCA (Lifecycle Architecture)" |
-| F1 | Design Model | Minor | Resolved | DM Document Control: "Author: User-Interface Designer, Designer (Analysis & Design), Database Designer" |
-| F2 | Development Case | Major | Resolved | DC Document Control: "Finding DC-F2 Status: RESOLVED — RPN values corrected to authoritative Risk List values" |
-| F1 | Risk List | Major | Resolved | RPN=63 consistent across all artifacts; Risk List Document Control: "Findings Addressed: RL-F1" |
-| F1 | Test Case | Minor | Resolved | TC Document Control: "TC-F1 (Minor — Blocking Reason column added to execution summary)" |
+| SAD-F4 | Software Architecture Document | **Critical** | OPEN | Open PR #4 at LCA review — productive code must not merge to main during Elaboration |
+| IA-F2 | Iteration Assessment | **Major** | OPEN (persisting, occ 2) | No Iteration 2 assessment — still at Iter 1 metadata, objectives not updated |
+| IA-F1 | Iteration Assessment | Minor | OPEN (persisting, occ 2) | Objectives 1-3 show "NOT MET" but underlying findings are all resolved |
+| UCM-F4 | Use-Case Model | Minor | OPEN (persisting, occ 2) | Milestone Target = "End of Elaboration" instead of "LCA (Lifecycle Architecture)" |
+| SS-F2 | Supplementary Specification | Minor | OPEN (new) | Milestone Target = "End of Elaboration" instead of "LCA (Lifecycle Architecture)" |
+| IP-F1 | Iteration Plan | Minor | OPEN (new) | Iteration field = "2 (Cycle 2)" instead of "2 (Cycle 1)" |
+| PoC-F1 | Architectural Proof-of-Concept | Minor | OPEN (persisting, occ 2) | Milestone Target = "End of Elaboration (LAM)" + Iteration = "1 (Cycle 1)" |
+| VIS-F2 | Vision | Minor | OPEN (persisting, occ 2) | Iteration = "1 (Cycle 1)" + Milestone Target = "End of Elaboration" |
 
-### New Findings (S2 — This Iteration)
+### Critical Findings Detail
 
-| # | Finding Key | Artifact | Severity | Finding | Recommendation | Verdict |
-|---|---|---|---|---|---|---|
-| 1 | F1 | Architectural Proof-of-Concept | Minor | PoC Document Control Milestone Target states "End of Elaboration (LAM)" — same "LAM" typo fixed in SAD but not in PoC. Iteration field also still "1 (Cycle 1)". | Update Milestone Target to "LCA (Lifecycle Architecture)" and Iteration to "2 (Cycle 1)". Metadata correction only. | Approved |
-| 2 | F2 | Iteration Assessment | Major | Iteration Assessment still at Iteration 1 metadata with no Iteration 2 assessment. LCA re-review requires updated assessment documenting whether the 6 corrective actions were completed and whether LCA exit criteria are now met. | Update to Iteration 2: add corrective actions status section, update objectives, state LCA exit criteria assessment from PM perspective. | NeedsRework |
-| 3 | F2 | Vision | Minor | Vision Document Control still shows "Iteration: 1 (Cycle 1)" — not updated for current iteration. CR #1 (approved) addresses this but has not been executed. | Update iteration field to "2 (Cycle 1)". Metadata correction only. | Approved |
-| 4 | F4 | Use-Case Model | Minor | Milestone Target states "End of Elaboration" instead of canonical "LCA (Lifecycle Architecture)" used across SAD, Risk List, DC, Iteration Plan. | Update Milestone Target to "LCA (Lifecycle Architecture)". | Approved |
-| 5 | F1 | Supplementary Specification | Minor | Milestone Target states "End of Elaboration" instead of canonical "LCA (Lifecycle Architecture)". | Update Milestone Target to "LCA (Lifecycle Architecture)". | Approved |
+#### SAD-F4 (Critical) — Open PR #4 at LCA Review
 
-### SCM State — PR Disposition
+**Location:** SCM state — PR #4 (`poc/E1-risk-t01-offline-sync` → `main`)
 
-| PR # | Branch | Target | Disposition | Rationale |
-|---|---|---|---|---|
-| #4 | poc/E1-risk-t01-offline-sync | main | REQUEST_CHANGES | Elaboration phase boundary: PoC code must not merge to main. Branch stays as SAD reference. Productive feature code belongs in Construction per RUP Ch.4 and Ch.16. |
+**Description:** Open PR #4 exists at LCA review time, carrying PoC code from the `poc/E1-risk-t01-offline-sync` branch targeting `main`. Per RUP Ch.4, productive feature code merged to main is NOT an Elaboration outcome. Per RUP Ch.16, the prototype is a referenced artifact, not a stream of feature PRs. The PoC has served its purpose (CI Green 3/3, architectural findings captured in CRs #5, #7, #8) and should not merge to main.
 
-### SCM State — Open Issues
+**Action Taken:** `scm_request_changes_on_pull_request` issued on PR #4 with rationale citing RUP Ch.4 and Ch.16.
 
-| Issue # | Severity | Status | Description | Relevance |
-|---|---|---|---|---|
-| #5 | Major | cr:approved | PoC tests excluded from CI pipeline | Construction entry — must integrate PoC tests into main CI |
-| #7 | Major | cr:logged | Sync-over-async in TcpHealthMonitor | Architectural defect — needs Architect review before Construction |
-| #8 | Minor | cr:logged | Reflection in SqliteLocalStore | Architectural defect — needs Architect review before Construction |
-| #6 | Minor | cr:approved | Placeholder smoke test on main | Construction entry — must replace with real smoke test |
-| #3 | Major | cr:logged | Design file impact assessment | Architectural — needs Architect review |
-| #2 | Minor | cr:approved | Update Iteration Assessment objective statuses | Directly related to finding F2 (this review) |
-| #1 | Minor | cr:approved | Update Vision Document Control iteration marker | Directly related to finding F2 (this review) |
+**Remediation:** Close PR #4 without merging. Keep the `poc/E1-risk-t01-offline-sync` branch as a referenced artifact in the SAD traceability. Productive feature code belongs in Construction iterations.
+
+**LCA Impact:** Blocks LCA transition until PR is closed. This is a process discipline violation, not an architecture defect — the PoC code itself is validated.
+
+### Major Findings Detail
+
+#### IA-F2 (Major, persisting occ 2) — No Iteration 2 Assessment
+
+**Location:** Iteration Assessment — Document Control + Objectives Status Summary
+
+**Description:** The Iteration Assessment is still at Iteration 1 metadata ("Iteration: 1 (Cycle 1)") and does not include an Iteration 2 assessment. The LCA re-review requires an updated assessment documenting whether the 6 corrective actions from the Iteration 1 CONDITIONAL NO-GO verdict were completed. The current content only describes the Iter 1 state (0 of 4 objectives achieved, CONDITIONAL NO-GO) but does not assess Iter 2 outcomes (all 6 findings resolved, RPN governance established, PoC validated).
+
+**Remediation:** Update the Iteration Assessment to Iteration 2: (1) Update Document Control iteration to "2 (Cycle 1)"; (2) Add an "Elaboration Iteration 2 — Corrective Actions Status" section documenting that all 6 findings (SAD-F2, SAD-F3, DC-F2, RL-F1, DM-F1, TC-F1) are resolved; (3) Update the objectives status to reflect that the corrective iteration met its objectives; (4) State whether the LCA exit criteria are now met from the PM perspective.
+
+**LCA Impact:** Without an Iteration 2 assessment, the LCA re-review cannot verify that the corrective iteration met its objectives. This is a PM discipline artifact — the Project Manager must update it.
+
+### Minor Findings Detail
+
+#### IA-F1 (Minor, persisting occ 2) — Objectives Status Stale
+
+**Location:** Iteration Assessment — Objectives Status Summary + Objective Detail table
+
+**Description:** Objectives 1-3 show "NOT MET" / "0 of 4 objectives achieved" but the underlying artifacts demonstrate the corrective work is complete. SAD-F2 and SAD-F3 resolved, RL-F1 resolved, DM-F1 resolved, TC-F1 resolved. The assessment status does not match the actual artifact state.
+
+**Remediation:** Update objectives 1-3 status from "NOT MET" to "ACHIEVED" with evidence referencing the resolved findings.
+
+#### UCM-F4 (Minor, persisting occ 2) — Milestone Metadata
+
+**Location:** Use-Case Model — Document Control
+
+**Description:** Milestone Target = "End of Elaboration" instead of "LCA (Lifecycle Architecture)".
+
+**Remediation:** Change to "LCA (Lifecycle Architecture)".
+
+#### SS-F2 (Minor, new) — Milestone Metadata
+
+**Location:** Supplementary Specification — Document Control
+
+**Description:** Milestone Target = "End of Elaboration" instead of "LCA (Lifecycle Architecture)".
+
+**Remediation:** Change to "LCA (Lifecycle Architecture)".
+
+#### IP-F1 (Minor, new) — Cycle Number Inconsistency
+
+**Location:** Iteration Plan — Document Control
+
+**Description:** Iteration field = "2 (Cycle 2)" instead of "2 (Cycle 1)" used by all other artifacts.
+
+**Remediation:** Change to "2 (Cycle 1)".
+
+#### PoC-F1 (Minor, persisting occ 2) — LAM Typo + Stale Iteration
+
+**Location:** Architectural Proof-of-Concept — Document Control
+
+**Description:** Milestone Target = "End of Elaboration (LAM)" — contains "LAM" typo (should be "LCA"). Iteration = "1 (Cycle 1)" — not updated to "2 (Cycle 1)".
+
+**Remediation:** Change Milestone Target to "LCA (Lifecycle Architecture)" and Iteration to "2 (Cycle 1)".
+
+#### VIS-F2 (Minor, persisting occ 2) — Stale Iteration + Milestone Metadata
+
+**Location:** Vision — Document Control
+
+**Description:** Iteration = "1 (Cycle 1)" — not updated to "2 (Cycle 1)". Milestone Target = "End of Elaboration" — should be "LCA (Lifecycle Architecture)".
+
+**Remediation:** Update Iteration to "2 (Cycle 1)" and Milestone Target to "LCA (Lifecycle Architecture)".
 
 ## Compliance Matrix
 
 ```plantuml
 @startuml
-title LCA Re-Review Compliance Matrix — Elaboration Iteration 2
+title LCA Re-Review — Compliance Matrix (Elaboration Iteration 2)
+
+skinparam objectBorderColor #2c3e50
+skinparam objectBackgroundColor #ecf0f1
 
 object "SAD" as SAD {
   4+1 Views = PASS
-  NFRs Addressed = PASS
-  Mechanisms Mapped = PASS
-  Interface-Based = PASS
-  ADRs Preserved = PASS
-  PoC Referenced = PASS
-  Milestone LCA = PASS
-  Prior F2/F3 = RESOLVED
+  ADRs = PASS
+  Mechanisms = PASS
+  PoC Reference = PASS
+  Metadata = PASS
+  Scope Adherence = PASS
+  Traceability = PASS
+  Open PR #4 = FAIL
 }
 
 object "Design Model" as DM {
   UC Realizations = PASS
   Class Signatures = PASS
   Interfaces = PASS
-  Co-Ownership = PASS
-  Persistence Mapping = PASS
+  Co-ownership = PASS
+  Persistence = PASS
   UI Flows = PASS
-  Prior F1 = RESOLVED
+  Metadata = PASS
+  Traceability = PASS
 }
 
 object "UC Model" as UCM {
-  7 UCs for 4 Processes = PASS
-  AD as <<include>> = PASS
-  Activity Diagrams = PASS
-  SRS Appended = PASS
-  Milestone Terminology = FAIL
-  Prior F1-F3 = RESOLVED
+  Actor Mapping = PASS
+  Flow Completeness = PASS
+  Scope Guard = PASS
+  SRS Consolidation = PASS
+  AD as Mechanism = PASS
+  Metadata = FAIL
+  Traceability = PASS
 }
 
 object "Supp Spec" as SS {
-  FURPS+ Complete = PASS
-  NFRs Quantified = PASS
-  No [ASSUMPTION] = PASS
-  Traceable = PASS
+  FURPS+ Coverage = PASS
+  Quantification = PASS
+  Testability = PASS
   No Gold-Plating = PASS
-  Milestone Terminology = FAIL
-}
-
-object "Risk List" as RL {
-  RPN Authoritative = PASS
-  Retirement Trends = PASS
-  PoC Validation = PASS
-  Prior F1 = RESOLVED
-}
-
-object "Dev Case" as DC {
-  24 Roles = PASS
-  CORE Artifacts = PASS
-  Optional Triggers = PASS
-  RPN Consistent = PASS
-  Prior F1/F2 = RESOLVED
+  Metadata = FAIL
+  Traceability = PASS
 }
 
 object "Iteration Plan" as IP {
-  Construction Plan = PASS
-  Risk-to-Task = PASS
+  Feasibility = PASS
   Schedule = PASS
-  Findings Addressed = PASS
+  Risk-to-Task = PASS
+  Construction Plan = PASS
+  Metadata = FAIL
+  Traceability = PASS
+}
+
+object "Risk List" as RL {
+  RPN Authority = PASS
+  Retirement Trends = PASS
+  PoC Validation = PASS
+  Metadata = PASS
+  Traceability = PASS
+}
+
+object "Dev Case" as DC {
+  Baseline Conformance = PASS
+  Optional Triggers = PASS
+  RPN Consistency = PASS
+  Metadata = PASS
+  Traceability = PASS
 }
 
 object "Test Case" as TC {
   Execution Summary = PASS
   Blocking Reason = PASS
   Build IDs = PASS
-  Prior F1 = RESOLVED
+  Metadata = PASS
+  Traceability = PASS
 }
 
 object "PoC" as POC {
   Risk Mitigation = PASS
-  CI Green = PASS
+  CI Status = PASS
   Traceability = PASS
-  Milestone LCA = FAIL
-  Iteration Metadata = FAIL
+  Metadata = FAIL
 }
 
 object "Iteration Assessment" as IA {
-  Iter 1 Assessment = PASS
-  Iter 2 Assessment = FAIL
-  LCA Verdict = STALE
+  Iteration 2 Update = FAIL
+  Objectives Status = FAIL
+  Corrective Actions = FAIL
+  Metadata = FAIL
 }
 
 object "Vision" as VIS {
-  Stakeholders = PASS
-  Features = PASS
-  Success Criteria = PASS
-  Iteration Metadata = FAIL
+  Content = PASS
+  Scope Adherence = PASS
+  Metadata = FAIL
 }
 
-object "Test Eval Summary" as TES {
-  Mission = PASS
+object "TES" as TES {
   PoC Results = PASS
-  SCM Quality = PASS
+  SCM Intelligence = PASS
   Test Schedule = PASS
+  Metadata = PASS
 }
-
-SAD --> DM : governs
-UCM --> DM : realizes
-SS --> SAD : constrains
-RL --> IP : drives
-DC --> SAD : tailors
-POC --> SAD : validates
-TC --> TES : feeds
-
-note right of IA
-  MAJOR FINDING (F2)
-  No Iteration 2 assessment
-  LCA re-review blocked
-end note
-
-note right of POC
-  MINOR FINDING (F1)
-  LAM->LCA + Iter metadata
-end note
-
-note right of VIS
-  MINOR FINDING (F2)
-  Iter 1->2 metadata
-end note
-
-note right of UCM
-  MINOR FINDING (F4)
-  Milestone terminology
-end note
-
-note right of SS
-  MINOR FINDING (F1)
-  Milestone terminology
-end note
 
 @enduml
 ```
@@ -227,118 +249,85 @@ end note
 
 ```plantuml
 @startuml
-title Defect Distribution — Elaboration Iteration 2 Reviewer Lens
+title LCA Re-Review — Defect Distribution (Severity × Artifact)
 
-object "Critical" as CRIT {
-  Count = 0
-  Artifacts = (none)
+skinparam rectangleBorderColor #2c3e50
+skinparam rectangleBackgroundColor #ecf0f1
+
+rectangle "Critical (1)" as Crit {
+  rectangle "SAD: Open PR #4\nat LCA review" as C1 #ffcccc
 }
 
-object "Major" as MAJ {
-  Count = 1
-  Artifacts = Iteration Assessment
-  Finding = F2: No Iter 2 assessment
+rectangle "Major (1)" as Maj {
+  rectangle "Iteration Assessment:\nNo Iter 2 assessment,\nstill at Iter 1 state" as M1 #ffd699
 }
 
-object "Minor" as MIN {
-  Count = 4
-  Artifacts = PoC, Vision, UC Model, Supp Spec
-  Findings = F1: LAM+Iter metadata
-  - F2: Vision iter metadata
-  - F4: UCM milestone term
-  - F1: SS milestone term
+rectangle "Minor (5)" as Min {
+  rectangle "UC Model:\nMilestone metadata\nnot LCA" as Mi1 #ffffcc
+  rectangle "Supp Spec:\nMilestone metadata\nnot LCA" as Mi2 #ffffcc
+  rectangle "Iteration Plan:\nCycle 2 vs Cycle 1" as Mi3 #ffffcc
+  rectangle "PoC:\nLAM typo + stale\niteration" as Mi4 #ffffcc
+  rectangle "Vision:\nStale iteration +\nmilestone metadata" as Mi5 #ffffcc
 }
 
-object "Info" as INFO {
-  Count = 0
-  Artifacts = (none)
+rectangle "Clean (6)" as Clean {
+  rectangle "Design Model" as Cl1 #ccffcc
+  rectangle "Risk List" as Cl2 #ccffcc
+  rectangle "Development Case" as Cl3 #ccffcc
+  rectangle "Test Case" as Cl4 #ccffcc
+  rectangle "Test Evaluation Summary" as Cl5 #ccffcc
+  rectangle "SAD (content)" as Cl6 #ccffcc
 }
 
-object "Resolved (This Iter)" as RES {
-  Count = 6
-  SAD-F2 = Stale PoC note
-  SAD-F3 = LAM->LCA
-  DM-F1 = Author attribution
-  DC-F2 = RPN 35->63
-  RL-F1 = RPN inconsistency
-  TC-F1 = Blocking reason column
-}
-
-CRIT --> MAJ : severity escalation path
-MAJ --> MIN
-MIN --> INFO
-
-RES --> CRIT : prior findings closed
-
-note bottom of MAJ
-  LCA BLOCKER: Iteration Assessment
-  must be updated for Iter 2
-  before LCA can be granted
-end note
-
-note bottom of RES
-  All 6 prior findings of this lens
-  resolved in S_RECONCILE
-  via resolve_artifact_finding
-end note
-
-@enduml
-```
-
-## PR Disposition
-
-```plantuml
-@startuml
-title PR #4 Disposition — Elaboration Phase Boundary
-
-rectangle "PR #4: poc/E1-risk-t01-offline-sync -> main" as PR {
-  card "22 files, 1327 additions" as SIZE
-  card "Label: ready-for-review" as LABEL
-  card "PoC-1: Offline Sync validation" as PURPOSE
-}
-
-rectangle "Disposition: REQUEST_CHANGES" as DISP {
-  card "Do NOT merge to main" as ACTION
-  card "Branch stays as SAD reference" as KEEP
-  card "Productive code -> Construction" as RULE
-}
-
-rectangle "Rationale" as RATIONALE {
-  card "RUP Ch.4: Elaboration outcomes = SAD, prototype, UC model, plan" as CH4
-  card "RUP Ch.16: Prototype is referenced artifact, not feature PR stream" as CH16
-  card "PoC served purpose: RISK-T01 validated, CI Green 3/3" as SERVED
-}
-
-PR --> DISP : Reviewer decision
-DISP --> RATIONALE : justified by
+Crit --> Maj : severity
+Maj --> Min : severity
+Min --> Clean : severity
 
 @enduml
 ```
 
 ## Resolutions and Actions
 
-### Resolved in This Iteration (S_RECONCILE)
+### Prior Findings Reconciliation (S_RECONCILE)
 
-| Finding | Artifact | Resolution | Evidence |
+| Finding | Artifact | Severity | Disposition | Rationale |
+|---|---|---|---|---|
+| SAD-F1 | SAD | Info | RESOLVED (prior iter) | Artifact type registration acknowledged — no content change needed |
+| SAD-F2 | SAD | Major | RESOLVED (prior iter) | Stale PoC trigger note corrected — PoC reference now accurate |
+| SAD-F3 | SAD | Major | RESOLVED (prior iter) | Milestone Target corrected from LAM to LCA |
+| DM-F1 | Design Model | Minor | RESOLVED (prior iter) | Author field updated to include all 3 co-owners |
+| UCM-F1 | UC Model | Major | RESOLVED (Inception 2) | [DERIVED] markers removed — stakeholder confirmed all UCs literal |
+| UCM-F2 | UC Model | Major | RESOLVED (Inception 2) | Same as F1 — UC-004 is literal decomposition |
+| UCM-F3 | UC Model | Major | RESOLVED (Inception 2) | AD auth correctly modeled as cross-cutting mechanism |
+| RL-F1 | Risk List | Major | RESOLVED (prior iter) | RPN governance protocol established, RISK-T01 RPN=63 canonical |
+| DC-F1 | Development Case | Major | RESOLVED (prior iter) | PoC trigger declared FIRED with justification |
+| DC-F2 | Development Case | Major | RESOLVED (prior iter) | RPN values corrected to authoritative Risk List values |
+| TC-F1 | Test Case | Minor | RESOLVED (prior iter) | Blocking Reason column added to execution summary |
+| VIS-F1 | Vision | Minor | RESOLVED (prior iter) | Phase transition corrected iteration marker (Inception → Elaboration) |
+
+### Persisting Findings (Left Open — Re-emitted in S2)
+
+| Finding | Artifact | Severity | Occurrence | Disposition |
+|---|---|---|---|---|
+| IA-F1 | Iteration Assessment | Minor | 2 | LEFT OPEN — objectives still show "NOT MET" |
+| IA-F2 | Iteration Assessment | Major | 2 | LEFT OPEN — no Iteration 2 assessment added |
+| VIS-F2 | Vision | Minor | 2 | LEFT OPEN — iteration and milestone metadata stale |
+| PoC-F1 | PoC | Minor | 2 | LEFT OPEN — LAM typo and stale iteration persist |
+| UCM-F4 | UC Model | Minor | 2 | LEFT OPEN — milestone metadata not corrected |
+
+### New Findings (S2)
+
+| Finding | Artifact | Severity | Disposition |
 |---|---|---|---|
-| SAD-F2 (Major, 3rd occ.) | Software Architecture Document | Resolved | Stale PoC trigger note removed; PoC-1 correctly referenced |
-| SAD-F3 (Major, 1st occ.) | Software Architecture Document | Resolved | Milestone Target corrected from "LAM" to "LCA" |
-| DM-F1 (Minor, 3rd occ.) | Design Model | Resolved | Author field updated to include all three co-owners |
-| DC-F2 (Major, 1st occ.) | Development Case | Resolved | RPN values corrected to authoritative Risk List values |
-| RL-F1 (Major, 2nd occ.) | Risk List | Resolved | RPN governance protocol established; all artifacts now reference RPN=63 |
-| TC-F1 (Minor, 3rd occ.) | Test Case | Resolved | Blocking Reason column added to execution summary |
+| SAD-F4 | SAD | Critical | OPEN — PR #4 must be closed |
+| SS-F2 | Supp Spec | Minor | OPEN — milestone metadata |
+| IP-F1 | Iteration Plan | Minor | OPEN — cycle number inconsistency |
 
-### Open Action Items
+### SCM Actions Taken
 
-| # | Finding | Artifact | Severity | Action Required | Owner |
-|---|---|---|---|---|---|
-| 1 | F2 | Iteration Assessment | Major | Update to Iteration 2 with corrective actions status and LCA criteria assessment | Project Manager |
-| 2 | F1 | Architectural Proof-of-Concept | Minor | Update Milestone Target to "LCA" and Iteration to "2" | Implementer / Software Architect |
-| 3 | F2 | Vision | Minor | Update iteration field to "2 (Cycle 1)" — CR #1 already approved | System Analyst |
-| 4 | F4 | Use-Case Model | Minor | Update Milestone Target to "LCA (Lifecycle Architecture)" | System Analyst |
-| 5 | F1 | Supplementary Specification | Minor | Update Milestone Target to "LCA (Lifecycle Architecture)" | System Analyst |
-| 6 | — | PR #4 | — | Do not merge; branch stays as SAD reference | All roles |
-| 7 | — | CR #5, #7 | Major | Integrate PoC tests into main CI; fix sync-over-async before Construction | Software Architect / Implementer |
+| Action | PR | Date | Result |
+|---|---|---|---|
+| `scm_request_changes_on_pull_request` | #4 | 2026-07-07 | REQUEST_CHANGES issued — PR must not merge to main during Elaboration |
 
 ## Disposition
 
@@ -346,49 +335,60 @@ DISP --> RATIONALE : justified by
 
 | Artifact | Verdict | Rationale |
 |---|---|---|
-| Software Architecture Document | **Approved** | All prior findings resolved. 4+1 views complete, ADRs preserved, mechanisms mapped, PoC referenced. Architecture baseline stable. |
-| Design Model | **Approved** | Prior finding resolved. UC realizations complete (SEQ-001–SEQ-007), full class signatures, interfaces defined, persistence mapping and UI flows contributed by co-owners. |
-| Use-Case Model | **Approved with Changes** | Content sound — 7 UCs for 4 declared processes, AD as cross-cutting mechanism, SRS appended. Minor milestone terminology fix needed. |
-| Supplementary Specification | **Approved with Changes** | All NFRs quantified, FURPS+ complete, no assumptions, no gold-plating. Minor milestone terminology fix needed. |
-| Iteration Plan | **Approved** | Construction plan credible, risk-to-task mapping complete, schedule defined, all findings addressed. |
-| Risk List | **Approved** | RPN authoritative (63/High), retirement trends positive, PoC validation documented, governance protocol established. |
-| Development Case | **Approved** | DC baseline conformance verified, optional triggers justified, RPN values consistent. All prior findings resolved. |
-| Test Case | **Approved** | Execution summary complete with blocking reasons, build IDs referenced, prior finding resolved. |
-| Architectural Proof-of-Concept | **Approved with Changes** | PoC-1 validates RISK-T01, CI Green 3/3, traceability complete. Minor metadata fixes needed (LAM→LCA, iteration). |
-| Iteration Assessment | **NeedsRework** | No Iteration 2 assessment — must be updated before LCA can be granted. Major finding. |
-| Vision | **Approved with Changes** | Content stable and correct. Minor iteration metadata update needed (CR #1 already approved). |
-| Test Evaluation Summary | **Approved** | Mission clear, PoC results incorporated, SCM quality documented, test schedule added. |
+| Software Architecture Document | **NeedsRework** | Content is sound (4+1 views, ADRs, mechanisms all PASS) but Critical finding SAD-F4 (open PR #4) blocks LCA. PR must be closed. |
+| Design Model | **Approved** | All checklist items PASS. UC realizations complete, class signatures full, interfaces defined, co-ownership transparent, persistence mapped. |
+| Use-Case Model | **Approved** | Content correct — 7 UCs, SRS consolidated, scope guard satisfied. Minor metadata finding (F4) does not block. |
+| Supplementary Specification | **Approved** | All NFRs quantified, FURPS+ complete, no gold-plating. Minor metadata finding does not block. |
+| Iteration Plan | **Approved** | Construction plan credible, risk-to-task mapping sound. Minor cycle number inconsistency does not block. |
+| Risk List | **Approved** | RPN governance established, RISK-T01=63 canonical, PoC validation referenced. All checklist items PASS. |
+| Development Case | **Approved** | Baseline conformance verified, optional triggers justified, RPN consistent. All checklist items PASS. |
+| Test Case | **Approved** | Execution summary complete, blocking reasons categorized, build IDs cited from actual CI. All checklist items PASS. |
+| Architectural Proof-of-Concept | **Approved** | PoC-1 validates RISK-T01, CI Green 3/3, traceability complete. Minor metadata finding does not block. |
+| Iteration Assessment | **NeedsRework** | Major finding IA-F2 — no Iteration 2 assessment. PM must update to reflect corrective action completion. |
+| Vision | **Approved** | Content correct, scope adherence verified. Minor metadata finding does not block. |
+| Test Evaluation Summary | **Approved** | PoC results incorporated, SCM intelligence updated, test schedule defined. All checklist items PASS. |
 
-### Overall LCA Re-Review Disposition
+### Overall LCA Disposition
 
-**APPROVED WITH CHANGES — Conditional GO pending Iteration Assessment update**
+**LCA Verdict: NEEDS REWORK — CONDITIONAL**
 
-The technical artifacts are substantially ready for LCA. All 6 prior findings from this lens have been resolved. The architecture baseline is stable (SAD 4+1 views complete, ADRs preserved, mechanisms mapped, PoC-1 validates critical risks). The Construction plan is credible. RPN governance is established.
+The architecture baseline is sound — the SAD's 4+1 views, ADRs, design mechanisms, and component interfaces are complete and stable. The Design Model provides full UC realizations with class signatures, persistence mapping, and UI flows. The Risk List has established RPN governance with RISK-T01 validated via PoC-1 (CI Green 3/3). The Development Case conforms to the IARI baseline with justified optional triggers. The Test Case and TES demonstrate architectural testability with Construction entry criteria defined.
 
-**One Major finding blocks unconditional LCA approval:** The Iteration Assessment has not been updated for Iteration 2. The LCA re-review requires an updated assessment documenting that the corrective iteration met its objectives. This is a PM action item — the Project Manager must update the Iteration Assessment before the LCA milestone can be granted.
+**However, two blocking issues prevent LCA approval:**
 
-**Four Minor findings** (metadata corrections on PoC, Vision, UC Model, Supplementary Specification) do not block LCA but should be corrected in the next iteration.
+1. **Critical: Open PR #4 (SAD-F4)** — A pull request carrying PoC code targets `main` during Elaboration. Per RUP Ch.4 and Ch.16, productive feature code must not merge to main during Elaboration. The PR has been issued REQUEST_CHANGES. **Remediation: Close PR #4.** This is a process discipline action, not an architecture defect.
 
-**Stakeholder sanction (CR-4)** remains pending — this is outside the Reviewer's technical lens but is a required LCA exit criterion. The PM must re-consult the stakeholder with the corrected artifacts.
+2. **Major: Iteration Assessment not updated (IA-F2)** — The Iteration Assessment still reflects Iteration 1 state (0 of 4 objectives achieved, CONDITIONAL NO-GO) despite all 6 corrective actions being resolved. **Remediation: PM must update to Iteration 2 with corrective action status.**
 
-**SCM state:** PR #4 disposed (REQUEST_CHANGES — do not merge PoC to main). 7 open issues tracked, including 2 Major architectural defects (#5, #7) that must be addressed before Construction entry.
+**The 5 Minor findings (metadata inconsistencies across UC Model, Supp Spec, Iteration Plan, PoC, and Vision) are non-blocking but should be corrected in the next iteration.**
+
+**LCA Exit Criteria Assessment:**
+
+| Criterion | Status | Evidence |
+|---|---|---|
+| CR-1: Architecture baselined | **PASS** | SAD 4+1 views complete, ADRs stable, mechanisms resolved, PoC-1 validates offline sync |
+| CR-2: Critical risks mitigated | **PASS** | RISK-T01 (RPN 63) validated via PoC-1 (CI Green 3/3), RISK-T05 retired, RPN governance established |
+| CR-3: Construction plan credible | **PASS** | Iteration Plan has Construction schedule, integration order (Infrastructure → Application → Presentation), UC prioritization |
+| CR-4: Stakeholder sanction | **PENDING** | Stakeholder explicitly refused LCA sanction in Iteration 1. Re-consultation required after corrective actions. |
+
+**Recommendation:** Once PR #4 is closed and the Iteration Assessment is updated to reflect Iteration 2 corrective action completion, the technical lens supports LCA approval — subject to stakeholder sanction (CR-4). The architecture is sound; the blocking issues are process discipline (PR management) and PM artifact currency (assessment update), not architecture defects.
 
 ## Traceability
 
 | Element | Traces From | Link Type | Traces To |
 |---|---|---|---|
-| SAD Review | Software Architecture Document (Elaboration Iter 2) | Reviews | SAD (corrective actions — all resolved) |
-| DM Review | Design Model (Elaboration Iter 2) | Reviews | Design Model (corrective action — resolved) |
-| UCM Review | Use-Case Model (Elaboration Iter 2) | Reviews | Use-Case Model (minor metadata fix — pending) |
-| SS Review | Supplementary Specification (Elaboration Iter 2) | Reviews | Supplementary Specification (minor metadata fix — pending) |
-| RL Review | Risk List (Elaboration Iter 2) | Reviews | Risk List (corrective action — resolved) |
-| DC Review | Development Case (Elaboration Iter 2) | Reviews | Development Case (corrective actions — all resolved) |
-| IP Review | Iteration Plan (Elaboration Iter 2) | Reviews | Iteration Plan (no findings) |
-| TC Review | Test Case (Elaboration Iter 2) | Reviews | Test Case (corrective action — resolved) |
-| PoC Review | Architectural Proof-of-Concept (Elaboration Iter 1) | Reviews | PoC (minor metadata fix — pending) |
+| SAD Review | Software Architecture Document (Elaboration Iter 2) | Reviews | SAD (content approved, PR #4 blocks) |
+| DM Review | Design Model (Elaboration Iter 2) | Reviews | Design Model (approved) |
+| UCM Review | Use-Case Model (Elaboration Iter 2) | Reviews | UC Model (approved, minor metadata) |
+| SS Review | Supplementary Specification (Elaboration Iter 2) | Reviews | Supp Spec (approved, minor metadata) |
+| IP Review | Iteration Plan (Elaboration Iter 2) | Reviews | Iteration Plan (approved, minor metadata) |
+| RL Review | Risk List (Elaboration Iter 2) | Reviews | Risk List (approved) |
+| DC Review | Development Case (Elaboration Iter 2) | Reviews | Development Case (approved) |
+| TC Review | Test Case (Elaboration Iter 2) | Reviews | Test Case (approved) |
+| PoC Review | Architectural Proof-of-Concept (Elaboration Iter 1) | Reviews | PoC (approved, minor metadata) |
 | IA Review | Iteration Assessment (Elaboration Iter 1) | Reviews | Iteration Assessment (Major — needs Iter 2 update) |
-| Vision Review | Vision (Elaboration Iter 1) | Reviews | Vision (minor metadata fix — pending) |
-| TES Review | Test Evaluation Summary (Elaboration Iter 2) | Reviews | TES (no findings) |
+| Vision Review | Vision (Elaboration Iter 1) | Reviews | Vision (approved, minor metadata) |
+| TES Review | Test Evaluation Summary (Elaboration Iter 2) | Reviews | TES (approved) |
 | PR #4 Disposition | scm_get_pull_request_diff (#4) | Reviews | PR #4 (REQUEST_CHANGES — do not merge) |
 | SCM Issues | scm_list_issues (7 open) | DependsOn | Construction entry criteria |
 | LCA Re-Review Verdict | All reviewed artifacts | Derives | LCA Milestone Decision, Construction Entry |
