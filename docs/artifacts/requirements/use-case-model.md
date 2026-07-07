@@ -107,7 +107,6 @@ end note
 - Stakeholder confirmation (S1, 2026-07-07): all 4 declared processes confirmed correct.
 
 ## Use-Case Specifications
-
 ### UC-001: Clock In/Out ⭐ Architecturally Significant
 
 | Field | Value |
@@ -132,6 +131,10 @@ end note
 **Alternative Flows:**
 - **AF-1: Network drop (offline mode):** If AD or server is unreachable (network drop ≤5 min), system uses cached session, records timestamp locally, queues for sync. On network restore, syncs queued data with zero data loss.
 - **AF-2: Already clocked in/out:** If employee attempts to clock in when already clocked in, system shows current status and does not create duplicate entry.
+
+**Exception Flows:**
+- **EF-1: Cached session expired (>5 min offline):** System displays "Session expired — network connection required" message. Employee must wait for network restore to clock in/out. No timestamp is recorded.
+- **EF-2: Sync conflict on restore:** If a queued clocking conflicts with a server-side entry (e.g., HR manually entered a clocking during outage), system flags the conflict for HR resolution. Employee's original timestamp is preserved; HR reviews and resolves.
 
 **Activity Diagram (UC-001 Flow):**
 
@@ -162,80 +165,76 @@ else (no — currently clocked IN)
   :Record timestamp (local + queued for sync);
   :Show confirmation with exact time;
 endif
-if (Network restored & data pending sync?) then (yes)
-  :Sync queued clockings to server;
-  :Verify no data loss;
-else (no)
-endif
 stop
 @enduml
 ```
 
-**Sequence Diagram (UC-001 Offline Sync Scenario):**
+**Sequence Diagram — Offline Sync Recovery:**
 
 ```plantuml
 @startuml
-title UC-001: Clock In/Out — Offline Sync Sequence (Architecturally Significant)
+title UC-001: Offline Sync Recovery — Sequence Diagram
 
 actor "Employee" as EMP
 participant "Portal UI\n(Razor Pages)" as UI
-participant "Clocking\nController" as CTRL
 participant "Local Cache\n(Offline Store)" as CACHE
-participant "AD Auth\nService" as AD
-participant "Clocking\nAPI (.NET 10)" as API
-participant "PostgreSQL" as DB
+participant "Sync Service" as SYNC
+database "PostgreSQL" as DB
+actor "Active Directory" as AD
 
-== Normal (Online) Flow ==
-EMP -> UI: Access portal
-UI -> AD: Authenticate (LDAP/OAuth2)
-AD --> UI: Auth success + session token
-UI -> CTRL: Get clocking status
-CTRL -> API: GET /clockings/status/{employeeId}
-API -> DB: Query current status
-DB --> API: Status = clocked OUT
-API --> CTRL: Show "Clock In" button
-CTRL --> UI: Render clock-in view
-EMP -> UI: Click "Clock In"
-UI -> CTRL: POST clock-in
-CTRL -> API: POST /clockings {timestamp}
-API -> DB: INSERT clocking record
-DB --> API: Record saved
-API --> CTRL: Confirmation
-CTRL --> UI: Show confirmation with time
+== Offline Phase (network drop) ==
+EMP -> UI : Access portal
+UI -> AD : Validate session
+AD --> UI : Timeout / unreachable
+UI -> CACHE : Use cached session token
+CACHE --> UI : Cached token valid (≤5 min)
+UI --> EMP : Portal available (offline mode)
 
-== Offline Flow (Network Drop ≤5 min) ==
-EMP -> UI: Access portal (network down)
-UI -> AD: Authenticate (unreachable)
-note right: AD unreachable → use cached session token
-UI -> CACHE: Validate cached session
-CACHE --> UI: Cached session valid
-UI -> CTRL: Get clocking status
-CTRL -> CACHE: Read local status
-CACHE --> CTRL: Status = clocked IN
-CTRL --> UI: Show "Clock Out" button
-EMP -> UI: Click "Clock Out"
-UI -> CTRL: POST clock-out
-CTRL -> CACHE: Store timestamp locally + queue for sync
-CACHE --> CTRL: Queued confirmation
-CTRL --> UI: Show confirmation with time
+EMP -> UI : Click Clock In
+UI -> CACHE : Record timestamp locally
+CACHE --> UI : Timestamp stored + queued
+UI --> EMP : Confirmation with exact time
 
-== Network Restore — Auto Sync ==
-CACHE -> API: Sync queued clockings (on network restore)
-API -> DB: INSERT queued records
-DB --> API: All records saved
-API --> CACHE: Sync success — clear queue
-note right: Zero data loss verified;\nqueue cleared on confirmed sync
+note right of CACHE
+  Offline constraints:
+  - Max 5 min network drop
+  - Zero data loss
+  - Timestamps preserved with
+    original client time
+end note
+
+== Online Recovery (network restored) ==
+SYNC -> CACHE : Detect network restored
+SYNC -> CACHE : Read queued clockings
+CACHE --> SYNC : Queued entries (1+)
+SYNC -> AD : Re-validate session
+AD --> SYNC : Session valid
+SYNC -> DB : Insert queued clockings
+DB --> SYNC : Insert confirmed
+SYNC -> CACHE : Clear queue
+SYNC -> SYNC : Log sync completion
+
+note right of SYNC
+  Sync guarantees:
+  - All queued entries persisted
+  - Original timestamps preserved
+  - Queue cleared only after
+    successful DB confirmation
+  - No duplicate entries
+end note
 
 @enduml
 ```
 
-**Concrete Scenarios (Discovery Walkthroughs):**
+**Concrete Scenarios:**
 
-| Scenario | Actor | Context | Flow | Outcome | Discovered Requirements |
-|---|---|---|---|---|---|
-| S-001: First clock-in of the day | Carlos (Employee, Havana office) | Arrives at 8:45 AM, opens portal on Chrome | Main flow steps 1-7 | Clock-in recorded at 08:45:12, confirmation shown | None new — standard flow |
-| S-002: Network drop during clock-out | María (Employee, Santiago office) | Clocks out at 17:02, network drops at 17:01 | AF-1: Cached session used, timestamp stored locally, queued for sync. Network restores at 17:04. Sync completes. | Clock-out recorded at 17:02:00, synced at 17:04:15, zero data loss | REQ-013 (offline tolerance), REQ-014 (no data loss), REQ-015 (graceful recovery) |
-| S-003: Duplicate clock-in attempt | Jorge (Employee, Havana office) | Already clocked in at 08:30, clicks portal again at 10:15 | AF-2: System shows "You are currently clocked in since 08:30" — no duplicate created | No duplicate entry; current status displayed | None new — AF-2 covers this |
+| # | Scenario | Actor | Steps | Expected Outcome |
+|---|---|---|---|---|
+| S1 | Morning clock-in (online) | Carlos (Employee, Havana office) | Accesses portal → AD authenticates → sees "Clock In" → clicks → confirmation at 08:32:15 | Timestamp 2026-07-08 08:32:15 recorded; confirmation displayed |
+| S2 | Clock-in during network drop | María (Employee, Santiago office) | Accesses portal → AD unreachable → cached session → sees "Clock In" → clicks → confirmation at 09:05:22 | Timestamp queued locally; confirmation displayed; sync occurs when network restores at 09:07 |
+| S3 | Duplicate clock-in attempt | Carlos (Employee) | Already clocked in at 08:32 → accesses portal again → sees "Clock Out" (not "Clock In") | System shows current status (clocked in since 08:32); no duplicate entry created |
+
+---
 
 ### UC-002: View Clocking History
 
@@ -244,18 +243,22 @@ note right: Zero data loss verified;\nqueue cleared on confirmed sync
 | Primary Actor | Employee (ACT-001) |
 | Trigger | Employee wants to review own clockings for current month |
 | Precondition | Employee is authenticated via AD |
-| Postcondition | Current month clocking history is displayed |
+| Postcondition | Current month's clocking history is displayed |
 | Priority | Must |
 | Stability | High |
+| Includes | AD Authentication (cross-cutting) |
 
 **Main Flow:**
-1. Employee navigates to clocking history view
+1. Employee navigates to clocking history page
 2. System authenticates employee via AD (`<<include>>`)
-3. System retrieves employee's clocking records for the current month
-4. System displays history list (date, clock-in time, clock-out time)
+3. System retrieves employee's clockings for the current month
+4. System displays clocking history table (date, clock in time, clock out time) sorted by date descending
 
 **Alternative Flows:**
-- **AF-1: No clockings this month:** System displays empty state message.
+- **AF-1: No clockings this month:** If no clockings exist for the current month, system displays "No clockings recorded this month."
+
+**Exception Flows:**
+- **EF-1: Database query timeout:** System displays "Unable to load history — please try again" and logs error.
 
 **Activity Diagram (UC-002 Flow):**
 
@@ -264,40 +267,63 @@ note right: Zero data loss verified;\nqueue cleared on confirmed sync
 title UC-002: View Clocking History — Activity Diagram
 
 start
-:Employee navigates to clocking history view;
+:Employee navigates to clocking history page;
 :Portal authenticates via AD (<<include>>);
-:System retrieves employee clocking records for current month;
-if (Records exist?) then (yes)
-  :Display history list (date, clock-in time, clock-out time);
-else (no)
-  :Display empty state message;
+:System retrieves employee's clockings for current month;
+if (Clockings exist for current month?) then (yes)
+  :Display clocking history table;
+  note right
+    Table columns:
+    Date | Clock In | Clock Out
+    Sorted by date descending
+  end note
+else (no clockings this month)
+  :Display "No clockings recorded this month";
 endif
 stop
+
 @enduml
 ```
+
+**Concrete Scenarios:**
+
+| # | Scenario | Actor | Steps | Expected Outcome |
+|---|---|---|---|---|
+| S1 | View mid-month history | Carlos (Employee) | Navigates to history page on July 15 → sees 10 clocking entries from July 1–14 | Table with 10 rows, sorted by date descending |
+| S2 | View on first of month | María (Employee) | Navigates to history on July 1 → no clockings yet | "No clockings recorded this month" message displayed |
+
+---
 
 ### UC-003: Review and Export Clockings
 
 | Field | Value |
 |---|---|
 | Primary Actor | HR Administrator (ACT-002) |
-| Trigger | HR needs to review or export monthly clocking data |
+| Trigger | HR needs to review or export monthly clocking report |
 | Precondition | HR Administrator is authenticated via AD with HR role |
-| Postcondition | Clocking data displayed and/or CSV file generated |
+| Postcondition | All employees' clockings are viewable; CSV export generated if requested |
 | Priority | Must |
 | Stability | Medium |
+| Includes | AD Authentication (cross-cutting) |
 
 **Main Flow:**
-1. HR Administrator navigates to clocking review panel
-2. System authenticates via AD (`<<include>>`)
-3. System displays all employees' clockings for the current month
-4. HR Administrator optionally selects a different month
-5. HR Administrator clicks "Export CSV"
-6. System generates CSV file with all clocking records for selected month
-7. System downloads CSV file to HR Administrator's browser
+1. HR Administrator navigates to clocking review page
+2. System authenticates HR Admin via AD (`<<include>>`) and verifies HR role
+3. HR selects month filter
+4. System retrieves all employees' clockings for selected month
+5. System displays clocking table (paginated, 50 rows/page)
+6. HR clicks "Export CSV"
+7. System generates CSV file (RFC 4180 compliant)
+8. System logs export action in audit trail
+9. Browser downloads CSV file
 
 **Alternative Flows:**
-- **AF-1: No clockings for selected month:** System displays empty state.
+- **AF-1: Browse without export:** HR reviews clocking data on screen without exporting. Flow ends at step 5.
+- **AF-2: Filter by employee:** HR can filter by specific employee name in addition to month.
+
+**Exception Flows:**
+- **EF-1: No clockings for selected month:** System displays "No clockings found for selected month."
+- **EF-2: CSV generation fails:** System displays error message, logs error, HR can retry.
 
 **Activity Diagram (UC-003 Flow):**
 
@@ -306,59 +332,111 @@ stop
 title UC-003: Review and Export Clockings — Activity Diagram
 
 start
-:HR Admin navigates to clocking review panel;
+:HR Admin navigates to clocking review page;
 :Portal authenticates via AD (<<include>>);
-:System loads all employees' clockings for current month;
-:Display clocking summary table (employee, date, in-time, out-time);
-
-if (HR selects different month?) then (yes)
-  :HR selects target month;
-  :System reloads clockings for selected month;
-  :Display updated table;
-else (no)
+:HR selects month filter;
+:System retrieves all employees' clockings for selected month;
+if (Clockings exist?) then (yes)
+  :Display clocking table (paginated);
+  note right
+    Columns: Employee | Date |
+    Clock In | Clock Out
+    Pagination: 50 rows/page
+  end note
+  if (HR clicks Export CSV?) then (yes)
+    :System generates CSV (RFC 4180);
+    :System logs export action in audit trail;
+    :Browser downloads CSV file;
+  else (no)
+    :HR browses clocking data;
+  endif
+else (no clockings for month)
+  :Display "No clockings found for selected month";
 endif
-
-if (HR clicks "Export CSV"?) then (yes)
-  :System generates CSV file (RFC 4180);
-  :CSV contains: employee, date, clock-in, clock-out;
-  :Browser downloads CSV file;
-  :Display export confirmation;
-else (no — view only)
-  :HR reviews data on screen;
-endif
-
-if (No clockings for selected month?) then (yes)
-  :Display empty state message;
-else (no)
-endif
-
 stop
+
 @enduml
 ```
+
+**Sequence Diagram — CSV Export Realization:**
+
+```plantuml
+@startuml
+title UC-003: Review and Export Clockings — Sequence Diagram
+
+actor "HR Administrator" as HR
+participant "Portal UI\n(Razor Pages)" as UI
+participant "Clocking Service" as CS
+participant "Audit Service" as AUD
+database "PostgreSQL" as DB
+actor "Active Directory" as AD
+
+HR -> UI : Navigate to clocking review
+UI -> AD : Validate session (<<include>>)
+AD --> UI : Session valid
+UI -> CS : Get all employees' clockings (month filter)
+CS -> DB : SELECT clockings WHERE month = current
+DB --> CS : Clocking records
+CS --> UI : Clocking list (paginated)
+UI --> HR : Display clocking table
+
+HR -> UI : Click "Export CSV"
+UI -> CS : Request CSV export (month, all employees)
+CS -> DB : SELECT all clockings for month
+DB --> CS : Full result set
+CS -> CS : Format as CSV (RFC 4180)
+CS -> AUD : Log export action (who, what, when)
+CS --> UI : CSV file download
+UI --> HR : Browser downloads CSV file
+
+note right of CS
+  CSV format: RFC 4180 compliant
+  Columns: Employee, Date, Clock In, Clock Out
+  Audit trail records export event
+end note
+
+@enduml
+```
+
+**Concrete Scenarios:**
+
+| # | Scenario | Actor | Steps | Expected Outcome |
+|---|---|---|---|---|
+| S1 | Monthly export for payroll | Laura (HR Admin) | Selects June 2026 → sees 200 employees' clockings → clicks Export CSV → downloads file | CSV file with ~4000 rows (200 employees × ~20 working days), RFC 4180 compliant |
+| S2 | Browse without export | Laura (HR Admin) | Selects July 2026 → reviews clockings on screen → does not export | Clocking table displayed, paginated; no CSV generated |
+| S3 | Export with no data | Laura (HR Admin) | Selects December 2025 (pre-system) → no clockings | "No clockings found for selected month" message |
+
+---
 
 ### UC-004: Publish News
 
 | Field | Value |
 |---|---|
 | Primary Actor | HR Administrator (ACT-002) |
-| Trigger | HR has an announcement to publish |
+| Trigger | HR has announcement or news to distribute to employees |
 | Precondition | HR Administrator is authenticated via AD with HR role |
-| Postcondition | News item is published and visible to employees; audit trail entry created |
+| Postcondition | News item is published with title, body, date, category, and featured flag; audit trail entry created |
 | Priority | Must |
 | Stability | Medium |
+| Includes | AD Authentication (cross-cutting), Audit Trail (cross-cutting) |
 
 **Main Flow:**
 1. HR Administrator navigates to news management panel
-2. System authenticates via AD (`<<include>>`)
-3. HR Administrator enters news title, body, selects category (General, HR, IT, Events), and optionally marks as featured
-4. HR Administrator clicks "Publish"
-5. System saves news item with current date
-6. System creates audit trail entry (who, what, when)
-7. System confirms publication
+2. System authenticates HR Admin via AD (`<<include>>`) and verifies HR role
+3. HR enters news title, body, category (General, HR, IT, Events), and date
+4. HR optionally marks news as "featured"
+5. HR clicks "Publish"
+6. System validates required fields (title, body, category required)
+7. System saves news item
+8. System creates audit trail entry (who, what, when)
+9. System displays publication confirmation
 
 **Alternative Flows:**
-- **AF-1: Edit existing news:** HR selects existing item, modifies fields, saves. Audit trail updated.
-- **AF-2: Delete news:** HR selects item, confirms deletion. Audit trail updated.
+- **AF-1: Edit existing news:** HR selects an existing news item, modifies fields, clicks "Save." System updates item and creates audit trail entry.
+- **AF-2: Delete news:** HR selects existing news item and clicks "Delete." System marks as deleted (soft delete) and creates audit trail entry.
+
+**Exception Flows:**
+- **EF-1: Validation failure:** If title or body is empty, system displays validation errors. HR corrects and resubmits.
 
 **Activity Diagram (UC-004 Flow):**
 
@@ -370,16 +448,26 @@ start
 :HR Admin navigates to news management panel;
 :Portal authenticates via AD (<<include>>);
 
-if (Create new?) then (yes)
-  :HR enters title, body, selects category;
-  :HR optionally marks as Featured;
+if (Create new news item?) then (yes)
+  :HR enters title, body, category, date;
+  if (Mark as featured?) then (yes)
+    :Set featured flag = true;
+  else (no)
+    :Set featured flag = false;
+  endif
   :HR clicks Publish;
-  :System saves news item with current date;
-  :System creates audit trail entry;
-  :Display publication confirmation;
-else (no — edit existing)
+  :System validates required fields;
+  if (Validation passes?) then (yes)
+    :System saves news item;
+    :System creates audit trail entry (who, what, when);
+    :Display publication confirmation;
+  else (no)
+    :Display validation errors;
+    :HR corrects and resubmits;
+  endif
+else (edit existing)
   :HR selects existing news item;
-  :HR modifies fields;
+  :HR updates fields;
   :HR clicks Save;
   :System updates news item;
   :System creates audit trail entry;
@@ -387,8 +475,19 @@ else (no — edit existing)
 endif
 
 stop
+
 @enduml
 ```
+
+**Concrete Scenarios:**
+
+| # | Scenario | Actor | Steps | Expected Outcome |
+|---|---|---|---|---|
+| S1 | Publish featured IT maintenance notice | Laura (HR Admin) | Enters title "Server Maintenance Friday" → body → category IT → marks featured → publishes | News item saved with featured=true; audit trail entry created; appears as banner on employee home page |
+| S2 | Publish general announcement | Laura (HR Admin) | Enters title "New Coffee Machine" → body → category General → does NOT mark featured → publishes | News item saved with featured=false; appears in news list (not banner); audit trail entry created |
+| S3 | Edit existing news with wrong date | Laura (HR Admin) | Selects news item → changes date from July 10 to July 15 → saves | News item updated; audit trail entry records edit action with timestamp |
+
+---
 
 ### UC-005: Read News
 
@@ -397,21 +496,27 @@ stop
 | Primary Actor | Employee (ACT-001) |
 | Trigger | Employee opens portal main page |
 | Precondition | Employee is authenticated via AD |
-| Postcondition | News list displayed with filtering and featured banner |
+| Postcondition | News items are displayed sorted by date with optional category filter and featured banner |
 | Priority | Must |
 | Stability | High |
+| Includes | AD Authentication (cross-cutting) |
 
 **Main Flow:**
 1. Employee navigates to portal home page
-2. System authenticates via AD (`<<include>>`)
-3. System displays featured news banner at top (if any featured items exist)
-4. System displays news list sorted by date (most recent first)
-5. Employee optionally selects a category filter (General, HR, IT, Events)
-6. System filters news list by selected category
+2. System authenticates employee via AD (`<<include>>`)
+3. System retrieves published news items sorted by date (descending)
+4. If featured news exists, system displays featured banner at top
+5. System displays news list below banner
+6. Employee optionally selects a category filter (General, HR, IT, Events)
+7. System filters news list by selected category
+8. Employee clicks a news item to read full content
 
 **Alternative Flows:**
-- **AF-1: No news items:** System displays empty state message.
-- **AF-2: No featured news:** Banner section is hidden; news list starts at top.
+- **AF-1: No category filter:** Employee browses all news without filtering. Flow proceeds from step 5 to step 8.
+- **AF-2: No featured news:** If no news items have the featured flag, the banner section is skipped.
+
+**Exception Flows:**
+- **EF-1: No news items published:** System displays "No news available" message on home page.
 
 **Activity Diagram (UC-005 Flow):**
 
@@ -422,25 +527,53 @@ title UC-005: Read News — Activity Diagram
 start
 :Employee navigates to portal home page;
 :Portal authenticates via AD (<<include>>);
+:System retrieves published news items;
+:System sorts news by date (descending);
+
 if (Featured news exists?) then (yes)
-  :Display featured news banner at top;
-else (no)
-  :Hide banner section;
+  :Display featured banner at top;
+  note right
+    Featured banner shows
+    title + summary of
+    most recent featured item
+  end note
+else (no featured)
+  :Skip featured banner section;
 endif
-:System displays news list sorted by date (most recent first);
+
+:Display news list below banner;
+
 if (Employee selects category filter?) then (yes)
   :System filters news by selected category;
-  :Display filtered results;
-else (no)
-  :Display all news;
+  note right
+    Categories: General, HR,
+    IT, Events
+  end note
+  :Display filtered news list;
+else (no filter)
+  :Display all news (unfiltered);
 endif
-if (No news items?) then (yes)
-  :Display empty state message;
+
+if (Employee clicks news item?) then (yes)
+  :Display full news content (title, body, date, category);
 else (no)
+  :Employee browses news list;
 endif
+
 stop
+
 @enduml
 ```
+
+**Concrete Scenarios:**
+
+| # | Scenario | Actor | Steps | Expected Outcome |
+|---|---|---|---|---|
+| S1 | Browse all news | Carlos (Employee) | Opens portal → sees featured banner (IT maintenance) → scrolls news list → clicks "New Coffee Machine" | Full news content displayed; featured banner visible at top |
+| S2 | Filter by HR category | María (Employee) | Opens portal → clicks "HR" category filter → sees only HR-category news | Filtered list showing only HR-category items, sorted by date |
+| S3 | No featured news | Carlos (Employee) | Opens portal on a day with no featured news → sees news list without banner | News list displayed; no banner section shown |
+
+---
 
 ### UC-006: Search Directory
 
@@ -449,20 +582,25 @@ stop
 | Primary Actor | Employee (ACT-001) |
 | Trigger | Employee needs to find a colleague's contact information |
 | Precondition | Employee is authenticated via AD |
-| Postcondition | Matching directory entries displayed with corporate contact data |
+| Postcondition | Matching directory entries are displayed with corporate contact data |
 | Priority | Must |
 | Stability | High |
+| Includes | AD Authentication (cross-cutting) |
 
 **Main Flow:**
 1. Employee navigates to directory page
-2. System authenticates via AD (`<<include>>`)
+2. System authenticates employee via AD (`<<include>>`)
 3. Employee enters search criteria (name, department, or office)
-4. System displays matching entries showing: name, job title, department, office, email, extension phone number
-5. Employee reviews results
+4. System queries directory entries matching criteria
+5. System displays matching entries (name, job title, department, office, email, extension phone)
+6. Employee reviews results
 
 **Alternative Flows:**
-- **AF-1: No matches:** System displays "No results found" message.
-- **AF-2: Browse all:** Employee leaves search empty; system shows all entries (paginated).
+- **AF-1: Browse all (no criteria):** Employee opens directory without entering search criteria. System displays all entries (paginated).
+
+**Exception Flows:**
+- **EF-1: No results found:** System displays "No colleagues found matching criteria."
+- **EF-2: Search timeout:** If query exceeds 2 seconds (REQ-018), system displays partial results or "Search timed out — please refine criteria."
 
 **Activity Diagram (UC-006 Flow):**
 
@@ -473,44 +611,76 @@ title UC-006: Search Directory — Activity Diagram
 start
 :Employee navigates to directory page;
 :Portal authenticates via AD (<<include>>);
+:Display directory search form;
+
 if (Employee enters search criteria?) then (yes)
-  :Employee enters name, department, or office;
-  :System searches matching entries;
-else (no — browse all)
-  :System loads all entries (paginated);
+  note right
+    Search by: name, department,
+    or office (or combination)
+  end note
+  :System queries directory entries matching criteria;
+  if (Results found?) then (yes)
+    :Display matching entries;
+    note right
+      Each entry shows:
+      Name | Job Title | Department |
+      Office | Email | Extension
+      Corporate data only —
+      no private info
+    end note
+  else (no results)
+    :Display "No colleagues found matching criteria";
+  endif
+else (no criteria — browse all)
+  :System displays all directory entries (paginated);
 endif
-if (Matches found?) then (yes)
-  :Display results: name, title, department, office, email, extension;
-else (no)
-  :Display "No results found" message;
-endif
+
 stop
+
 @enduml
 ```
+
+**Concrete Scenarios:**
+
+| # | Scenario | Actor | Steps | Expected Outcome |
+|---|---|---|---|---|
+| S1 | Search by name | Carlos (Employee) | Types "María" in name field → clicks Search | All employees named María displayed with title, dept, office, email, extension |
+| S2 | Filter by department | Carlos (Employee) | Selects "IT" department filter → clicks Search | All IT department employees displayed |
+| S3 | Search by office | María (Employee) | Selects "Santiago" office → clicks Search | All employees at Santiago office displayed |
+| S4 | No results | Carlos (Employee) | Types "xyz" in name field → clicks Search | "No colleagues found matching criteria" message |
+
+---
 
 ### UC-007: Manage Directory
 
 | Field | Value |
 |---|---|
 | Primary Actor | HR Administrator (ACT-002) |
-| Trigger | HR needs to update employee directory data |
+| Trigger | HR needs to create, update, or deactivate an employee directory entry |
 | Precondition | HR Administrator is authenticated via AD with HR role |
-| Postcondition | Directory entry created/updated/deactivated; audit trail entry created |
+| Postcondition | Directory entry is created/updated/deactivated; audit trail entry created |
 | Priority | Must |
 | Stability | Medium |
+| Includes | AD Authentication (cross-cutting), Audit Trail (cross-cutting) |
 
 **Main Flow:**
 1. HR Administrator navigates to directory admin panel
-2. System authenticates via AD (`<<include>>`)
-3. HR Administrator selects an employee entry to edit (or creates new)
-4. HR Administrator updates fields: name, job title, department, office, email, extension phone number
-5. HR Administrator saves changes
-6. System creates audit trail entry (who, what, when)
-7. System confirms update
+2. System authenticates HR Admin via AD (`<<include>>`) and verifies HR role
+3. HR selects action: create new entry or edit existing entry
+4. **Create:** HR enters name, job title, department, office, email, extension phone
+5. HR clicks "Save"
+6. System creates directory entry
+7. System creates audit trail entry (who, what, when)
+8. System displays creation confirmation
 
 **Alternative Flows:**
-- **AF-1: Deactivate entry:** HR marks entry as inactive; entry hidden from directory search but retained in database.
-- **AF-2: AD sync conflict:** If AD-synchronized data conflicts with manual edit, system flags conflict for HR resolution.
+- **AF-1: Edit existing entry:** HR selects employee entry, updates fields, clicks "Save." System updates entry and creates audit trail entry.
+- **AF-2: Deactivate entry:** HR selects employee entry and clicks "Deactivate." Entry is marked inactive (not deleted); audit trail entry created.
+- **AF-3: AD sync conflict:** If AD-synchronized data conflicts with manual edit, system flags conflict for HR resolution.
+
+**Exception Flows:**
+- **EF-1: Required field missing:** If name or email is empty, system displays validation error. HR corrects and resubmits.
+- **EF-2: AD sync conflict unresolved:** If HR attempts to save an AD-synced field change without choosing override or revert, system blocks save and prompts for resolution.
 
 **Activity Diagram (UC-007 Flow):**
 
@@ -551,6 +721,60 @@ stop
 @enduml
 ```
 
+**Sequence Diagram — AD Sync Conflict Resolution:**
+
+```plantuml
+@startuml
+title UC-007: Manage Directory — AD Sync Conflict Sequence
+
+actor "HR Administrator" as HR
+participant "Portal UI\n(Razor Pages)" as UI
+participant "Directory Service" as DS
+participant "AD Sync Service" as ADS
+participant "Audit Service" as AUD
+database "PostgreSQL" as DB
+actor "Active Directory" as AD
+
+HR -> UI : Select employee entry to edit
+UI -> AD : Validate session (<<include>>)
+AD --> UI : Session valid
+UI -> DS : Get employee directory entry
+DS -> DB : SELECT directory_entry WHERE id = ?
+DB --> DS : Entry with AD-synced fields
+DS --> UI : Entry data (name, email, dept from AD; phone, title from local)
+UI --> HR : Display editable form
+
+HR -> UI : Modify department field (AD-synced)
+HR -> UI : Click Save
+UI -> DS : Update entry (department = new_value)
+
+DS -> ADS : Check if field is AD-synced
+ADS -> AD : Query AD for employee record
+AD --> ADS : AD record (department = original)
+ADS --> DS : Conflict detected: field is AD-managed
+
+alt HR chooses to override
+    DS -> DB : Save with manual_override_flag = true
+    DS -> AUD : Log override (who, what, when, reason)
+    DS --> UI : Update confirmed with override warning
+    UI --> HR : "Saved with manual override — AD sync will not overwrite"
+else HR chooses to revert
+    DS -> DB : Revert to AD value
+    DS --> UI : Reverted to AD value
+    UI --> HR : "Reverted to AD synchronized value"
+end
+
+@enduml
+```
+
+**Concrete Scenarios:**
+
+| # | Scenario | Actor | Steps | Expected Outcome |
+|---|---|---|---|---|
+| S1 | Create new employee entry | Laura (HR Admin) | Enters name "Pedro Ruiz" → title "Accountant" → dept Finance → office Havana → email pruiz@cubacorp.com → ext 2205 → saves | Entry created; audit trail entry logged; Pedro appears in directory search |
+| S2 | Update extension phone (non-AD field) | Laura (HR Admin) | Selects Carlos → changes extension from 2100 to 2150 → saves | Entry updated; no AD conflict (phone is local field); audit trail entry created |
+| S3 | Update department (AD-synced field) with override | Laura (HR Admin) | Selects María → changes dept from IT to Operations → system flags AD conflict → HR chooses override → saves | Entry saved with manual_override_flag=true; audit trail logs override; AD sync will not overwrite this field |
+| S4 | Deactivate departing employee | Laura (HR Admin) | Selects Juan → clicks Deactivate → confirms | Entry marked inactive; not visible in directory search; audit trail entry created |
 ## Traceability
 
 | Element | Traces From | Link Type | Traces To |
