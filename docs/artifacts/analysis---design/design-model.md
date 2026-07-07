@@ -3,9 +3,15 @@
 |---|---|
 | Phase | Elaboration |
 | Status | Draft |
-| Iteration | 1 (Cycle 1) |
+| Iteration | 2 (Cycle 1) |
 | Milestone Target | End of Elaboration |
-| Author | User-Interface Designer |
+| Author | User-Interface Designer, Designer (Analysis & Design), Database Designer |
+
+### Elaboration Iteration 2 — UI Designer Changes
+
+- **DM-F1 resolved:** Author field corrected to include all co-owners (User-Interface Designer, Designer, Database Designer) per Review Record finding DM-F1 (Minor, 3rd occurrence).
+- Iteration updated to 2 (Cycle 1).
+- All UI sections (view/controller classes, UI Patterns, interaction flows, Navigation Topology, Salt wireframes) preserved from Iteration 1 — no findings target them.
 
 ### Elaboration Iteration 1 — UI Designer Contribution
 
