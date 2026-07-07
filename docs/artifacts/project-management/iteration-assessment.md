@@ -10,30 +10,27 @@
 | Prior Assessment | Iteration 1 (2026-07-07) — LCO: iteration REQUIRED |
 | Review Coordinator Verdict | Pending — LCO re-review scheduled 2026-07-17 |
 ## Iteration Objectives Reached
-
 ### Objectives Status Summary
 
-The iteration was planned with 7 objectives. The Review Coordinator's LCO verdict is **iteration REQUIRED** — the milestone was NOT achieved. Two objectives were fully achieved, two are pending, and three were partially met.
+This iteration is a **corrective iteration** triggered by 4 open Major findings at the LCO review of Iteration 1. The Review Coordinator's LCO verdict was **iteration REQUIRED**. This assessment tracks the progress of Iteration 2 against its 6 corrective objectives.
 
 ```plantuml
 @startuml
-title Inception Iteration 1 - Objectives Assessment
+title Inception Iteration 2 — Objectives Assessment
 
 start
-:Objective 1: Establish project scope;
-note right: PENDING - F1 F2 F3 S2 open
-:Objective 2: Identify and classify risks;
-note right: ACHIEVED - 8 risks classified
-:Objective 3: Architecture candidate;
-note right: ACHIEVED - SAD delivered
-:Objective 4: Vision and UC Model;
-note right: PARTIALLY MET - 3 Major findings
-:Objective 5: Supplementary Spec;
-note right: ACHIEVED - 23 REQs
-:Objective 6: Analysis classes;
-note right: ACHIEVED
-:Objective 7: LCO readiness;
-note right: PENDING - 4 open Major findings
+:Objective 1: Resolve F1-F3 (UC Model rework);
+note right: IN PROGRESS - System Analyst owns
+:Objective 2: Incorporate design file (S2);
+note right: IN PROGRESS - UI Designer owns
+:Objective 3: Resolve F4-F5 (minor findings);
+note right: IN PROGRESS - Test Mgr, Architect own
+:Objective 4: Update Risk List;
+note right: ACHIEVED - 4 risk statuses updated
+:Objective 5: Evolve Iteration Plan;
+note right: ACHIEVED - Iter 2 plan with Gantt
+:Objective 6: LCO re-assessment;
+note right: PENDING - awaits finding closures
 stop
 @enduml
 ```
@@ -42,14 +39,12 @@ stop
 
 | # | Objective | Status | Evidence |
 |---|---|---|---|
-| 1 | Establish project scope and boundaries | **PENDING** | UC-002/UC-003 carry unresolved `[DERIVED]` markers (F1, F2); UC-004/UC-007 decompose AD Auth as standalone UCs violating Rule 7 (F3); design file `employee-portal-design.html` not incorporated (S2) |
-| 2 | Identify and classify initial risks | **ACHIEVED** | Risk List contains 8 risks classified via FMEA (RPN): 2 High, 3 Significant, 1 Moderate, 1 Minor, 1 Low. Mitigation and contingency plans documented for all. |
-| 3 | Produce initial architecture candidate | **ACHIEVED** | SAD delivered with layered architecture addressing offline sync (RISK-T01), AD integration (RISK-T02), and deployment on internal Windows Server. |
-| 4 | Author Vision and Use Case Model | **PARTIALLY MET** | Vision Document complete with 0 findings. Use Case Model has 3 Major findings (F1, F2, F3) requiring rework. |
-| 5 | Author Supplementary Specification | **ACHIEVED** | 23 requirements (REQ-001 through REQ-023) captured across FURPS+ categories. 0 findings from review. |
-| 6 | Produce initial analysis classes | **ACHIEVED** | Analysis classes produced in Design Model with boundary/control/entity stereotypes. |
-| 7 | Assess LCO milestone readiness | **PENDING** | LCO NOT achieved — 4 open Major findings block milestone. Auto-iteration required. |
-
+| 1 | Resolve F1–F3 (UC Model rework) | **IN PROGRESS** | System Analyst owns F1 (remove [DERIVED] from UC-002), F2 (remove [DERIVED] from UC-003), F3 (refactor AD Auth UC-004/UC-007 to Supplementary Spec). Stakeholder confirmation S1 received — markers can be removed. |
+| 2 | Incorporate design file (S2) | **IN PROGRESS** | UI Designer tasks T5/T6 assigned to review `employee-portal-design.html` and assess impact on UC Model, Design Model, SAD. Software Architect task T7 assigned for SAD impact. |
+| 3 | Resolve F4–F5 (minor findings) | **IN PROGRESS** | F4 (TES coverage table update) depends on T4 (UC renumbering completion). F5 (SAD artifact type verification) assigned to Software Architect. |
+| 4 | Update Risk List | **ACHIEVED** | 4 risk statuses updated: RISK-T03 → Mitigation Planned, RISK-R01 → Mitigation Planned, RISK-S02 → Mitigation Planned, RISK-T05 → Active. All 9 risks have current status reflecting iteration 2 progress. |
+| 5 | Evolve Iteration Plan | **ACHIEVED** | Iteration Plan updated for Iteration 2 with 14 tasks, Gantt schedule, agent role assignments, and LCO re-review evaluation criteria. |
+| 6 | LCO re-assessment | **PENDING** | Awaits closure of F1–F3, S2 by owning roles. LCO re-review scheduled 2026-07-17. |
 ## Adherence to Plan
 
 ### Planned vs. Actual
