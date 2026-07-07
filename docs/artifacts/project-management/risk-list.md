@@ -146,14 +146,23 @@ end note
 | ID | Category | Description | P | I | RPN | Magnitude | Strategy | Owner | Status |
 |---|---|---|---|---|---|---|---|---|---|
 | RISK-T01 | Technical | Offline fault tolerance: system must accept clock in/out during 5-min network drop with zero data loss and sync on restore | 7 | 9 | 63 | **High** | Accept (mitigate) | Software Architect | Mitigation Planned |
-| RISK-T03 | Technical | Data synchronization conflict when network restores — concurrent local and remote clock entries may conflict | 6 | 8 | 48 | **High** | Accept (mitigate) | Software Architect | Identified |
+| RISK-T03 | Technical | Data synchronization conflict when network restores — concurrent local and remote clock entries may conflict | 6 | 8 | 48 | **High** | Accept (mitigate) | Software Architect | Mitigation Planned |
 | RISK-T02 | Technical | AD/LDAP integration: authentication via Active Directory may have schema, connectivity, or configuration issues | 5 | 7 | 35 | **Significant** | Accept (mitigate) | Software Architect | Spike Scheduled |
-| RISK-R01 | Technical | AD schema mismatch: employee attributes in AD may not map cleanly to portal data model (department, office, extension) | 5 | 6 | 30 | **Significant** | Accept (mitigate) | Software Architect | Identified |
-| RISK-S02 | Schedule | Low employee adoption: 80% adoption target within 3 months may not be met if UX is poor or training is insufficient | 4 | 6 | 24 | **Significant** | Accept (mitigate) | HR Director (Laura Gómez) | Identified |
-| RISK-T05 | Technical | Stakeholder design file (`employee-portal-design.html`) not yet incorporated — may require architecture, UC model, or UI design changes | 4 | 6 | 24 | **Significant** | Accept (mitigate) | UI Designer | Identified |
+| RISK-R01 | Technical | AD schema mismatch: employee attributes in AD may not map cleanly to portal data model (department, office, extension) | 5 | 6 | 30 | **Significant** | Accept (mitigate) | Software Architect | Mitigation Planned |
+| RISK-S02 | Schedule | Low employee adoption: 80% adoption target within 3 months may not be met if UX is poor or training is insufficient | 4 | 6 | 24 | **Significant** | Accept (mitigate) | HR Director (Laura Gómez) | Mitigation Planned |
+| RISK-T05 | Technical | Stakeholder design file (`employee-portal-design.html`) not yet incorporated — may require architecture, UC model, or UI design changes | 4 | 6 | 24 | **Significant** | Accept (mitigate) | UI Designer | Active |
 | RISK-S01 | Schedule | Scope creep: stakeholders request additional features (vacation management, payroll integration, push notifications) during iterations | 4 | 5 | 20 | **Moderate** | Avoid | Project Manager | Active |
 | RISK-T04 | Technical | Performance under concurrent clock-in: 200 employees clocking in simultaneously at shift start may exceed 1-second response threshold | 3 | 5 | 15 | **Moderate** | Accept (mitigate) | Software Architect | Identified |
 | RISK-E01 | External | Windows Server hosting constraints: internal server may have limited resources, patching windows, or configuration restrictions | 3 | 4 | 12 | **Minor** | Accept | Technical Advisor (Miguel Torres) | Identified |
+
+### Status Changes — Iteration 2
+
+| Risk ID | Prior Status | New Status | Rationale |
+|---|---|---|---|
+| RISK-T03 | Identified | Mitigation Planned | SAD addresses sync conflict strategy (timestamp-based merge, append-only log); PoC deferred to Elaboration Iter 1 |
+| RISK-R01 | Identified | Mitigation Planned | Mitigation plan defined (AD schema audit with Miguel Torres, local supplement table for missing attributes); Elaboration spike scheduled |
+| RISK-S02 | Identified | Mitigation Planned | Mitigation plan defined (UX simplicity priority, adoption tracking, Laura Gómez communication plan); design file (S2) provides UX baseline |
+| RISK-T05 | Identified | Active | UI Designer tasks T5/T6 assigned in Iteration Plan; design file review in progress this iteration |
 ## Risk Mitigation and Contingency
 ### RISK-T01: Offline Fault Tolerance (RPN 63 — HIGH)
 
