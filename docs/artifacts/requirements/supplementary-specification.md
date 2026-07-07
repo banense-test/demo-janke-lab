@@ -75,14 +75,14 @@ end note
 | REQ-011 | News page shows featured banner and category filter intuitively | No training required to filter news | STK-003 | UC-005 |
 
 ## Reliability
-
 | ID | Requirement | Threshold | Source | Traces To |
 |---|---|---|---|---|
 | REQ-012 | Portal available Monday–Friday 7:00–19:00 | ≥99% uptime during business hours | Declared NFR (Availability), CON-009 | All UCs |
 | REQ-013 | Offline fault tolerance: clock in/out continues during network drops up to 5 minutes | Zero data loss; auto-sync on network restore | Declared NFR (Offline), STK-003 | UC-001 |
 | REQ-014 | No data loss during offline-to-online sync | 100% of queued clockings synced | Declared NFR (Offline) | UC-001 |
 | REQ-015 | System recovers gracefully from brief network interruptions | Portal resumes normal operation without manual restart | STK-002 | All UCs |
-
+| REQ-024 | Database backup performed daily with point-in-time recovery capability | Daily backup; RPO ≤ 24 hours; RTO ≤ 2 hours [ASSUMPTION — requires validation] | Implied NFR — clocking data critical for payroll; stakeholders would reject system with no backup | UC-001, UC-002, UC-003 |
+| REQ-025 | Concurrent user capacity during peak clock-in window (09:00–09:30) | Response time within declared thresholds at 50 concurrent users [ASSUMPTION — requires validation] | Implied NFR — 200 employees, peak morning clock-in rush | UC-001, All UCs |
 ## Performance
 
 | ID | Requirement | Threshold | Source | Traces To |
