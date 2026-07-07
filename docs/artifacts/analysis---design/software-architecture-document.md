@@ -359,7 +359,6 @@ end note
 | Offline buffer capacity | ~50 clockings per office per 5-min window | SQLite file-based; trivial storage |
 
 ## Quality
-
 | Quality Attribute | Requirement | Architectural Tactic | Status |
 |---|---|---|---|
 | Reliability | 99% uptime Mon–Fri 7:00–19:00 (REQ-012) | Single reliable server; offline fallback for clock in/out | Addressed |
@@ -370,6 +369,17 @@ end note
 | Maintainability | Standard .NET 10 patterns (REQ-020) | Layered architecture; interface-based boundaries; DI container | Addressed |
 | Supportability | Configurable for 3 offices without code changes (REQ-022) | Data-driven office list in Employee table | Addressed |
 
+### Proof-of-Concept Plan (Elaboration)
+
+The following PoCs are planned for the Elaboration phase to validate the top technical risks. The `get_optional_artifact_triggers` oracle reports the Architectural Proof-of-Concept artifact trigger as **not fired** in Inception — these PoCs will be executed in Elaboration if the trigger fires then.
+
+| PoC | Risk Addressed | Scope | Success Criteria |
+|---|---|---|---|
+| **PoC-1: Offline Sync** | RISK-T01 (RPN 63), RISK-T03 (RPN 48) | Simulate 5-min network drop; write clockings to SQLite; restore network; verify sync to PostgreSQL with zero data loss and conflict detection | 100% of queued clockings synced; no duplicates; sync completes <30s after restore |
+| **PoC-2: AD Integration** | RISK-T02 (RPN 35), RISK-R01 (RPN 30) | Spike with Miguel Torres: test LDAP bind against corporate AD; test OAuth2 via AD FS if available; evaluate employee data sync | Successful authentication against corporate AD; employee data (name, email, department) retrieved; protocol recommendation documented |
+| **PoC-3: Design File Integration** | RISK-T05 (RPN 12) | Verify that the stakeholder design file (`docs/inputs/employee-portal-design.html`) can be implemented within the Razor Pages architecture without structural changes | All 3 main views + HR admin panel implemented as Razor Pages matching design intent; no architectural deviations required |
+
+**PoC-1 is the highest priority** — it validates the single highest-risk mechanism (offline fault tolerance). PoC-2 resolves the LDAP-vs-OAuth2 decision that blocks the AD Auth Provider implementation. PoC-3 confirms the design file alignment assessed in this iteration.
 ## ADRs
 
 ### ADR-001: Layered Architecture (not Microservices)
