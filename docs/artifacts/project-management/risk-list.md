@@ -241,7 +241,6 @@ end note
 | **Contingency** | If server resources are insufficient, request a VM allocation or resource upgrade from IT. |
 | **Detection** | Server resource monitoring; deployment dry-run in Elaboration. |
 ## Traceability
-
 | Element | Traces From | Link Type | Traces To |
 |---|---|---|---|
 | RISK-T01 | NFR: Offline Fault Tolerance | Derives | Elaboration PoC, SAD (Architecture) |
@@ -252,3 +251,4 @@ end note
 | RISK-S01 | Scope Guard (Declared Scope) | Derives | Iteration Plan (Scope Boundary), CCM Process |
 | RISK-T04 | NFR: Performance thresholds | Derives | SAD (Performance), Test Plan (Load Test) |
 | RISK-E01 | Constraint: Internal Windows Server hosting | Derives | SAD (Deployment View), Deployment Model |
+| RISK-T05 | Review Record S2 (Stakeholder design file) | Derives | Design Model, SAD, Use Case Model (design impact) |
