@@ -422,20 +422,21 @@ The SoftwareArchitect resolves specific NuGet package versions (e.g., Npgsql EF 
 | Baseline tagging not enforced | ConfigurationManager | Implement CI gate enforcement | Elaboration (deferred from Inception) |
 
 ## Traceability
-
 | Element | Traces From | Link Type | Traces To |
 |---|---|---|---|
-| Development Case (Elaboration) | IARI DC Baseline, Inception Development Case | Refines | All project artifacts (governs production) |
+| Development Case (Elaboration Iter 2) | IARI DC Baseline, Inception Development Case, Elaboration Iter 1 Development Case | Refines | All project artifacts (governs production) |
 | Business Modeling INACTIVE | DC §4 classification (re-confirmed) | Derives | record_dc_classification |
-| Optional: Architectural PoC FIRED | DC §5.2 trigger (Elaboration + RISK-T01, RISK-T02) | Derives | record_optional_artifact_triggers, SAD (PoC plans) |
+| Optional: Architectural PoC FIRED | DC §5.2 trigger (Elaboration + RISK-T01 RPN 63/High, RISK-T02 RPN 35/Significant) | Derives | record_optional_artifact_triggers, SAD (PoC plans), PoC-1 artifact |
 | Optional: Data Model NOT FIRED | DC §5.2 trigger (~8 entities, not data-centric) | Derives | record_optional_artifact_triggers |
 | Optional: Deployment Model NOT FIRED | DC §5.2 trigger (single-node topology) | Derives | record_optional_artifact_triggers |
 | Optional: Glossary NOT FIRED | DC §5.2 trigger (no specialist vocabulary) | Derives | record_optional_artifact_triggers |
 | Optional: UI Prototype NOT FIRED | DC §5.2 trigger (standard CRUD UI) | Derives | record_optional_artifact_triggers |
 | Optional: Test Plan NOT FIRED | DC §5.2 trigger (no regulatory/contractual reporting) | Derives | record_optional_artifact_triggers |
-| Version Policy (.NET 10, PostgreSQL 16) | Stakeholder Constraints | Derives | record_version_policy, SAD (technology stack) |
+| Version Policy (.NET 10, PostgreSQL 16, Npgsql 10.0.2, EF Core Sqlite 10.0.9) | Stakeholder Constraints, SAD | Derives | record_version_policy, SAD (technology stack) |
 | Inception Lessons Learned | Review Record F1-F7, Iteration Assessment | Derives | Tailoring sections (Requirements, A&D) |
-| Tool Assessment | Stakeholder Constraints, SAD | Derives | ConfigurationManager, TestDesigner (gap actions) |
-| SAD Integration | Software Architecture Document (Elaboration Draft) | Derives | A&D tailoring section, PoC trigger |
-| UC Model Integration | Use-Case Model (Elaboration Draft, 7 UCs) | Derives | Requirements tailoring section |
-| Risk List Integration | Risk List (Inception, RISK-T01/T02/T03) | Derives | PoC trigger justification, A&D tailoring |
+| Elaboration Iter 1 Lessons Learned | Review Record DC-F2, RL-F1, SAD-F2, SAD-F3 | Derives | Tailoring sections (RPN governance, metadata verification) |
+| Tool Assessment | Stakeholder Constraints, SAD, PoC-1 results | Derives | ConfigurationManager, TestDesigner (gap actions) |
+| SAD Integration | Software Architecture Document (Elaboration Iter 2) | Derives | A&D tailoring section, PoC trigger |
+| UC Model Integration | Use-Case Model (Elaboration, 7 UCs) | Derives | Requirements tailoring section |
+| Risk List Integration | Risk List (Elaboration, RISK-T01 RPN 63/High, RISK-T02 RPN 35/Significant, RISK-T03 RPN 48/High) | Derives | PoC trigger justification, A&D tailoring |
+| DC-F2 Resolution | Review Record DC-F2 (RPN inconsistency) | Reviews | Development Case Tailoring Overview + Artifacts and Templates (corrected) |
