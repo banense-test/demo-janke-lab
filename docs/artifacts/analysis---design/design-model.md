@@ -47,6 +47,272 @@
 - Interface Contracts: INT-001–INT-006 with operation signatures, pre/postconditions, provider/consumer mapping, and testability entry points.
 - State Machines: Clocking sync lifecycle (PENDING→SYNCING→SYNCED/SKIPPED), Employee directory lifecycle (ACTIVE→OVERRIDDEN→INACTIVE).
 - Design Decisions documented: DI for testability, SemaphoreSlim for SQLite concurrency, OverrideFlag for AD sync conflict, Result<T> pattern, separate LocalDbContext.
+
+### Database Designer Contribution — Persistent Data Model
+
+> **Contributed by Database Designer (Analysis & Design)** — Physical persistence mapping of design entity classes to PostgreSQL/SQLite schema structures. Data Model trigger NOT fired (§5.2: <10 entities, no data migration); persistence mapping lives inline in the Design Model per protocol.
+
+#### Persistence Contexts
+
+```plantuml
+@startuml
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+title Persistence Contexts — Schema Organization
+
+package "PortalDbContext (PostgreSQL — Online)" {
+  class "clockings" as T1 <<table>>
+  class "news_items" as T2 <<table>>
+  class "employees" as T3 <<table>>
+  class "audit_entries" as T4 <<table>>
+}
+
+package "LocalDbContext (SQLite — Offline Buffer)" {
+  class "clockings_local" as T1L <<table>>
+  class "sync_records" as T5 <<table>>
+}
+
+T1L ..> T1 : sync flush
+T5 ..> T1L : clocking_id FK
+
+note bottom of "LocalDbContext (SQLite — Offline Buffer)"
+  Subset schema: clockings + sync_records only.
+  EF Core EnsureCreated. SemaphoreSlim(1,1).
+  RISK-T01, RISK-T06.
+end note
+
+note bottom of "PortalDbContext (PostgreSQL — Online)"
+  Primary store: all entities.
+  EF Core migrations (versioned, forward-only).
+  Npgsql provider.
+end note
+
+@enduml
+```
+
+#### Persistent Schema — Table Diagram
+
+```plantuml
+@startuml
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam class {
+  BackgroundColor<<table>> #fce4ec
+  BorderColor #37474f
+}
+
+title Persistent Data Model — PostgreSQL Schema (PortalDbContext)
+
+class "clockings\n(TBL-001)" as TBL_001 <<table>> {
+  + id : uuid <<PK>>
+  + employee_id : uuid <<FK>> NOT NULL
+  + type : varchar(4) NOT NULL CHECK (IN ('IN','OUT'))
+  + timestamp : timestamptz NOT NULL
+  + sync_status : varchar(8) NOT NULL DEFAULT 'SYNCED' CHECK (IN ('PENDING','SYNCED','SKIPPED'))
+  + created_at : timestamptz NOT NULL DEFAULT now()
+}
+
+class "news_items\n(TBL-002)" as TBL_002 <<table>> {
+  + id : uuid <<PK>>
+  + title : varchar(200) NOT NULL
+  + body : text NOT NULL
+  + published_date : timestamptz NOT NULL
+  + category : varchar(10) NOT NULL CHECK (IN ('General','HR','IT','Events'))
+  + is_featured : boolean NOT NULL DEFAULT false
+  + created_at : timestamptz NOT NULL DEFAULT now()
+}
+
+class "employees\n(TBL-003)" as TBL_003 <<table>> {
+  + id : uuid <<PK>>
+  + ad_id : varchar(100) NOT NULL UNIQUE
+  + full_name : varchar(200) NOT NULL
+  + job_title : varchar(100) NULL
+  + department : varchar(50) NULL
+  + office : varchar(50) NULL
+  + email : varchar(255) NOT NULL
+  + extension : varchar(20) NULL
+  + is_active : boolean NOT NULL DEFAULT true
+  + override_flag : boolean NOT NULL DEFAULT false
+  + updated_at : timestamptz NOT NULL DEFAULT now()
+}
+
+class "audit_entries\n(TBL-004)" as TBL_004 <<table>> {
+  + id : uuid <<PK>>
+  + entity_type : varchar(50) NOT NULL
+  + entity_id : varchar(36) NOT NULL
+  + action : varchar(20) NOT NULL
+  + user_id : varchar(100) NOT NULL
+  + timestamp : timestamptz NOT NULL DEFAULT now()
+}
+
+class "sync_records\n(TBL-005)" as TBL_005 <<table>> {
+  + local_id : serial <<PK>>
+  + clocking_id : uuid <<FK>> NOT NULL
+  + status : varchar(8) NOT NULL CHECK (IN ('PENDING','SYNCED','SKIPPED'))
+  + queued_at : timestamptz NOT NULL
+  + synced_at : timestamptz NULL
+}
+
+TBL_001 "1" -- "0..*" TBL_005 : "clocking_id → id"
+TBL_003 "1" -- "0..*" TBL_001 : "employee_id → id"
+
+note right of TBL_001
+  **Maps to:** Clocking (CLS-014)
+  **Identity:** Guid (application-assigned)
+  **Index:** idx_clockings_emp_ts (employee_id, timestamp DESC)
+  **Index:** idx_clockings_sync (sync_status) WHERE sync_status = 'PENDING'
+  **NFR:** REQ-017 (<1s clock in/out)
+end note
+
+note right of TBL_002
+  **Maps to:** NewsItem (CLS-015)
+  **Identity:** Guid (application-assigned)
+  **Index:** idx_news_date (published_date DESC)
+  **Index:** idx_news_cat_date (category, published_date DESC)
+  **NFR:** REQ-019 (<3s page load)
+end note
+
+note right of TBL_003
+  **Maps to:** Employee (CLS-016)
+  **Identity:** Guid (application-assigned)
+  **Index:** idx_emp_name (full_name) — GIN trigram
+  **Index:** idx_emp_dept (department)
+  **Index:** idx_emp_office (office)
+  **Index:** idx_emp_ad_id (ad_id) UNIQUE
+  **NFR:** REQ-018 (<2s directory search)
+end note
+
+note right of TBL_004
+  **Maps to:** AuditEntry (CLS-017)
+  **Identity:** Guid (application-assigned)
+  **Append-only:** No UPDATE or DELETE
+  **Index:** idx_audit_entity (entity_type, entity_id)
+  **Index:** idx_audit_ts (timestamp DESC)
+  **NFR:** REQ-004/005/006 (audit trail)
+end note
+
+note right of TBL_005
+  **Maps to:** SyncRecord (CLS-018)
+  **SQLite only** (LocalDbContext)
+  **Identity:** serial (auto-increment)
+  **Index:** idx_sync_status (status) WHERE status = 'PENDING'
+  **NFR:** REQ-014 (offline, zero data loss)
+end note
+
+@enduml
+```
+
+#### ORM Mapping — Class to Table
+
+| Design Class | ID | Table | Context | Identity Strategy | Loading |
+|---|---|---|---|---|---|
+| Clocking | CLS-014 | clockings (TBL-001) | PortalDbContext | Guid (app-assigned) | Eager (employee FK) |
+| NewsItem | CLS-015 | news_items (TBL-002) | PortalDbContext | Guid (app-assigned) | Lazy |
+| Employee | CLS-016 | employees (TBL-003) | PortalDbContext | Guid (app-assigned) | Lazy |
+| AuditEntry | CLS-017 | audit_entries (TBL-004) | PortalDbContext | Guid (app-assigned) | Lazy |
+| SyncRecord | CLS-018 | sync_records (TBL-005) | LocalDbContext | serial (auto-increment) | Eager (clocking FK) |
+
+#### Column Mapping Detail
+
+| Table | Column | C# Property | PostgreSQL Type | Nullable | Default | Constraint |
+|---|---|---|---|---|---|---|
+| clockings | id | Clocking.Id | uuid | NO | — | PK |
+| clockings | employee_id | Clocking.EmployeeId | uuid | NO | — | FK → employees(id) ON DELETE RESTRICT |
+| clockings | type | Clocking.Type | varchar(4) | NO | — | CHECK IN ('IN','OUT') |
+| clockings | timestamp | Clocking.Timestamp | timestamptz | NO | — | — |
+| clockings | sync_status | Clocking.SyncStatus | varchar(8) | NO | 'SYNCED' | CHECK IN ('PENDING','SYNCED','SKIPPED') |
+| clockings | created_at | — (shadow) | timestamptz | NO | now() | — |
+| news_items | id | NewsItem.Id | uuid | NO | — | PK |
+| news_items | title | NewsItem.Title | varchar(200) | NO | — | — |
+| news_items | body | NewsItem.Body | text | NO | — | — |
+| news_items | published_date | NewsItem.PublishedDate | timestamptz | NO | — | — |
+| news_items | category | NewsItem.Category | varchar(10) | NO | — | CHECK IN ('General','HR','IT','Events') |
+| news_items | is_featured | NewsItem.IsFeatured | boolean | NO | false | — |
+| news_items | created_at | — (shadow) | timestamptz | NO | now() | — |
+| employees | id | Employee.Id | uuid | NO | — | PK |
+| employees | ad_id | Employee.AdId | varchar(100) | NO | — | UNIQUE |
+| employees | full_name | Employee.FullName | varchar(200) | NO | — | — |
+| employees | job_title | Employee.JobTitle | varchar(100) | YES | — | — |
+| employees | department | Employee.Department | varchar(50) | YES | — | — |
+| employees | office | Employee.Office | varchar(50) | YES | — | — |
+| employees | email | Employee.Email | varchar(255) | NO | — | — |
+| employees | extension | Employee.Extension | varchar(20) | YES | — | — |
+| employees | is_active | Employee.IsActive | boolean | NO | true | — |
+| employees | override_flag | Employee.OverrideFlag | boolean | NO | false | — |
+| employees | updated_at | — (shadow) | timestamptz | NO | now() | — |
+| audit_entries | id | AuditEntry.Id | uuid | NO | — | PK |
+| audit_entries | entity_type | AuditEntry.EntityType | varchar(50) | NO | — | — |
+| audit_entries | entity_id | AuditEntry.EntityId | varchar(36) | NO | — | — |
+| audit_entries | action | AuditEntry.Action | varchar(20) | NO | — | — |
+| audit_entries | user_id | AuditEntry.User | varchar(100) | NO | — | — |
+| audit_entries | timestamp | AuditEntry.Timestamp | timestamptz | NO | now() | — |
+| sync_records | local_id | SyncRecord.LocalId | serial | NO | — | PK (SQLite: INTEGER AUTOINCREMENT) |
+| sync_records | clocking_id | SyncRecord.ClockingId | uuid | NO | — | FK → clockings_local(id) ON DELETE CASCADE |
+| sync_records | status | SyncRecord.Status | varchar(8) | NO | — | CHECK IN ('PENDING','SYNCED','SKIPPED') |
+| sync_records | queued_at | SyncRecord.QueuedAt | timestamptz | NO | — | — |
+| sync_records | synced_at | SyncRecord.SyncedAt | timestamptz | YES | — | NULL until synced |
+
+#### Index Strategy
+
+| Index | Table | Columns | Type | Justification | NFR |
+|---|---|---|---|---|---|
+| idx_clockings_emp_ts | clockings | (employee_id, timestamp DESC) | B-tree | UC-002: employee views current month history — range scan by employee + date | REQ-017 (<1s clock) |
+| idx_clockings_sync | clockings | (sync_status) | Partial B-tree | SyncQueue.Flush() queries PENDING records only — partial index WHERE sync_status='PENDING' | REQ-014 (offline sync) |
+| idx_news_date | news_items | (published_date DESC) | B-tree | UC-005: news list sorted by date — index scan avoids sort | REQ-019 (<3s page load) |
+| idx_news_cat_date | news_items | (category, published_date DESC) | B-tree | UC-005: filter by category + sort by date — composite index covers both | REQ-019 (<3s page load) |
+| idx_emp_name | employees | (full_name) | GIN trigram | UC-006: search by name — trigram supports ILIKE '%query%' | REQ-018 (<2s search) |
+| idx_emp_dept | employees | (department) | B-tree | UC-006: filter by department — equality scan | REQ-018 (<2s search) |
+| idx_emp_office | employees | (office) | B-tree | UC-006: filter by office — equality scan | REQ-018 (<2s search) |
+| idx_audit_entity | audit_entries | (entity_type, entity_id) | B-tree | UC-004/UC-007: audit lookup by entity — composite equality scan | REQ-004/005/006 |
+| idx_audit_ts | audit_entries | (timestamp DESC) | B-tree | Audit log browsing — chronological order | REQ-004/005/006 |
+
+> **Note:** `idx_emp_name` uses PostgreSQL `pg_trgm` extension for GIN trigram index enabling case-insensitive substring search (`ILIKE '%query%'`). This is the only extension required; it is included in PostgreSQL default packages. Migration must `CREATE EXTENSION IF NOT EXISTS pg_trgm` before index creation.
+
+#### FK Cascade Behavior
+
+| FK | Parent | Child | ON DELETE | ON UPDATE | Rationale |
+|---|---|---|---|---|---|
+| clockings.employee_id → employees.id | employees | clockings | RESTRICT | CASCADE | Clockings are payroll-critical — never delete an employee with clockings; allow ID updates to propagate |
+| sync_records.clocking_id → clockings_local.id | clockings_local | sync_records | CASCADE | CASCADE | SQLite local store — sync records are transient; deleting a local clocking cleans up its sync record |
+
+#### Normalization Assessment
+
+All tables are in **3NF**:
+- **1NF:** All columns atomic (no repeating groups, no arrays).
+- **2NF:** All tables have surrogate UUID PKs — no partial dependencies possible.
+- **3NF:** No transitive dependencies. `sync_status` on `clockings` is functionally dependent on the PK only (not on `employee_id` or `timestamp`). `created_at`/`updated_at` are shadow properties for audit, not transitively dependent on non-key attributes.
+
+No denormalization applied — the schema is simple enough (5 tables, 200 employees, ~40K clockings/year) that 3NF with proper indexes meets all performance NFRs without denormalization trade-offs.
+
+#### Baseline Migration Strategy
+
+**EF Core Migration Sequence (PostgreSQL — PortalDbContext):**
+
+| Migration | Version | Operations | Rollback |
+|---|---|---|---|
+| InitialCreate | v1 | CREATE TABLE employees, news_items, clockings, audit_entries; CREATE INDEX idx_clockings_emp_ts, idx_news_date, idx_news_cat_date, idx_emp_dept, idx_emp_office, idx_audit_entity, idx_audit_ts; CREATE EXTENSION pg_trgm; CREATE INDEX idx_emp_name (GIN trigram); CREATE UNIQUE INDEX idx_emp_ad_id | DropAll (development only — production rollback via Down method drops tables in reverse dependency order) |
+| AddOfflineSync | v2 | ALTER TABLE clockings ADD COLUMN sync_status varchar(8) NOT NULL DEFAULT 'SYNCED' CHECK (IN ('PENDING','SYNCED','SKIPPED')); CREATE INDEX idx_clockings_sync (partial) | ALTER TABLE clockings DROP COLUMN sync_status; DROP INDEX idx_clockings_sync |
+
+**SQLite (LocalDbContext):** EF Core `EnsureCreated()` — no migrations needed. Schema is transient (recreated on each session if needed). Tables: `clockings_local`, `sync_records`.
+
+**Idempotency:** All migrations use `IF NOT EXISTS` semantics via EF Core migration framework. `CREATE EXTENSION IF NOT EXISTS pg_trgm` ensures extension creation is safe on re-run.
+
+**Rollback policy:** Development: `dotnet ef database update <previous-version>`. Production: forward-only migrations only; rollback requires a new forward migration that reverses the change (no `Down` method in production deployments).
+
+#### Performance Baseline
+
+| Query | Access Path | Expected Rows | Expected Response | NFR Target |
+|---|---|---|---|---|
+| ClockIn/ClockOut (INSERT clockings) | Single row insert + idx_clockings_emp_ts append | 1 | <50ms | REQ-017 (<1s) |
+| GetClockings (employee, month) | idx_clockings_emp_ts range scan | ~22 (daily clockings × 22 work days) | <20ms | REQ-017 (<1s) |
+| GetAllClockings (month, all employees) | Seq scan + filter by month | ~4400 (200 emp × 22 days) | <200ms | REQ-019 (<3s) |
+| GetNewsList (sorted by date) | idx_news_date index scan | ~50 (active news items) | <10ms | REQ-019 (<3s) |
+| GetNewsList (filter by category) | idx_news_cat_date composite scan | ~12 (per category) | <10ms | REQ-019 (<3s) |
+| DirectorySearch (by name) | idx_emp_name GIN trigram + ILIKE | <200 (all employees) | <50ms | REQ-018 (<2s) |
+| DirectorySearch (by dept/office) | idx_emp_dept or idx_emp_office equality | <200 | <20ms | REQ-018 (<2s) |
+| AuditLog (by entity) | idx_audit_entity composite equality | <100 | <10ms | REQ-004/005/006 |
+| SyncQueue.Flush() | idx_clockings_sync partial scan | <50 (pending records) | <100ms | REQ-014 (offline sync) |
 ## Design Overview
 This Design Model captures the complete design of the Employee Portal, combining UI design (view/controller classes, UI patterns, interaction flows) and component design (domain classes, service classes, use-case realizations, state machines, subsystem definitions).
 
