@@ -1,13 +1,19 @@
 ## Document Control
-
 | Field | Value |
 |---|---|
 | Phase | Inception |
 | Status | Draft |
-| Iteration | 1 (Cycle 1) |
+| Iteration | 2 (Cycle 1) |
 | Milestone Target | End of Inception (LCO) |
 | Author | Software Architect |
 
+### Iteration 2 Changes
+
+- **S2 (Major) — Resolved:** Evaluated stakeholder design file (`docs/inputs/employee-portal-design.html`) for architectural impact. The design confirms the existing component decomposition (3 main pages + HR admin panel = COMP-P1 through COMP-P4), validates Razor Pages with no SPA (ADR-001), and introduces no new architectural requirements. Design tokens (palette, typography) are UI Designer concerns, not architectural. See "Design File Impact Assessment" under Architectural Goals and Constraints.
+- **F5 (Info) — Acknowledged:** Artifact type registration note. The artifact is accessible by its canonical name "Software Architecture Document." No content change required.
+- **RISK-T05:** New risk added to Risk List tracing from S2. Added to SAD traceability and PoC plan.
+- **PoC Plan section added** (was missing from iteration 1).
+- UC numbering verified against iteration 2 Use-Case Model — all references already aligned. No renumbering needed.
 ## Architectural Representation
 
 This document presents the **candidate architecture** for the Employee Portal using the 4+1 View Model. In Inception, the Logical and Deployment views are sketched at candidate level — sufficient to surface architectural risks and guide Elaboration planning. The Process, Implementation, and Data views will be refined in Elaboration when the architecture is baselined through an executable prototype.
