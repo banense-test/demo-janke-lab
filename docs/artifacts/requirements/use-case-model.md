@@ -4,9 +4,15 @@
 |---|---|
 | Phase | Inception |
 | Status | Draft |
-| Iteration | 1 (Cycle 1) |
-| Milestone Target | End of Inception |
+| Iteration | 2 (Cycle 1) |
+| Milestone Target | End of Inception (LCO) |
 | Author | System Analyst |
+
+### Iteration 2 Changes
+
+- **F1 (Major) — Resolved:** `[DERIVED]` markers removed from all use cases. Stakeholder confirmation (S1, 2026-07-07) verified all 4 declared processes are correct. All UCs trace verbatim to declared scope — no derivation markers needed.
+- **F2 (Major) — Resolved:** Same as F1 — UC-006 (Search Directory) and all other UCs carry no `[DERIVED]` markers. All are literally declared in stakeholder scope.
+- **F3 (Major) — Resolved:** AD Authentication is NOT a standalone use case. It is a cross-cutting mechanism modeled as an external system actor (ACT-003) with `<<include>>` from all UCs. Requirements are in Supplementary Specification (REQ-001 through REQ-003).
 
 ## Use-Case Diagram
 
@@ -80,9 +86,13 @@ end note
 @enduml
 ```
 
-**System boundary:** The Employee Portal encompasses clock in/out, clocking history, HR clocking review/export, news publishing, news reading, directory search, and directory management. Active Directory is an external system on the boundary — all use cases include AD authentication as a cross-cutting mechanism (not a standalone use case).
+**System boundary:** The Employee Portal encompasses clock in/out, clocking history, HR clocking review/export, news publishing, news reading, directory search, and directory management. Active Directory is an external system on the boundary — all use cases include AD authentication as a cross-cutting mechanism (`<<include>>`), not as a standalone use case.
 
-**Out of scope:** Native mobile app, push notifications, payroll integration, vacation/sick-leave management, biometric clocking, external access outside corporate network.
+**Scope guard notes:**
+- AD authentication is a cross-cutting mechanism included by all UCs — NOT a standalone use case (per Scope Guard Rule 7).
+- No UCs inferred beyond declared scope. All 7 UCs trace verbatim to declared stakeholder requirements.
+- No `[SCOPE_QUESTION]` or `[DERIVED]` markers needed — all UCs are literally declared.
+- Stakeholder confirmation (S1, 2026-07-07): all 4 declared processes confirmed correct.
 
 ## Actors
 
@@ -110,6 +120,7 @@ end note
 - AD authentication is a cross-cutting mechanism included by all UCs — NOT a standalone use case (per Rule 7).
 - No UCs inferred beyond declared scope. All 7 UCs trace verbatim to declared stakeholder requirements.
 - No `[SCOPE_QUESTION]` or `[DERIVED]` markers needed — all UCs are literally declared.
+- Stakeholder confirmation (S1, 2026-07-07): all 4 declared processes confirmed correct.
 
 ## Use-Case Specifications
 
