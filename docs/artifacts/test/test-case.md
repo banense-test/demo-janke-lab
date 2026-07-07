@@ -1,13 +1,16 @@
 ## Document Control
-
 | Field | Value |
 |---|---|
 | Phase | Elaboration |
 | Status | Draft |
 | Iteration | 1 (Cycle 1) |
 | Milestone Target | End of Elaboration (LCA) |
-| Author | Test Designer |
-
+| Author | Test Designer (catalog) — Tester (execution findings) |
+| Execution Date | 2026-07-07 |
+| Build ID (main) | CI run 28860381346 — success (2026-07-07 10:46:47Z) |
+| Build ID (PoC) | CI run 28860807083 — success (2026-07-07 10:54:52Z) |
+| PoC Branch | `poc/E1-risk-t01-offline-sync` |
+| Prior Iteration | Inception 2 (LCO approved — GO verdict, 2026-07-07) |
 ## Test Scope
 
 ### Purpose
