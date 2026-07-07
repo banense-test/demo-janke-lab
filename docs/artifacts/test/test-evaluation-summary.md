@@ -7,10 +7,11 @@
 | Milestone Target | End of Inception (LCO) |
 | Author | Test Manager |
 ## Test Scope
-
 ### Evaluation Mission
 
 **Mission Statement:** Establish the test strategy foundation for the Employee Portal by identifying quality risks, defining test coverage priorities against the 7 use cases, and setting the initial evaluation criteria that will govern each subsequent iteration's test effort. The Inception test effort focuses on **risk identification and strategy formulation** — not test execution.
+
+> **Iteration 2 Update (F4 Resolution):** AD Authentication is no longer a standalone use case. Per UC Model iteration 2 rework (F3 resolved), AD Authentication is modeled as external system actor **ACT-003** with `<<include>>` from all UCs. AD auth testing is therefore a **cross-cutting test concern** integrated into every UC test scenario, not a separate test item. Requirements REQ-001 through REQ-003 in the Supplementary Specification govern AD auth test coverage.
 
 **Objectives:**
 1. Identify and prioritize testing risks derived from the project Risk List and Supplementary Specification
@@ -18,22 +19,26 @@
 3. Define the initial test strategy: what will be tested, how, and with what infrastructure
 4. Establish order-of-magnitude effort estimates for test activities across phases
 5. Define the defect lifecycle that will govern issue tracking via SCM
+6. Identify AD authentication (ACT-003) as a cross-cutting test concern across all UC scenarios
 
 **Scope Boundaries:**
-- **In scope:** Test strategy definition, risk-based coverage prioritization, infrastructure assessment, defect lifecycle definition
+- **In scope:** Test strategy definition, risk-based coverage prioritization, infrastructure assessment, defect lifecycle definition, cross-cutting AD auth test strategy
 - **Out of scope (Inception):** Test case authoring, test execution, automated test framework setup, performance/load testing, detailed acceptance thresholds (deferred to Elaboration)
 
 ### Inception Test Workflow
 
 ```plantuml
 @startuml
-title Inception Test Evaluation Workflow
+title Inception Test Evaluation Workflow (Iteration 2)
 
 start
 :Read Vision, Risk List, UC Model, Supp Spec;
 :Identify testing risks from risk register;
 :Draft Evaluation Mission (objectives, scope, monitoring);
 :Define initial test strategy per UC;
+:Note: AD Auth (ACT-003) is cross-cutting
+  <<include>> from all UCs — not a
+  standalone test item;
 :Assess test infrastructure needs;
 :Map UCs to test coverage priorities;
 :Document quality goals and acceptance thresholds;
@@ -44,17 +49,18 @@ stop
 
 ### Use Case Coverage Priorities
 
-Coverage priority is assigned based on architectural significance, risk priority number (RPN), and stakeholder acceptance criteria.
+Coverage priority is assigned based on architectural significance, risk priority number (RPN), and stakeholder acceptance criteria. AD Authentication (ACT-003) is a cross-cutting concern tested via `<<include>>` from all UCs — it does not have its own coverage row.
 
 | UC ID | Use Case | Test Priority | Rationale |
 |---|---|---|---|
-| UC-001 | Clock In/Out | **P1 — Critical** | Architecturally significant (offline fault tolerance); RISK-T01 (RPN 63); acceptance criteria: clock in/out without help, 80% adoption, offline sync |
-| UC-002 | View Clocking History | P2 — High | Depends on UC-001 data integrity; employee self-service |
-| UC-003 | Review and Export Clockings | P2 — High | HR reporting function; CSV format compliance (RFC 4180); role-based access (REQ-002) |
-| UC-004 | Publish News | P2 — High | Audit trail requirement (REQ-004, REQ-006); HR admin function |
-| UC-005 | Read News | P3 — Medium | Read-only employee function; performance threshold (REQ-019) |
-| UC-006 | Search Directory | P2 — High | Acceptance criterion: find colleague in <10 seconds (REQ-008); performance threshold (REQ-018) |
-| UC-007 | Manage Directory | P2 — High | Audit trail (REQ-005, REQ-006); AD sync conflict handling (RISK-R01) |
+| UC-001 | Clock In/Out | **P1 — Critical** | Architecturally significant (offline fault tolerance); RISK-T01 (RPN 63); acceptance criteria: clock in/out without help, 80% adoption, offline sync; AD auth via `<<include>>` ACT-003 |
+| UC-002 | View Clocking History | P2 — High | Depends on UC-001 data integrity; employee self-service; AD auth via `<<include>>` ACT-003 |
+| UC-003 | Review and Export Clockings | P2 — High | HR reporting function; CSV format compliance (RFC 4180); role-based access (REQ-002); AD auth via `<<include>>` ACT-003 |
+| UC-004 | Publish News | P2 — High | Audit trail requirement (REQ-004, REQ-006); HR admin function; AD auth via `<<include>>` ACT-003 |
+| UC-005 | Read News | P3 — Medium | Read-only employee function; performance threshold (REQ-019); AD auth via `<<include>>` ACT-003 |
+| UC-006 | Search Directory | P2 — High | Acceptance criterion: find colleague in <10 seconds (REQ-008); performance threshold (REQ-018); AD auth via `<<include>>` ACT-003 |
+| UC-007 | Manage Directory | P2 — High | Audit trail (REQ-005, REQ-006); AD sync conflict handling (RISK-R01); AD auth via `<<include>>` ACT-003 |
+| **ACT-003** | **Active Directory (cross-cutting)** | **P1 — Critical (cross-cutting)** | **AD auth is `<<include>>` from all 7 UCs; test coverage integrated into every UC scenario; standalone AD integration test in Elaboration (RISK-T02 mitigation)** |
 
 ### Testing Risks Identified
 
@@ -62,7 +68,7 @@ Coverage priority is assigned based on architectural significance, risk priority
 |---|---|---|---|
 | RISK-T01 | Offline fault tolerance (RPN 63) | Hardest to test — requires network simulation; data integrity verification after sync | Plan dedicated offline test scenario in Elaboration; coordinate with SA on PoC |
 | RISK-T03 | Sync conflict (RPN 48) | Concurrent clock entries during offline period may conflict on restore | Design conflict-resolution test cases in Elaboration |
-| RISK-T02 | AD integration (RPN 35) | Auth testing requires AD test environment or mock; fallback auth path needs coverage | Early spike with Miguel Torres; plan AD integration test in Elaboration |
+| RISK-T02 | AD integration (RPN 35) | Auth testing requires AD test environment or mock; cross-cutting across all UCs (ACT-003 `<<include>>`); fallback auth path needs coverage | Early spike with Miguel Torres; plan AD integration test in Elaboration; test AD auth within each UC scenario |
 | RISK-T04 | Performance (RPN 30) | Load testing for 200 concurrent users; page load <3s, clock <1s | Performance test plan in Construction; baseline measurements in Elaboration |
 | RISK-S02 | Adoption (RPN 24) | Usability testing for zero-training clock in/out | Usability test scenario in Construction; acceptance criterion: 80% complete clocking with no training |
 | RISK-R01 | AD data mapping (RPN 30) | Directory data accuracy depends on AD sync; test data must reflect real AD schema | Coordinate test data with Miguel Torres; validate field mapping in Elaboration |
@@ -71,9 +77,9 @@ Coverage priority is assigned based on architectural significance, risk priority
 
 | Phase | Test Activities | Effort Estimate |
 |---|---|---|
-| **Inception** (current) | Risk identification, strategy definition, coverage prioritization, defect lifecycle | ~5% of total test effort |
-| **Elaboration** | Test architecture, AD integration spike testing, offline PoC test support, test environment setup, initial test case design for P1 UCs | ~20% of total test effort |
-| **Construction** | Test case authoring (all UCs), test execution, regression testing per iteration, performance testing, usability testing, integration testing | ~60% of total test effort |
+| **Inception** (current) | Risk identification, strategy definition, coverage prioritization, defect lifecycle, cross-cutting AD auth test strategy | ~5% of total test effort |
+| **Elaboration** | Test architecture, AD integration spike testing (ACT-003 cross-cutting), offline PoC test support, test environment setup, initial test case design for P1 UCs | ~20% of total test effort |
+| **Construction** | Test case authoring (all UCs), test execution, regression testing per iteration, performance testing, usability testing, integration testing, AD auth regression per UC | ~60% of total test effort |
 | **Transition** | System acceptance testing, deployment verification, user acceptance testing with HR Director, final regression | ~15% of total test effort |
 
 ### Quality Goals (Inception)
@@ -82,9 +88,9 @@ Coverage priority is assigned based on architectural significance, risk priority
 |---|---|---|
 | Risk coverage | All High-magnitude risks (RPN > 35) have a testing mitigation plan | 100% by end of Inception |
 | UC coverage mapping | Every UC assigned a test priority | 7/7 UCs mapped |
+| AD auth coverage | AD auth (ACT-003) test strategy defined as cross-cutting concern across all UCs | Strategy documented |
 | Test strategy alignment | Strategy traces to Vision acceptance criteria and Supplementary Spec REQs | All 5 acceptance criteria addressed |
 | Defect lifecycle | Formal lifecycle defined and agreed | State machine published |
-
 ## Test Summary
 
 ### Inception Test Status
