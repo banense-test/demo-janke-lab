@@ -1,14 +1,22 @@
-# Employee Portal — IaC Base (Placeholder)
-# Inception baseline: skeleton only.
-# The portal deploys to a single Windows Server (no Kubernetes, no cloud).
-# This file is a placeholder for future containerization if a CR approves it.
+# Employee Portal — Infrastructure as Code Base
+# Inception baseline: skeleton only
 #
-# Current deployment: manual installation by IT on Windows Server.
-# See docs/DEPLOYMENT_STRATEGY.md for details.
-
-apiVersion: v2
-name: employee-portal
-description: Employee Portal for Cuba Corp — IaC placeholder (not yet used)
-type: application
-version: 0.1.0
-appVersion: "0.1.0-inception"
+# For a single-server intranet deployment, full Kubernetes/Helm is not required.
+# This file serves as a placeholder for infrastructure configuration scripts
+# that will be developed in Elaboration/Construction phases.
+#
+# Deployment target: Internal Windows Server (no cloud, no containers required)
+# Components: .NET 10 Kestrel, PostgreSQL, SQLite (offline buffer)
+#
+# TODO (Elaboration): Replace with PowerShell DSC or Ansible playbook
+# for Windows Server configuration management.
+#
+# Key infrastructure tasks for future phases:
+# 1. Install .NET 10 runtime on Windows Server
+# 2. Install and configure PostgreSQL (TCP 5432)
+# 3. Configure firewall rules (HTTP/HTTPS inbound, TCP 5432 local, TCP 389/636 to AD)
+# 4. Create service account for portal application
+# 5. Configure AD connection (LDAP/OAuth2 — method TBD Elaboration spike)
+# 6. Set up SQLite offline buffer directory with appropriate permissions
+# 7. Configure Windows Service for Kestrel auto-start
+# 8. Set up PostgreSQL backup schedule
