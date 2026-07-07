@@ -210,12 +210,12 @@ The Inception Evaluation Mission aimed to establish the test strategy foundation
 | 80% complete clocking with no training | UC-001 P1 usability test; user acceptance testing; AD auth via ACT-003 `<<include>>` | Transition |
 | System works offline 5 min, syncs on restore | UC-001 P1 offline test scenario; RISK-T01 mitigation; AD auth via ACT-003 `<<include>>` | Elaboration (PoC) + Construction |
 ## Traceability
-
 | Element | Traces From | Link Type | Traces To |
 |---|---|---|---|
 | TES-001 (Evaluation Mission) | Vision, Risk List | Derives | Iteration Plan (Elaboration test scope) |
-| TES-002 (UC Coverage Priorities) | UC-001 through UC-007, RISK-T01, RISK-T03, RISK-T04 | Derives | TC-001 through TC-007 (future, Elaboration) |
+| TES-002 (UC Coverage Priorities) | UC-001 through UC-007, ACT-003 (AD cross-cutting), RISK-T01, RISK-T03, RISK-T04 | Derives | TC-001 through TC-007 (future, Elaboration) |
 | TES-003 (Testing Risks) | RISK-T01, RISK-T02, RISK-T03, RISK-T04, RISK-R01, RISK-S02 | Derives | Elaboration Test Plan, Construction Test Cases |
 | TES-004 (Defect Lifecycle) | SCM Issue Tracker | DependsOn | All future test execution |
 | TES-005 (Test Strategy by Phase) | Vision (acceptance criteria), Supplementary Spec (REQ-001 through REQ-023) | Derives | Elaboration/Construction/Transition test plans |
 | TES-006 (Acceptance Criteria Mapping) | Vision (5 acceptance criteria), REQ-008, REQ-009, REQ-013, REQ-014, REQ-016, REQ-017 | Derives | User Acceptance Testing (Transition) |
+| TES-007 (AD Auth Cross-Cutting Strategy) | ACT-003, REQ-001, REQ-002, REQ-003, F4 (Review Record) | Derives | All UC test scenarios (TC-001 through TC-007) |
