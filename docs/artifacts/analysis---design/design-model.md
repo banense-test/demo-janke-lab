@@ -4,8 +4,14 @@
 | Phase | Elaboration |
 | Status | Draft |
 | Iteration | 2 (Cycle 1) |
-| Milestone Target | End of Elaboration |
+| Milestone Target | LCA (Lifecycle Architecture) |
 | Author | User-Interface Designer, Designer (Analysis & Design), Database Designer |
+
+### Elaboration Iteration 2 — Designer (Analysis & Design) Changes
+
+- **DM-F1 co-owner resolution:** Verified author field includes all three co-owners. Designer (Analysis & Design) sections confirmed present and properly attributed: Domain Model (Analysis Classes ACL-001–ACL-018, mechanism resolution, state machines), Use-Case Realizations (SEQ-001–SEQ-007 sequence diagrams), Design Packages and Classes (CLS-009–CLS-031 full signatures), Interface Contracts (INT-001–INT-006 with pre/postconditions), Testability Entry Points.
+- **Milestone Target corrected** from "End of Elaboration" to "LCA (Lifecycle Architecture)" for consistency with SAD and Review Record.
+- All Designer sections preserved from Iteration 1 — no new findings or CRs target them.
 
 ### Elaboration Iteration 2 — UI Designer Changes
 
@@ -21,6 +27,16 @@
 - Salt wireframes produced for 4 primary screens: Login, Home/Clock, Directory Search, Admin News Publishing.
 - Interaction flow activity diagrams for all 7 UCs trace to use-case flow steps and apply measurable usability requirements (REQ-008 through REQ-045).
 - **Navigation Topology state machine added** — formal model of all 11 screens (9 view pages + Login + error states), transitions with guard conditions, verified for reachability and no dead-end screens. Traces to REQ-042 (consistent navigation) and all UCs of UI significance.
+
+### Elaboration Iteration 1 — Designer (Analysis & Design) Contribution
+
+- Analysis Classes identified for all 7 UCs: 8 boundary (ACL-001–ACL-008), 5 control (ACL-009–ACL-013), 5 entity (ACL-014–ACL-018) with full stereotype attribution.
+- Three-Level Mechanism Chain resolved: persistence → IRepository<T> → EF Core+Npgsql; offline → ILocalStore → EF Core+SQLite; auth → IAuthProvider → LDAP adapter; audit → IAuditLogger → AuditEntry table; network → INetworkHealth → TcpHealthMonitor; export → IExportService → CsvExporter.
+- Use-Case Realizations: 7 sequence diagrams (SEQ-001–SEQ-007) covering main flow + key alternative/exception flows for all UCs.
+- Design Classes: CLS-009–CLS-031 with full signatures, visibility modifiers, constructor injection, interface realizations across Application, Domain, and Infrastructure packages.
+- Interface Contracts: INT-001–INT-006 with operation signatures, pre/postconditions, provider/consumer mapping, and testability entry points.
+- State Machines: Clocking sync lifecycle (PENDING→SYNCING→SYNCED/SKIPPED), Employee directory lifecycle (ACTIVE→OVERRIDDEN→INACTIVE).
+- Design Decisions documented: DI for testability, SemaphoreSlim for SQLite concurrency, OverrideFlag for AD sync conflict, Result<T> pattern, separate LocalDbContext.
 ## Design Overview
 This Design Model captures the complete design of the Employee Portal, combining UI design (view/controller classes, UI patterns, interaction flows) and component design (domain classes, service classes, use-case realizations, state machines, subsystem definitions).
 
