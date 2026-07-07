@@ -1,259 +1,434 @@
 ## Document Control
 | Field | Value |
 |---|---|
-| Phase | Inception |
+| Phase | Elaboration |
 | Status | Draft |
-| Milestone Target | End of Inception (LCO) |
-| Iteration | 2 (Cycle 1) |
+| Milestone Target | End of Elaboration (LAM) |
+| Iteration | 1 (Cycle 1) |
 | Author | ProcessEngineer |
-| Governance Re-recorded | 2026-07-07 — DC classification, optional triggers, version policy all re-confirmed for iteration 2 |
+| Prior Phase | Inception (LCO approved — GO verdict, 2026-07-07) |
+| Governance Re-recorded | 2026-07-07 — DC classification, optional triggers, version policy all re-confirmed for Elaboration iteration 1 |
+
 ## Tailoring Overview
 
 This Development Case specifies project-specific **deltas** over the IARI DC baseline. The baseline defines 24 active roles, 16 CORE artifacts, 6 OPTIONAL artifacts, and a canonical discipline-intensity matrix. This document declares only deviations from that baseline — it does not restate it.
 
-### Organization Assessment
+### Organization Assessment (Updated for Elaboration)
 
 | Factor | Finding |
 |---|---|
 | Organization | Cuba Corp — 200 employees, 3 offices. Internal IT project, no external regulatory constraints. |
 | Agent roles | 24 RUP roles active per IARI baseline. AI-agent-driven process. |
-| Process maturity | Greenfield — no prior RUP artifacts. Incremental rollout: Requirements + Architecture first, then Implementation + Test. |
-| Risk profile | Low-medium. Primary technical risk: offline fault tolerance (5-min network drop with zero data loss for clock in/out). Secondary: AD/LDAP integration. |
+| Process maturity | Post-Inception: 2 iterations completed, LCO approved. Process stabilized for Requirements + Architecture. Implementation + Test disciplines entering active phase. |
+| Risk profile | Low-medium. RISK-T01 (offline sync, RPN 35 — Significant), RISK-T02 (AD integration, RPN 30 — Significant), RISK-T03 (data sync conflicts, RPN 24 — Significant). All require Elaboration mitigation. |
 | Tool baseline | Git/SCM, .NET 10 SDK, Razor Pages, PostgreSQL, Windows Server (internal hosting), Chrome/Edge only. CI via GitHub Actions workflows. |
 
-### Tool Assessment
+### Inception Lessons Learned (Process Improvement Input)
+
+| Lesson | Source | Process Adjustment |
+|---|---|---|
+| DERIVED markers require precision — over-application causes rework | Iteration Assessment, Review Record F1-F3 | UC enumeration rules reinforced: DERIVED valid ONLY when STK-NNN verbatim describes the UC process. Cross-cutting mechanisms (auth/sync/audit) remain in Supplementary Specification, never as UCs. |
+| Stale objective statuses in Iteration Assessment | Review Record F7 | Process Engineer to verify Document Control metadata is refreshed on every section update across all artifacts. |
+| AD auth method (LDAP vs OAuth2) undecided | Risk List RISK-T02, SAD ADR-003 | AD integration isolated behind IAuthProvider interface — spike deferred to Construction per SAD decision. Process tailoring: PoC artifact triggered for Elaboration risk validation. |
+| Design file impact requires stakeholder input | Review Record S2 | Process adjustment: stakeholder design file review integrated into Elaboration SAD evolution. |
+
+### Tool Assessment (Updated for Elaboration)
 
 | Tool Category | Status | Notes |
 |---|---|---|
-| Version control | Available (Git/SCM) | Project repository initialized |
-| Build pipeline | To configure | `.github/workflows` — .NET 10 build + test |
-| Test framework | To configure | xUnit for .NET 10 (deferred to Elaboration) |
-| Modeling | PlantUML via process tooling | UML diagrams embedded in artifacts |
-| Requirements | Artifact-based | Use-Case Model + Supplementary Specification |
-| Database | PostgreSQL on Windows Server | Npgsql EF Core provider (version to be resolved by SoftwareArchitect) |
+| Version control | Available (Git/SCM) | Project repository initialized, branching strategy published |
+| Build pipeline | To configure | `.github/workflows` — .NET 10 build + test. ConfigurationManager to configure during Elaboration. |
+| Test framework | To configure | xUnit for .NET 10. Deferred to Construction per canonical intensity (Test: Medium in Elaboration, Critical in Construction). |
+| Modeling | PlantUML via process tooling | UML diagrams embedded in artifacts — verified working |
+| Requirements | Artifact-based | Use-Case Model (7 UCs, all with activity diagrams) + Supplementary Specification (fully quantified) |
+| Database | PostgreSQL on Windows Server | Npgsql EF Core provider — version resolved by SoftwareArchitect (10.0.2 confirmed in SAD) |
+| CI/CD | GitHub Actions | CI triggers on all branch families for push and PR. Baseline tagging and CI gate enforcement deferred to Elaboration. |
 
 ## Disciplines and Intensity
 
-Per canonical matrix — no deviations. All 7 always-active disciplines confirmed at canonical intensity levels for Inception.
+Per canonical matrix — no deviations. All 7 always-active disciplines confirmed at canonical intensity levels for Elaboration:
 
-| Discipline | Inception Intensity | Status |
+| Discipline | Elaboration Intensity | Notes |
 |---|---|---|
-| Business Modeling | High | **INACTIVE** — see below |
-| Requirements | Critical | Active |
-| Analysis & Design | Medium | Active |
-| Implementation | Medium | Active |
-| Test | Low | Active |
-| Deployment | Low | Active |
-| Configuration & Change Management | Medium | Active |
-| Project Management | High | Active |
-| Environment | High | Active (this artifact) |
+| Requirements | High | UC Model evolved to Elaboration depth (7 UCs with activity diagrams, scenarios) |
+| Analysis & Design | Critical | SAD baseline established (4+1 views complete), Design Model in progress |
+| Implementation | Medium | Bottom-up integration: Infrastructure → Application → Presentation |
+| Test | Medium | Test Evaluation Summary from Inception; Test Case design begins |
+| Deployment | Low | Single-node topology; deployment section in SAD sufficient |
+| Configuration & Change Management | Medium | CI pipeline configuration; baseline tagging deferred to Elaboration |
+| Project Management | Medium | Iteration Plan, Risk List, Iteration Assessment active |
+| Business Modeling | INACTIVE | Not business-process-led per DC §4 classification (re-confirmed) |
+| Environment | Medium | This iteration — Development Case refinement + tool verification |
 
-### Business Modeling — INACTIVE
-
-**Verdict:** `business-process-led = false`
-
-**Rationale:** The project replaces fragmented tools (Excel sheets, mass emails, PDF directory) with a centralized web portal. The stakeholder declared concrete IT system requirements (3 functional use cases + AD authentication) and business goals (50% HR time reduction, 100% Excel elimination, 80% adoption). The approach is building a software system to automate existing processes — not redesigning how the business operates. No business process reengineering, no business object model, no business use-case modeling is warranted. The System Analyst captures requirements directly from stakeholder declarations.
-
-**Impact:** BusinessProcessAnalyst and BusinessReviewer roles are idle for this project. No Business Use-Case Model or Business Rules artifact is produced. Requirements discipline consumes stakeholder declarations directly.
+**No intensity deviations requested.** The canonical matrix levels match the project's risk profile and phase objectives.
 
 ## Artifacts and Templates
 
 ### CORE Artifacts (16) — All Active
 
-All 16 CORE artifacts from the IARI baseline are in scope. No CORE artifact is omitted. Primary ownership per baseline allowlist — no reassignments.
+All 16 CORE artifacts are produced per IARI baseline ownership. No CORE artifacts omitted. No ownership reassignments.
 
-| Artifact | Primary Owner | Inception Status |
-|---|---|---|
-| Vision | RequirementsSpecifier | Draft |
-| Use-Case Model | SystemAnalyst | Draft |
-| Supplementary Specification | SystemAnalyst | Draft |
-| Software Architecture Document | SoftwareArchitect | Preliminary |
-| Design Model | Designer | Preliminary |
-| Implementation Model | Implementer | Preliminary |
-| Test Case | TestDesigner | Preliminary |
-| Test Evaluation Summary | TestManager | Deferred (Construction) |
-| User Documentation | TechnicalWriter | Deferred (Transition) |
-| Release Notes | TechnicalWriter | Deferred (Transition) |
-| Iteration Plan | ProjectManager | Draft |
-| Iteration Assessment | ProjectManager | End of iteration |
-| Risk List | ProjectManager | Draft |
-| Review Record | ReviewCoordinator | End of iteration |
-| Development Case | ProcessEngineer | This artifact |
-| Change Request | ChangeControlManager | As needed (Construction+) |
+### OPTIONAL Artifacts (6) — Trigger Re-Evaluation for Elaboration
 
-### OPTIONAL Artifacts (6) — Trigger Evaluation
-
-| Optional Artifact | Trigger Condition | Fired? | Justification |
+| Optional Artifact | §5.2 Trigger Condition | Fired? | Justification |
 |---|---|---|---|
-| Glossary | Domain uses specialist vocabulary | **No** | HR/time-tracking domain uses common business terms. No regulated/legal/medical/financial jargon. |
-| Architectural Proof-of-Concept | Elaboration + technical risk requiring empirical validation | **No** | Currently Inception. May fire in Elaboration if offline fault tolerance risk warrants empirical validation per Risk List. |
-| Data Model | Data-centric OR >10 entities OR data-migration in scope | **No** | ~5-6 entities (Employee, Clocking, News, Category, DirectoryEntry, AuditLog). Not data-centric CRUD portal. No data migration. Data lives inline in Design Model. |
-| Deployment Model | Distributed/multi-node OR multi-environment non-trivial | **No** | Single Windows Server, single environment, internal network only. Deployment is a section in SAD. |
-| User-Interface Prototype | UX-critical OR UI complexity requiring validation | **No** | Simple CRUD portal with 3 features. Razor Pages, no SPA. Standard intranet UI patterns. |
-| Test Plan | Formal delivery / regulatory audit / contractual test reporting | **No** | Internal portal, no regulatory or contractual test reporting requirements. Iteration Plan defines per-iteration testing scope. |
+| Architectural Proof-of-Concept | Elaboration phase + at least one technical risk requiring empirical validation (per Risk List) | **YES** | Elaboration phase active. RISK-T01 (offline sync, RPN 35) and RISK-T02 (AD integration, RPN 30) are Significant technical risks requiring empirical validation. SAD references PoC-1 (Offline Sync) and PoC-2 (AD Integration) plans. |
+| Data Model | Data-centric system OR >10 entities OR data-migration in scope | NO | Standard CRUD intranet portal. ~8 entities (Employees, Clockings, News, NewsCategories, DirectoryEntries, AuditLogs, etc.). Not data-centric, no migration. Data schema lives in SAD Data View. |
+| Deployment Model | Distributed / multi-node topology, OR multi-environment non-trivial | NO | Single Windows Server, single node, internal network only. Physical View in SAD is sufficient. |
+| Glossary | Domain uses specialist vocabulary (technical/regulated/legal/medical/financial jargon) | NO | Standard intranet domain — no specialist vocabulary requiring stakeholder-validated definitions. |
+| User-Interface Prototype | UX-critical OR UI complexity requiring stakeholder validation before implementation | NO | Razor Pages intranet with standard CRUD UI. Not UX-critical. No prototype needed before implementation. |
+| Test Plan | Formal delivery / regulatory audit / contractual test reporting | NO | Internal tool, no regulatory or contractual test reporting requirements. Iteration Plan defines per-iteration testing scope. |
 
-**Result:** Zero OPTIONAL artifacts triggered. All 6 remain NOT-FIRED.
+**Change from Inception:** Architectural Proof-of-Concept trigger newly FIRED (Inception was not in Elaboration phase — trigger condition requires Elaboration phase). All other triggers unchanged.
 
 ## Optional Artifact Triggers
 
-See table above. No optional artifacts are triggered for this project in Inception. The Process Engineer will re-evaluate each iteration — triggers may fire via Change Request or phase transition (e.g., Architectural PoC in Elaboration).
+Recorded via `record_optional_artifact_triggers`:
+- **FIRED:** Architectural Proof-of-Concept
+- **NOT FIRED:** Data Model, Deployment Model, Glossary, User-Interface Prototype, Test Plan
+
+The Architectural Proof-of-Concept artifact is now sanctioned for production. The SoftwareArchitect owns this artifact. PoC scope per SAD: PoC-1 (Offline Sync — validates RISK-T01 mitigation), PoC-2 (AD Integration — validates RISK-T02 mitigation). PoC-3 (Design Integration — validates RISK-T05) is referenced but may be deferred based on risk evolution.
 
 ## Roles and Ownership
 
-All 24 IARI baseline roles are active per the fixed roster. No merges, no reassignments, no omissions.
+Per IARI baseline — 24 active roles, no reassignments, no merges. All CORE artifact ownership is fixed per the service-side allowlist. This Development Case does not modify any role assignments.
 
-**Idle roles** (due to Business Modeling being INACTIVE):
-- BusinessProcessAnalyst — no business use-case modeling work
-- BusinessReviewer — no business artifacts to review
+### Elaboration-Specific Role Focus
 
-**Contributor notes** (not ownership changes):
-- RequirementsSpecifier contributes to Vision; SystemAnalyst owns Use-Case Model and Supplementary Specification
-- Miguel Torres (Technical Advisor) is a stakeholder resource for AD/infrastructure clarification — not a project role
+| Role | Elaboration Focus |
+|---|---|
+| SoftwareArchitect | SAD baseline (complete), PoC artifact (triggered), architecture stability verification |
+| Designer | Design Model — class diagrams, use-case realizations, sequence diagrams for architecturally significant UCs |
+| DatabaseDesigner | Data schema in SAD (complete); data sections in Design Model |
+| UserInterfaceDesigner | UI sections in Design Model (Razor Pages layout) |
+| SystemAnalyst | UC Model (Elaboration depth — 80%+), Supplementary Specification (fully quantified) |
+| Implementer | Implementation Model — bottom-up: Infrastructure → Application → Presentation |
+| TestDesigner | Test Case design begins (Test: Medium in Elaboration) |
+| ProjectManager | Iteration Plan, Risk List updates, Iteration Assessment |
+| Reviewer | Review Record for Elaboration artifacts |
+| ProcessEngineer | This Development Case + environment verification |
 
 ## Guidelines and Procedures
 
-Project-specific guidelines are authored by discipline experts and referenced here. The Process Engineer integrates references — does not author guideline content.
-
-| Guideline | Owner | Location | Status |
-|---|---|---|---|
-| Coding standards | SoftwareArchitect | `CONTRIBUTING.md` | To be created in Elaboration |
-| CI/CD pipeline | ConfigurationManager | `.github/workflows/` | To be configured in Elaboration |
-| Lint configuration | SoftwareArchitect | `editorconfig` / analyzer rules | To be created in Elaboration |
-| Test conventions | TestDesigner | `CONTRIBUTING.md` (test section) | To be created in Elaboration |
-| UI patterns | UserInterfaceDesigner | `CONTRIBUTING.md` (UI section) | To be created in Elaboration |
-
-### Process Workflow — Active Disciplines (Inception)
+### Process Workflow — Elaboration Discipline Tailoring
 
 ```plantuml
-@startuml DC_DisciplineWorkflow
-title Development Case — Active Discipline Workflow (Inception)
+@startuml
+title Elaboration Discipline Workflow — Process Engineer Tailoring
 
 start
-:Requirements (Critical);
-note right
-  Vision, Use-Case Model,
-  Supplementary Specification
-  SystemAnalyst, RequirementsSpecifier
-end note
+:Load Inception Development Case;
+:Read Review Record (Inception findings);
+:Read Iteration Assessment (lessons learned);
+:Read Risk List (risk profile changes);
+:Read SAD (architecture baseline);
+:Read UC Model (requirements baseline);
 
-:Analysis & Design (Medium);
-note right
-  Software Architecture Document,
-  Design Model (preliminary)
-  SoftwareArchitect, Designer
-end note
+partition "Re-evaluate Triggers" {
+  :Check OPTIONAL artifact triggers;
+  if (Architectural PoC trigger?\nElaboration + technical risk?) then (yes)
+    :Fire: Architectural Proof-of-Concept;
+  else (no)
+    :Not fired: PoC;
+  endif
+  if (Data Model trigger?\nData-centric OR >10 entities?) then (yes)
+    :Fire: Data Model;
+  else (no)
+    :Not fired: Data Model;
+  endif
+  if (Deployment Model trigger?\nDistributed/multi-node?) then (yes)
+    :Fire: Deployment Model;
+  else (no)
+    :Not fired: Deployment Model;
+  endif
+}
 
-:Implementation (Medium);
-note right
-  Implementation Model (preliminary)
-  Implementer
-end note
+partition "Refine Tailoring" {
+  :Update Document Control -> Elaboration;
+  :Confirm discipline intensity per canonical matrix;
+  :Record Inception lessons learned in tailoring;
+  :Update tool assessment (CI/build/test config);
+  :Integrate SAD architecture decisions into design tailoring;
+  :Integrate UC Model into requirements tailoring;
+}
 
-:Test (Low);
-note right
-  Test Case (preliminary)
-  TestDesigner, TestAnalyst
-end note
-
-:Deployment (Low);
-note right
-  Deployment considerations noted
-  in SAD (no separate model)
-  DeploymentManager
-end note
-
-:Configuration & Change Management (Medium);
-note right
-  Change Request, CM config
-  ChangeControlManager,
-  ConfigurationManager
-end note
-
-:Project Management (High);
-note right
-  Iteration Plan, Risk List,
-  Iteration Assessment
-  ProjectManager
-end note
-
-:Environment (High);
-note right
-  Development Case (this artifact),
-  tool configuration verification
-  ProcessEngineer
-end note
+partition "Persist" {
+  :Generate activity diagram (this workflow);
+  :Generate class diagram (role-artifact matrix);
+  :Upsert Development Case (Elaboration delta);
+  :Record optional artifact triggers;
+}
 
 stop
 @enduml
 ```
 
-### Role-Artifact Ownership Matrix
+### Role-Artifact Responsibility Matrix
 
 ```plantuml
 @startuml
-title Role-Artifact Ownership Matrix
+title Role-Artifact Responsibility Matrix — Elaboration Active Disciplines
 
 class ProcessEngineer {
-  Development Case
-}
-class SystemAnalyst {
-  Use-Case Model
-  Supplementary Spec
-}
-class SoftwareArchitect {
-  Architecture Document
-}
-class Designer {
-  Design Model
-}
-class Implementer {
-  Implementation Model
-}
-class TestDesigner {
-  Test Case
-}
-class ProjectManager {
-  Iteration Plan
-  Risk List
-}
-class ChangeControlManager {
-  Change Request
+  + Development Case
+  + record_dc_classification()
+  + record_optional_artifact_triggers()
+  + record_version_policy()
 }
 
-ProcessEngineer --> SystemAnalyst
-ProcessEngineer --> SoftwareArchitect
-SystemAnalyst --> SoftwareArchitect
-SoftwareArchitect --> Designer
-Designer --> Implementer
-SystemAnalyst --> TestDesigner
-ProjectManager --> SystemAnalyst
-ProjectManager --> SoftwareArchitect
+class SystemAnalyst {
+  + Use-Case Model
+  + Supplementary Specification
+  + Vision
+}
+
+class SoftwareArchitect {
+  + Software Architecture Document
+  + Design Model (architecture sections)
+}
+
+class Designer {
+  + Design Model (class/sequence sections)
+}
+
+class DatabaseDesigner {
+  + Design Model (data sections)
+}
+
+class UserInterfaceDesigner {
+  + Design Model (UI sections)
+}
+
+class Implementer {
+  + Implementation Model
+}
+
+class TestDesigner {
+  + Test Case
+}
+
+class TestManager {
+  + Test Evaluation Summary
+}
+
+class ProjectManager {
+  + Iteration Plan
+  + Iteration Assessment
+  + Risk List
+}
+
+class Reviewer {
+  + Review Record
+}
+
+class ChangeControlManager {
+  + Change Request
+}
+
+class ConfigurationManager {
+  + CI/CD Configuration
+}
+
+class TechnicalWriter {
+  + User Documentation
+}
+
+class DeploymentManager {
+  + Deployment Model (if triggered)
+}
+
+ProcessEngineer --> DevelopmentCase : owns
+SystemAnalyst --> UseCaseModel : owns
+SystemAnalyst --> SupplementarySpec : owns
+SystemAnalyst --> Vision : owns
+SoftwareArchitect --> SAD : owns
+Designer --> DesignModel : contributes
+DatabaseDesigner --> DesignModel : contributes
+UserInterfaceDesigner --> DesignModel : contributes
+Implementer --> ImplementationModel : owns
+TestDesigner --> TestCase : owns
+TestManager --> TestEvalSummary : owns
+ProjectManager --> IterationPlan : owns
+ProjectManager --> RiskList : owns
+ProjectManager --> IterationAssessment : owns
+Reviewer --> ReviewRecord : owns
+ChangeControlManager --> ChangeRequest : owns
+TechnicalWriter --> UserDocumentation : owns
+
+DevelopmentCase ..> UseCaseModel : governs
+DevelopmentCase ..> SAD : governs
+DevelopmentCase ..> DesignModel : governs
+DevelopmentCase ..> ImplementationModel : governs
+DevelopmentCase ..> TestCase : governs
 
 note right of ProcessEngineer
-  Business Modeling: INACTIVE
-  business-process-led = false
+  Elaboration focus:
+  - Re-evaluate OPTIONAL triggers
+  - Integrate discipline-expert input
+  - Verify tool environment
+  - Record version policy
+end note
+
+note right of DevelopmentCase
+  Override delta over IARI baseline.
+  Does NOT redefine roster or
+  CORE artifact ownership.
 end note
 
 @enduml
 ```
 
+### Environment Preparation Checklist
+
+```plantuml
+@startuml
+title Elaboration Iteration 1 — Environment Preparation Checklist
+
+start
+:Process Engineer: Prepare Environment for Elaboration;
+
+partition "Tool Configuration Verification" {
+  if (Build pipeline configured?\n(.github/workflows .NET 10)) then (yes)
+    :Verify build runs green;
+  else (no)
+    :Flag gap: build pipeline\nneeds Configuration Manager;
+    note right: Gap logged in DC for\nConfigurationManager to address
+  endif
+  
+  if (Test framework configured?\n(xUnit for .NET 10)) then (yes)
+    :Verify test runner executes;
+  else (no)
+    :Flag gap: test framework\ndeferred to Construction;
+    note right: Elaboration focus is\narchitecture validation
+  endif
+  
+  if (Modeling tool available?\n(PlantUML)) then (yes)
+    :Verify UML rendering;
+  else (no)
+    :Block: modeling tool required;
+  endif
+}
+
+partition "Process Readiness" {
+  if (Development Case updated\nfor Elaboration?) then (yes)
+    :Confirm tailoring sections complete;
+  else (no)
+    :Complete DC tailoring first;
+  endif
+  
+  if (Optional triggers\nre-evaluated?) then (yes)
+    :Confirm: PoC fired, others not;
+  else (no)
+    :Re-evaluate triggers;
+  endif
+  
+  if (Version policy\nrecorded?) then (yes)
+    :Confirm: .NET 10, PostgreSQL LTS;
+  else (no)
+    :Record version policy;
+  endif
+}
+
+partition "Discipline Expert Integration" {
+  :SAD input: architecture baseline stable;
+  :UC Model input: 7 UCs fully specified;
+  :Risk List input: 2 Significant risks (T01, T02);
+  :Integrate into DC tailoring sections;
+}
+
+:Environment ready for Elaboration;
+stop
+@enduml
+```
+
+### Discipline-Specific Tailoring (Integrated from Discipline Experts)
+
+#### Requirements Discipline
+
+- **Active roles:** SystemAnalyst, RequirementsSpecifier
+- **Artifacts:** Use-Case Model (7 UCs — UC-001 through UC-007), Supplementary Specification, Vision
+- **Elaboration focus:** UC specifications at 80%+ detail with activity diagrams and scenario walkthroughs. UC-001 (Clock In/Out) is architecturally significant — drives offline sync design. AD authentication is a Supplementary Specification constraint with `<<include>>` from all UCs, NOT a standalone UC (per Scope Guard Rule 7).
+- **Guideline reference:** `CONTRIBUTING.md` (to be authored by SystemAnalyst for UC specification conventions)
+- **Inception lesson applied:** DERIVED markers used with precision — only when STK-NNN verbatim describes the UC process. F1-F3 findings resolved by removing incorrect DERIVED markers and refactoring cross-cutting mechanisms.
+
+#### Analysis & Design Discipline
+
+- **Active roles:** SoftwareArchitect, Designer, DatabaseDesigner, UserInterfaceDesigner, CapsuleDesigner
+- **Artifacts:** Software Architecture Document (baseline — 4+1 views complete), Design Model (in progress), Architectural Proof-of-Concept (OPTIONAL — triggered)
+- **Elaboration focus:** Architecture baseline stabilization. SAD has all 4+1 views: Logical (component diagram), Process (offline sync concurrency), Deployment (single-node Windows Server), Implementation (package diagram), Data (full schema), Use-Case (sequence diagrams for top 3 UCs). Design Mechanisms section maps all analysis mechanisms to concrete solutions.
+- **PoC scope:** PoC-1 (Offline Sync — RISK-T01), PoC-2 (AD Integration — RISK-T02). PoC-3 (Design Integration — RISK-T05) referenced.
+- **Key architectural decisions:** ADR-001 (layered architecture), ADR-002 (offline sync via SQLite local store + Network Health Monitor), ADR-003 (AD auth isolated behind IAuthProvider — spike deferred to Construction).
+- **Integration order:** Infrastructure → Application → Presentation (bottom-up per SAD).
+- **Guideline reference:** `CONTRIBUTING.md` (to be authored by SoftwareArchitect for coding standards, design conventions)
+
+#### Implementation Discipline
+
+- **Active roles:** Implementer, Integrator
+- **Artifacts:** Implementation Model
+- **Elaboration focus:** Medium intensity. Implementation Model planning. Bottom-up integration order per SAD. AD integration isolated behind IAuthProvider interface — spike deferred to Construction.
+- **Guideline reference:** `CONTRIBUTING.md` (to be authored by Implementer for build conventions, code style)
+
+#### Test Discipline
+
+- **Active roles:** TestManager, TestAnalyst, TestDesigner, Tester
+- **Artifacts:** Test Evaluation Summary (from Inception), Test Case (design begins in Elaboration)
+- **Elaboration focus:** Medium intensity. Test Case design for architecturally significant UCs (UC-001 offline sync, UC-007 AD integration). Test framework (xUnit) configuration deferred to Construction per canonical intensity.
+- **Guideline reference:** `CONTRIBUTING.md` (to be authored by TestDesigner for test conventions)
+
+#### Configuration & Change Management Discipline
+
+- **Active roles:** ChangeControlManager, ConfigurationManager
+- **Artifacts:** Change Request (narrative ledger from Construction onwards), CI/CD configuration
+- **Elaboration focus:** Medium intensity. CI pipeline configuration (`.github/workflows`). Baseline tagging and CI gate enforcement deferred to Elaboration. CI triggers on all branch families for push and PR.
+- **Guideline reference:** `.github/workflows` (owned by ConfigurationManager), `CONTRIBUTING.md` (collaborative)
+
+#### Project Management Discipline
+
+- **Active roles:** ProjectManager, ManagementReviewer
+- **Artifacts:** Iteration Plan, Iteration Assessment, Risk List
+- **Elaboration focus:** Medium intensity. Risk List updates for RISK-T01, RISK-T02, RISK-T03 mitigation tracking. Iteration Plan for Elaboration scope. Iteration Assessment at end of iteration.
+
+#### Deployment Discipline
+
+- **Active roles:** DeploymentManager
+- **Artifacts:** Deployment section in SAD (Physical View)
+- **Elaboration focus:** Low intensity. Single-node topology. Deployment Model OPTIONAL artifact NOT triggered — Physical View in SAD is sufficient.
+
 ### Version Policy
 
-The stakeholder declared the following technology constraints:
-- **Framework:** .NET 10 (backend + Razor Pages frontend)
-- **Database:** PostgreSQL
-- **Browsers:** Chrome and Edge (current versions) only
-- **Hosting:** Internal Windows Server, no cloud
-- **Authentication:** Active Directory via LDAP/OAuth2
+Recorded via `record_version_policy`:
 
-The framework pin (.NET 10) is recorded via `record_version_policy`. No specific NuGet package versions were pinned by the stakeholder — the SoftwareArchitect resolves package versions (e.g., Npgsql EF Core provider) during Elaboration, governed by the framework pin.
+| Ecosystem | Package | Pinned Version | LTS Only | Rationale |
+|---|---|---|---|---|
+| framework | .NET 10 | 10.0 | No | Stakeholder constraint: Backend .NET 10 with REST API. Framework pin governs all NuGet package resolution. |
+| framework | PostgreSQL | 16 | Yes | Stakeholder constraint: PostgreSQL on internal Windows Server. LTS version for enterprise stability. |
+
+The SoftwareArchitect resolves specific NuGet package versions (e.g., Npgsql EF Core provider) against the .NET 10 framework pin. SAD confirms: EF Core 10.0.9, Npgsql 10.0.2, EF Core Sqlite 10.0.9.
+
+### Tool Configuration Gaps (Flagged for Discipline Experts)
+
+| Gap | Owner | Action Required | Due |
+|---|---|---|---|
+| Build pipeline not yet configured | ConfigurationManager | Configure `.github/workflows` for .NET 10 build + test | Elaboration iteration 1 |
+| Test framework not yet configured | TestDesigner / ConfigurationManager | Configure xUnit for .NET 10 | Construction iteration 1 (per canonical intensity) |
+| `CONTRIBUTING.md` not yet authored | Each discipline expert | Author discipline-specific guideline sections | Elaboration iteration 1 |
+| Baseline tagging not enforced | ConfigurationManager | Implement CI gate enforcement | Elaboration (deferred from Inception) |
 
 ## Traceability
 
 | Element | Traces From | Link Type | Traces To |
 |---|---|---|---|
-| Development Case | IARI DC Baseline | Refines | All project artifacts (governs production) |
-| Business Modeling INACTIVE | DC §4 classification | Derives | record_dc_classification |
-| Optional triggers (none fired) | DC §5.2 trigger conditions | Derives | record_optional_artifact_triggers |
-| Version Policy (.NET 10) | Stakeholder Constraints | Derives | record_version_policy |
-| Tool references | Stakeholder Constraints | Derives | CONTRIBUTING.md, .github/workflows (Elaboration) |
+| Development Case (Elaboration) | IARI DC Baseline, Inception Development Case | Refines | All project artifacts (governs production) |
+| Business Modeling INACTIVE | DC §4 classification (re-confirmed) | Derives | record_dc_classification |
+| Optional: Architectural PoC FIRED | DC §5.2 trigger (Elaboration + RISK-T01, RISK-T02) | Derives | record_optional_artifact_triggers, SAD (PoC plans) |
+| Optional: Data Model NOT FIRED | DC §5.2 trigger (~8 entities, not data-centric) | Derives | record_optional_artifact_triggers |
+| Optional: Deployment Model NOT FIRED | DC §5.2 trigger (single-node topology) | Derives | record_optional_artifact_triggers |
+| Optional: Glossary NOT FIRED | DC §5.2 trigger (no specialist vocabulary) | Derives | record_optional_artifact_triggers |
+| Optional: UI Prototype NOT FIRED | DC §5.2 trigger (standard CRUD UI) | Derives | record_optional_artifact_triggers |
+| Optional: Test Plan NOT FIRED | DC §5.2 trigger (no regulatory/contractual reporting) | Derives | record_optional_artifact_triggers |
+| Version Policy (.NET 10, PostgreSQL 16) | Stakeholder Constraints | Derives | record_version_policy, SAD (technology stack) |
+| Inception Lessons Learned | Review Record F1-F7, Iteration Assessment | Derives | Tailoring sections (Requirements, A&D) |
+| Tool Assessment | Stakeholder Constraints, SAD | Derives | ConfigurationManager, TestDesigner (gap actions) |
+| SAD Integration | Software Architecture Document (Elaboration Draft) | Derives | A&D tailoring section, PoC trigger |
+| UC Model Integration | Use-Case Model (Elaboration Draft, 7 UCs) | Derives | Requirements tailoring section |
+| Risk List Integration | Risk List (Inception, RISK-T01/T02/T03) | Derives | PoC trigger justification, A&D tailoring |
