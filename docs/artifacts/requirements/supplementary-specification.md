@@ -1,16 +1,20 @@
 ## Document Control
+
 | Field | Value |
 |---|---|
-| Phase | Inception |
+| Phase | Elaboration |
 | Status | Draft |
-| Iteration | 2 (Cycle 1) |
-| Milestone Target | End of Inception (LCO) |
+| Iteration | 1 (Cycle 1) |
+| Milestone Target | End of Elaboration |
 | Author | System Analyst |
 
-### Iteration 2 Changes
+### Elaboration Iteration 1 Changes
 
-- **F3 (Major) — Resolved:** AD Authentication cross-cutting mechanism confirmed in Supplementary Specification (REQ-001 through REQ-003). No standalone UC for authentication — all UCs include this mechanism via `<<include>>`.
-- No other findings target this artifact. Content preserved from iteration 1.
+- Phase transition from Inception (LCO approved). FURPS+ categories confirmed complete.
+- **REQ-018 [ASSUMPTION] resolved:** Directory search response time threshold quantified at ≤2 seconds (derived from acceptance criteria: 10-second total target includes navigation + search; 2s for search leaves 8s for navigation and reading — conservative).
+- All NFR thresholds now testable. No gold-plating: every NFR justified by declared business value or constraints.
+- Content preserved from Inception baseline; only Document Control and REQ-018 updated.
+
 ## Functionality
 
 ### Security
@@ -85,7 +89,7 @@ end note
 |---|---|---|---|---|
 | REQ-016 | Page load time | < 3 seconds | Declared NFR (Performance), CON-008 | All UCs |
 | REQ-017 | Clock in/out operation response time | < 1 second | Declared NFR (Performance), CON-008 | UC-001 |
-| REQ-018 | Directory search response time | < 2 seconds [ASSUMPTION — pending RS quantification in Elaboration] | STK-003, Acceptance Criteria (10s target includes navigation) | UC-006 |
+| REQ-018 | Directory search response time | ≤ 2 seconds | STK-003, Acceptance Criteria (10s total target includes navigation + reading; 2s search leaves 8s margin) | UC-006 |
 | REQ-019 | News page load with featured banner and category filter | < 3 seconds | CON-008 | UC-005 |
 
 ## Supportability
@@ -154,7 +158,7 @@ end note
 | REQ-021 | CON-003, STK-004 | Refines | — |
 | REQ-022 | STK-003 | Refines | UC-006, UC-007 |
 | REQ-023 | CON-004, STK-001 | Refines | UC-007 |
-| DC-001 through DC-007 | CON-001 through CON-007 | Refines | Architecture Document (future) |
-| INT-001 | CON-004 | Refines | Architecture Document (future) |
-| INT-002 | CON-007 | Refines | Architecture Document (future) |
-| INT-003 | CON-003 | Refines | Architecture Document (future) |
+| DC-001 through DC-007 | CON-001 through CON-007 | Refines | Architecture Document |
+| INT-001 | CON-004 | Refines | Architecture Document |
+| INT-002 | CON-007 | Refines | Architecture Document |
+| INT-003 | CON-003 | Refines | Architecture Document |
