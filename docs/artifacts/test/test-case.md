@@ -317,7 +317,7 @@ stop
 | Build ID | Verdict | Notes |
 |---|---|---|
 | CI 28860381346 (main) | NOT EXECUTABLE | UC-001 not implemented in main branch — only Program.cs with Razor Pages skeleton exists |
-| CI 28860807083 (PoC) | BLOCKED | PoC validates offline sync mechanism (TC-005..TC-008 scope) but PoC tests not included in CI pipeline (Finding F-E1-01) |
+| CI 28860807083 (PoC) | BLOCKED | PoC validates offline sync mechanism (TC-005..TC-008 scope) but PoC tests not included in CI pipeline (Finding F-E1-01, CR #5) |
 
 ---
 
@@ -357,7 +357,7 @@ stop
 | Build ID | Verdict | Notes |
 |---|---|---|
 | CI 28860381346 (main) | NOT EXECUTABLE | UC-001 not implemented in main branch |
-| CI 28860807083 (PoC) | BLOCKED | PoC tests not in CI pipeline (F-E1-01) |
+| CI 28860807083 (PoC) | BLOCKED | PoC tests not in CI pipeline (F-E1-01, CR #5) |
 
 ---
 
@@ -377,7 +377,7 @@ stop
 | Build ID | Verdict | Notes |
 |---|---|---|
 | CI 28860381346 (main) | NOT EXECUTABLE | UC-001 not implemented |
-| CI 28860807083 (PoC) | BLOCKED | PoC tests not in CI pipeline (F-E1-01) |
+| CI 28860807083 (PoC) | BLOCKED | PoC tests not in CI pipeline (F-E1-01, CR #5) |
 
 ---
 
@@ -397,7 +397,7 @@ stop
 | Build ID | Verdict | Notes |
 |---|---|---|
 | CI 28860381346 (main) | NOT EXECUTABLE | UC-001 not implemented |
-| CI 28860807083 (PoC) | BLOCKED | PoC tests not in CI pipeline (F-E1-01) |
+| CI 28860807083 (PoC) | BLOCKED | PoC tests not in CI pipeline (F-E1-01, CR #5) |
 
 ---
 
@@ -417,7 +417,7 @@ stop
 | Build ID | Verdict | Notes |
 |---|---|---|
 | CI 28860381346 (main) | NOT EXECUTABLE | Offline sync not implemented in main |
-| CI 28860807083 (PoC) | BLOCKED — Code Review PASS | PoC `TimeTrackingServiceTests.ClockInAsync_NetworkDown_EnqueuesOfflineAndReturnsSuccess` validates this scenario at unit level. Test asserts: result.IsSuccess, Source="OFFLINE", remote repo empty, pending count=1. Code review confirms test logic is correct. **However, PoC tests are excluded from CI pipeline** (Finding F-E1-01) — no CI execution evidence. |
+| CI 28860807083 (PoC) | BLOCKED — Code Review PASS | PoC `TimeTrackingServiceTests.ClockInAsync_NetworkDown_EnqueuesOfflineAndReturnsSuccess` validates this scenario at unit level. Test asserts: result.IsSuccess, Source="OFFLINE", remote repo empty, pending count=1. Code review confirms test logic is correct. **However, PoC tests are excluded from CI pipeline** (Finding F-E1-01, CR #5) — no CI execution evidence. |
 
 ---
 
@@ -434,7 +434,7 @@ stop
 **Elaboration Iteration 1 Findings:**
 | Build ID | Verdict | Notes |
 |---|---|---|
-| CI 28860807083 (PoC) | BLOCKED — Code Review PASS | `TimeTrackingServiceTests.ClockOutAsync_NetworkUp_WritesToRemoteAndReturnsSuccess` covers online path. Offline clock-out covered by same `ProcessClockingAsync` code path. Code review confirms symmetry. CI execution blocked (F-E1-01). |
+| CI 28860807083 (PoC) | BLOCKED — Code Review PASS | `TimeTrackingServiceTests.ClockOutAsync_NetworkUp_WritesToRemoteAndReturnsSuccess` covers online path. Offline clock-out covered by same `ProcessClockingAsync` code path. Code review confirms symmetry. CI execution blocked (F-E1-01, CR #5). |
 
 ---
 
@@ -453,7 +453,7 @@ stop
 **Elaboration Iteration 1 Findings:**
 | Build ID | Verdict | Notes |
 |---|---|---|
-| CI 28860807083 (PoC) | BLOCKED — Code Review PASS | `SyncQueueTests.FlushAsync_DuplicateClocking_MarksAsSkipped` validates: pre-populate remote with same (employeeId, timestamp), enqueue duplicate, flush → assert Skipped=1, Synced=0. `FlushAsync_MixedRecords_SyncsAndSkips` validates mixed scenario. Conflict detection by (employeeId, timestamp) confirmed in `SyncQueue.cs` line 62. CI execution blocked (F-E1-01). |
+| CI 28860807083 (PoC) | BLOCKED — Code Review PASS | `SyncQueueTests.FlushAsync_DuplicateClocking_MarksAsSkipped` validates: pre-populate remote with same (employeeId, timestamp), enqueue duplicate, flush → assert Skipped=1, Synced=0. `FlushAsync_MixedRecords_SyncsAndSkips` validates mixed scenario. Conflict detection by (employeeId, timestamp) confirmed in `SyncQueue.cs`. CI execution blocked (F-E1-01, CR #5). |
 
 ---
 
@@ -472,7 +472,7 @@ stop
 **Elaboration Iteration 1 Findings:**
 | Build ID | Verdict | Notes |
 |---|---|---|
-| CI 28860807083 (PoC) | BLOCKED — Code Review PASS | `TimeTrackingServiceTests.ClockInAsync_NetworkDown_ZeroDataLoss` validates: 5 offline clock-ins → 5 pending → sync → 5 synced, 5 in remote, 0 pending. `SyncQueueTests.FlushAsync_AfterFlush_PendingCountIsZero` confirms clean state post-flush. CI execution blocked (F-E1-01). |
+| CI 28860807083 (PoC) | BLOCKED — Code Review PASS | `TimeTrackingServiceTests.ClockInAsync_NetworkDown_ZeroDataLoss` validates: 5 offline clock-ins → 5 pending → sync → 5 synced, 5 in remote, 0 pending. `SyncQueueTests.FlushAsync_AfterFlush_PendingCountIsZero` confirms clean state post-flush. CI execution blocked (F-E1-01, CR #5). |
 
 ---
 
@@ -491,7 +491,7 @@ stop
 **Elaboration Iteration 1 Findings:**
 | Build ID | Verdict | Notes |
 |---|---|---|
-| CI 28860807083 (PoC) | PARTIAL — Code Review PASS | `SyncQueueTests.EnqueueAsync_ConcurrentEnqueues_AllSucceed` validates 10 concurrent enqueues with SemaphoreSlim(1,1) — all succeed, count=10. This is a concurrency proof-of-concept at 10 users, not the full 50-user performance test. Full performance test requires BenchmarkDotNet + 50-user load harness (not yet built). CI execution blocked (F-E1-01). |
+| CI 28860807083 (PoC) | PARTIAL — Code Review PASS | `SyncQueueTests.EnqueueAsync_ConcurrentEnqueues_AllSucceed` validates 10 concurrent enqueues with SemaphoreSlim(1,1) — all succeed, count=10. This is a concurrency proof-of-concept at 10 users, not the full 50-user performance test. Full performance test requires BenchmarkDotNet + 50-user load harness (not yet built). CI execution blocked (F-E1-01, CR #5). |
 
 ---
 
@@ -526,12 +526,12 @@ skinparam activityBackgroundColor #ecf0f1
 start
 :TC-005..TC-008: Offline sync mechanism;
 note right: CODE REVIEW PASS — 35 test methods
-:BLOCKED (CI) — PoC tests excluded from pipeline;
+:BLOCKED (CI) — PoC tests excluded from pipeline (CR #5);
 
 |Main Branch|
 :TC-SMOKE: Project skeleton;
 note right: PASS (CI) — Assert.True(true) = no validation
-:FINDING F-E1-02: Placeholder test;
+:FINDING F-E1-02: Placeholder test (CR #6);
 
 |Future Construction TCs|
 :TC-001..TC-004: UC-001 integration;
@@ -547,8 +547,8 @@ stop
 
 | Finding ID | Severity | Description | CR Reference |
 |---|---|---|---|
-| F-E1-01 | Major | PoC test projects (`samples/poc/**/Tests/`) are excluded from CI pipeline — `ci.yml` only regenerates solution from `src/` and `tests/` directories. 35 architecture validation tests never execute in CI. "Green" CI on PoC branch is false confidence. | CR-004 |
-| F-E1-02 | Minor | Main branch `SmokeTest.cs` contains `Assert.True(true)` — a placeholder that validates nothing. No architecture or integration tests exist in the main test project. | CR-005 |
+| F-E1-01 | Major | PoC test projects (`samples/poc/**/Tests/`) are excluded from CI pipeline — `ci.yml` only regenerates solution from `src/` and `tests/` directories. 35 architecture validation tests never execute in CI. "Green" CI on PoC branch is false confidence. | CR #5 |
+| F-E1-02 | Minor | Main branch `SmokeTest.cs` contains `Assert.True(true)` — a placeholder that validates nothing. No architecture or integration tests exist in the main test project. | CR #6 |
 | F-E1-03 | Info | PoC code review confirms architecture validation tests are well-structured: dual black-box + white-box coverage, traceability comments, proper test doubles (StaticHealthMonitor, InMemoryClockingRepository with failure mode). Test quality is high — the problem is CI integration, not test design. | — |
 ## Test Data
 
