@@ -1018,7 +1018,7 @@ Per the IARI branching strategy, integration follows bottom-up dependency order:
 | Quality Attribute | Requirement | Architectural Tactic | Status |
 |---|---|---|---|
 | Reliability | 99% uptime Mon–Fri 7:00–19:00 (REQ-012) | Single reliable server; offline fallback for clock in/out | Addressed |
-| Fault Tolerance | 5-min network drop, zero data loss (REQ-013, REQ-014) | SQLite local buffer + Sync Queue + Network Health Monitor | **Baselined — sequence diagram validates** |
+| Fault Tolerance | 5-min network drop, zero data loss (REQ-013, REQ-014) | SQLite local buffer + Sync Queue + Network Health Monitor | **Baselined — PoC-1 validated** |
 | Security | AD auth for all access (REQ-001); RBAC for HR (REQ-002); intranet-only (REQ-003) | IAuthProvider interface; role checks in Application Layer; intranet binding | Addressed (protocol decision pending spike) |
 | Auditability | Immutable audit trail (REQ-004, REQ-005, REQ-006) | AuditInterceptor via IAuditLogger; append-only audit table with DB-level REVOKE | **Baselined — sequence diagram validates** |
 | Performance | <3s page load, <1s clock (REQ-016, REQ-017) | Server-rendered pages; direct DB access; indexed search | Addressed |
@@ -1026,18 +1026,17 @@ Per the IARI branching strategy, integration follows bottom-up dependency order:
 | Supportability | Configurable for 3 offices without code changes (REQ-022) | Data-driven office list in Employee table | Addressed |
 | Backup | Nightly full backup, RPO ≤24h (REQ-024); WAL archiving for clocking PITR, RPO ≤15min (REQ-026) | pg_dump nightly + PostgreSQL WAL archiving; off-server copy (REQ-027); monthly test-restore (REQ-028) | Addressed |
 
-### PoC Plan (Reference — Optional Artifact NOT Fired)
+### PoC Plan and Results
 
-The `get_optional_artifact_triggers` oracle reports the Architectural Proof-of-Concept artifact trigger as **not fired** for this iteration. The PoC plan is preserved from Inception as a risk mitigation reference. Formal PoC artifact omitted per Development Case.
+The Architectural Proof-of-Concept artifact was produced by the Implementer in Elaboration Iteration 1. PoC-1 (Offline Sync) is implemented on branch `poc/E1-risk-t01-offline-sync` with CI Green (3/3 pushes passed). Results are cross-referenced from the [Architectural Proof-of-Concept] artifact.
 
-[OMITTED: Architectural Proof-of-Concept — trigger not fired per Development Case]
 [OMITTED: Deployment Model — trigger not fired; Physical View within SAD is sufficient for single-node topology]
 
-| PoC | Risk Addressed | Scope | Success Criteria |
-|---|---|---|---|
-| **PoC-1: Offline Sync** | RISK-T01 (RPN 63), RISK-T03 (RPN 48) | Simulate 5-min network drop; write clockings to SQLite; restore network; verify sync to PostgreSQL with zero data loss and conflict detection | 100% of queued clockings synced; no duplicates; sync completes <30s after restore |
-| **PoC-2: AD Integration** | RISK-T02 (RPN 35), RISK-R01 (RPN 30) | Spike with Miguel Torres: test LDAP bind against corporate AD; test OAuth2 via AD FS if available; evaluate employee data sync | Successful authentication against corporate AD; employee data retrieved; protocol recommendation documented |
-| **PoC-3: Design File Integration** | RISK-T05 (RPN 12) | Verify design file implementation within Razor Pages architecture | All views implemented as Razor Pages matching design intent; no architectural deviations |
+| PoC | Risk Addressed | Scope | Success Criteria | Result |
+|---|---|---|---|---|
+| **PoC-1: Offline Sync** | RISK-T01 (RPN 63), RISK-T03 (RPN 48) | Simulate 5-min network drop; write clockings to SQLite; restore network; verify sync to PostgreSQL with zero data loss and conflict detection | 100% of queued clockings synced; no duplicates; sync completes <30s after restore | **PASS** — All clockings synced, zero data loss, conflict detection validated. CI Green. |
+| **PoC-2: AD Integration** | RISK-T02 (RPN 35), RISK-R01 (RPN 30) | Spike with Miguel Torres: test LDAP bind against corporate AD; test OAuth2 via AD FS if available; evaluate employee data sync | Successful authentication against corporate AD; employee data retrieved; protocol recommendation documented | **Deferred to Construction** — IAuthProvider interface isolates protocol decision. |
+| **PoC-3: Design File Integration** | RISK-T05 (RPN 24) | Verify design file implementation within Razor Pages architecture | All views implemented as Razor Pages matching design intent; no architectural deviations | **RESOLVED** — Design file incorporated; no architectural impact. RISK-T05 retired. |
 
 ### Lifecycle Architecture Milestone Review
 
@@ -1045,36 +1044,36 @@ The `get_optional_artifact_triggers` oracle reports the Architectural Proof-of-C
 |---|---|---|---|
 | 1 | Is the vision of the product stable? | **YES** | Vision Document approved at LCO. Scope confirmed by stakeholder. 4 use cases, 4 NFRs, 3 business goals — all stable since Inception. No scope changes in Elaboration. |
 | 2 | Is the architecture stable? | **YES** | All 4+1 views baselined. 7 UML diagrams validate the architecture. 3 ADRs document key decisions with alternatives. Component decomposition unchanged from Inception candidate — validated by sequence diagrams. New component COMP-I5 (Network Health Monitor) is an additive refinement, not a structural change. |
-| 3 | Does the executable prototype show that major risks have been addressed? | **PARTIAL** | PoC artifact trigger NOT fired per Development Case. Architecture is validated through sequence diagrams (not executable prototype). Top 3 risks (RISK-T01 RPN 63, RISK-T03 RPN 48, RISK-T02 RPN 35) have architectural mitigations designed and validated via sequence diagrams. PoC-1 (offline sync) and PoC-2 (AD integration) remain as Construction-phase validation activities. The architecture is sound; empirical validation deferred to Construction. |
+| 3 | Does the executable prototype show that major risks have been addressed? | **YES** | PoC-1 (Offline Sync) implemented by Implementer on branch `poc/E1-risk-t01-offline-sync` with CI Green (3/3 pushes passed). Validates RISK-T01 (offline fault tolerance) and RISK-T03 (sync conflict) — the two highest-RPN technical risks. All queued clockings synced with zero data loss and conflict detection. PoC-2 (AD Integration) deferred to Construction — isolated behind IAuthProvider interface with no structural impact. |
 | 4 | Is the construction plan sufficiently detailed and backed by credible estimates? | **YES** | Implementation View defines 6 projects with dependency order. Build integration order specified (Infrastructure → Application → Domain → Presentation → Tests). Component inventory maps every component to UCs and Designer class IDs. |
 | 5 | Do ALL stakeholders agree the vision can be achieved with current plan + architecture? | **YES** | Stakeholder approved at LCO: "Yes, I agree to advance to the next phase." Architecture evolved within approved scope — no new scope added. Design file validated against architecture. |
-| 6 | Is actual resource expenditure vs. planned acceptable? | **YES** | Elaboration Iteration 1 produced complete architectural baseline within budget. All 4+1 views baselined in one iteration. No rework needed — Inception findings all resolved. |
+| 6 | Is actual resource expenditure vs. planned acceptable? | **YES** | Elaboration Iteration 1 produced complete architectural baseline + PoC-1 within budget. All 4+1 views baselined. Iteration 2 resolves review findings (SAD-F2, SAD-F3). |
 
 ### Open Architecture Issues
 
 | Issue | Severity | Resolution Path | Target |
 |---|---|---|---|
 | AD protocol decision (LDAP vs OAuth2) | Medium | Spike with Miguel Torres in Construction Iteration 1. Architecture isolates decision behind IAuthProvider — no structural impact either way. | Construction Iteration 1 |
-| PoC-1 (Offline Sync) empirical validation | Medium | Execute in Construction Iteration 1. Sequence diagram validates design; executable test confirms implementation. | Construction Iteration 1 |
 | PoC-2 (AD Integration) empirical validation | Medium | Execute in Construction Iteration 1. IAuthProvider interface allows swap without rippling. | Construction Iteration 1 |
 
 ### Risk Resolution Status
 
 | Risk | RPN | Status | Architectural Mitigation |
 |---|---|---|---|
-| RISK-T01 (Offline fault tolerance) | 63 | **Mitigated (design)** | SQLite buffer + Sync Queue + Network Health Monitor. Validated by UC-001 sequence diagram and Process View activity diagram. |
-| RISK-T03 (Sync conflict) | 48 | **Mitigated (design)** | Conflict detection by (employeeId, timestamp) uniqueness. SyncRecord status tracking (PENDING/SYNCED/SKIPPED). Validated by UC-001 sequence diagram. |
+| RISK-T01 (Offline fault tolerance) | 63 | **PoC-1 Validated** | SQLite buffer + Sync Queue + Network Health Monitor. PoC-1 confirms zero data loss, conflict detection, sync <30s. Validated by UC-001 sequence diagram, Process View activity diagram, and executable PoC. |
+| RISK-T03 (Sync conflict) | 48 | **PoC-1 Validated** | Conflict detection by (employeeId, timestamp) uniqueness. SyncRecord status tracking (PENDING/SYNCED/SKIPPED). PoC-1 confirms conflict handling works. |
 | RISK-T02 (AD auth protocol) | 35 | **Mitigated (design)** | IAuthProvider interface isolates protocol. ADR-003 documents decision. Spike with Miguel Torres pending. |
 | RISK-R01 (AD data mapping) | 30 | **Mitigated (design)** | Override flag on Employee entity. Three-way merge logic (skip/merge/import). Validated by UC-007 sequence diagram. |
-| RISK-T04 (Performance) | 20 | **Addressed** | Server-rendered pages, indexed search, async I/O. Performance targets in Size and Performance section. |
-| RISK-T05 (Design file) | 12 | **Resolved** | Design file assessed — no architectural impact. COMP-P1 through COMP-P4 validated. |
-| RISK-E01 (Windows Server hosting) | 12 | **Addressed** | Single-node deployment diagram. No cloud dependency. |
-| RISK-S01 (Scope creep) | 12 | **Monitored** | Scope Guard enforced. No scope expansion in Elaboration. |
-| RISK-S02 (Adoption) | 16 | **Monitored** | Architecture supports acceptance criteria. UI Designer produced wireframes. |
+| RISK-T06 (SQLite concurrency) | 24 | **Identified** | SemaphoreSlim(1,1) single-writer lock. SAD assesses contention as negligible (~50 per office per 5-min). Load test in Construction. |
+| RISK-S02 (Adoption) | 24 | **Monitored** | Architecture supports acceptance criteria. UI Designer produced wireframes. |
+| RISK-S01 (Scope creep) | 20 | **Monitored** | Scope Guard enforced. No scope expansion in Elaboration. |
+| RISK-T04 (Performance) | 15 | **Mitigated (design)** | Server-rendered pages, indexed search, async I/O. Load test in Construction. |
+| RISK-T05 (Design file) | 24 | **Resolved** | Design file incorporated — no architectural impact. RISK-T05 retired. |
+| RISK-E01 (Windows Server hosting) | 12 | **Mitigated (design)** | Single-node deployment diagram. No cloud dependency. |
 
-### LAM Verdict
+### LCA Verdict
 
-**Architecture is stable and ready for Construction.** All 4+1 views are baselined with UML diagrams. The top 3 architecturally significant use cases are validated through sequence diagrams. Three open issues (AD protocol, PoC-1, PoC-2) are scheduled for Construction Iteration 1 — the architecture isolates each behind interfaces so they can be resolved without structural changes.
+**Architecture is stable and ready for Construction.** All 4+1 views are baselined with UML diagrams. The top 3 architecturally significant use cases are validated through sequence diagrams. PoC-1 (Offline Sync) empirically validates the two highest-RPN technical risks (RISK-T01, RISK-T03) with CI Green. Two open issues (AD protocol, PoC-2) are scheduled for Construction Iteration 1 — the architecture isolates each behind interfaces so they can be resolved without structural changes.
 ## Traceability
 
 | Element | Traces From | Link Type | Traces To |
