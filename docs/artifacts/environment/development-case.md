@@ -11,17 +11,16 @@
 | Governance Re-recorded | 2026-07-07 — DC classification, optional triggers, version policy all re-confirmed for Elaboration iteration 2 |
 | Finding DC-F2 Status | RESOLVED — RPN values corrected to authoritative Risk List values (RISK-T01: 63/High, RISK-T02: 35/Significant, RISK-T03: 48/High) |
 ## Tailoring Overview
-
 This Development Case specifies project-specific **deltas** over the IARI DC baseline. The baseline defines 24 active roles, 16 CORE artifacts, 6 OPTIONAL artifacts, and a canonical discipline-intensity matrix. This document declares only deviations from that baseline — it does not restate it.
 
-### Organization Assessment (Updated for Elaboration)
+### Organization Assessment (Updated for Elaboration Iteration 2)
 
 | Factor | Finding |
 |---|---|
 | Organization | Cuba Corp — 200 employees, 3 offices. Internal IT project, no external regulatory constraints. |
 | Agent roles | 24 RUP roles active per IARI baseline. AI-agent-driven process. |
-| Process maturity | Post-Inception: 2 iterations completed, LCO approved. Process stabilized for Requirements + Architecture. Implementation + Test disciplines entering active phase. |
-| Risk profile | Low-medium. RISK-T01 (offline sync, RPN 35 — Significant), RISK-T02 (AD integration, RPN 30 — Significant), RISK-T03 (data sync conflicts, RPN 24 — Significant). All require Elaboration mitigation. |
+| Process maturity | Post-Inception + Elaboration Iter 1: 3 iterations completed, LCO approved. LCA verdict: CONDITIONAL NO-GO — auto-iterate to Cycle 2. Process stabilized for Requirements + Architecture. Implementation + Test disciplines entering active phase. |
+| Risk profile | Low-medium. RISK-T01 (offline sync, RPN 63 — High), RISK-T02 (AD integration, RPN 35 — Significant), RISK-T03 (data sync conflicts, RPN 48 — High). All require Elaboration mitigation. PoC-1 produced for RISK-T01. |
 | Tool baseline | Git/SCM, .NET 10 SDK, Razor Pages, PostgreSQL, Windows Server (internal hosting), Chrome/Edge only. CI via GitHub Actions workflows. |
 
 ### Inception Lessons Learned (Process Improvement Input)
@@ -32,8 +31,17 @@ This Development Case specifies project-specific **deltas** over the IARI DC bas
 | Stale objective statuses in Iteration Assessment | Review Record F7 | Process Engineer to verify Document Control metadata is refreshed on every section update across all artifacts. |
 | AD auth method (LDAP vs OAuth2) undecided | Risk List RISK-T02, SAD ADR-003 | AD integration isolated behind IAuthProvider interface — spike deferred to Construction per SAD decision. Process tailoring: PoC artifact triggered for Elaboration risk validation. |
 | Design file impact requires stakeholder input | Review Record S2 | Process adjustment: stakeholder design file review integrated into Elaboration SAD evolution. |
+| RPN governance failure across artifacts | Review Record RL-F1, MR-RL-F1, DC-F2 | Process adjustment: Process Engineer must cross-check RPN values in DC against authoritative Risk List before each upsert. RPN values are READ-ONLY from Risk List — never independently assessed in DC. |
 
-### Tool Assessment (Updated for Elaboration)
+### Elaboration Iteration 1 Lessons Learned (Cycle 2 Process Improvement)
+
+| Lesson | Source | Process Adjustment |
+|---|---|---|
+| RPN inconsistency across DC/TC/IP | Review Record DC-F2, RL-F1 | DC Risk Profile corrected to authoritative Risk List values. Process rule: DC references Risk List RPNs by ID only, never hardcodes values without verification. |
+| LCA milestone metadata confusion (LAM vs LCA) | Review Record SAD-F3 | Document Control milestone target corrected to LCA. Process rule: verify milestone target matches current phase exit criterion. |
+| PoC artifact produced but SAD reference stale | Review Record SAD-F2 | SAD corrected in Iteration 2. Process rule: when optional artifact is produced, all referencing artifacts must be updated in the same iteration. |
+
+### Tool Assessment (Updated for Elaboration Iteration 2)
 
 | Tool Category | Status | Notes |
 |---|---|---|
@@ -44,7 +52,7 @@ This Development Case specifies project-specific **deltas** over the IARI DC bas
 | Requirements | Artifact-based | Use-Case Model (7 UCs, all with activity diagrams) + Supplementary Specification (fully quantified) |
 | Database | PostgreSQL on Windows Server | Npgsql EF Core provider — version resolved by SoftwareArchitect (10.0.2 confirmed in SAD) |
 | CI/CD | GitHub Actions | CI triggers on all branch families for push and PR. Baseline tagging and CI gate enforcement deferred to Elaboration. |
-
+| PoC validation | Available | PoC-1 (Offline Sync) produced by Implementer on branch `poc/E1-risk-t01-offline-sync`, CI Green 3/3. Validates RISK-T01 mitigation. |
 ## Disciplines and Intensity
 
 Per canonical matrix — no deviations. All 7 always-active disciplines confirmed at canonical intensity levels for Elaboration:
