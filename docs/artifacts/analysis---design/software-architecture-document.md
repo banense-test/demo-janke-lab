@@ -1011,7 +1011,6 @@ Per the IARI branching strategy, integration follows bottom-up dependency order:
 | Health detection latency | < 5s | TCP probe every 5s; immediate event on state change | Addressed |
 
 ## Quality
-
 | Quality Attribute | Requirement | Architectural Tactic | Status |
 |---|---|---|---|
 | Reliability | 99% uptime Mon–Fri 7:00–19:00 (REQ-012) | Single reliable server; offline fallback for clock in/out | Addressed |
@@ -1036,6 +1035,42 @@ The `get_optional_artifact_triggers` oracle reports the Architectural Proof-of-C
 | **PoC-2: AD Integration** | RISK-T02 (RPN 35), RISK-R01 (RPN 30) | Spike with Miguel Torres: test LDAP bind against corporate AD; test OAuth2 via AD FS if available; evaluate employee data sync | Successful authentication against corporate AD; employee data retrieved; protocol recommendation documented |
 | **PoC-3: Design File Integration** | RISK-T05 (RPN 12) | Verify design file implementation within Razor Pages architecture | All views implemented as Razor Pages matching design intent; no architectural deviations |
 
+### Lifecycle Architecture Milestone Review
+
+| # | Criterion | Verdict | Evidence |
+|---|---|---|---|
+| 1 | Is the vision of the product stable? | **YES** | Vision Document approved at LCO. Scope confirmed by stakeholder. 4 use cases, 4 NFRs, 3 business goals — all stable since Inception. No scope changes in Elaboration. |
+| 2 | Is the architecture stable? | **YES** | All 4+1 views baselined. 7 UML diagrams validate the architecture. 3 ADRs document key decisions with alternatives. Component decomposition unchanged from Inception candidate — validated by sequence diagrams. New component COMP-I5 (Network Health Monitor) is an additive refinement, not a structural change. |
+| 3 | Does the executable prototype show that major risks have been addressed? | **PARTIAL** | PoC artifact trigger NOT fired per Development Case. Architecture is validated through sequence diagrams (not executable prototype). Top 3 risks (RISK-T01 RPN 63, RISK-T03 RPN 48, RISK-T02 RPN 35) have architectural mitigations designed and validated via sequence diagrams. PoC-1 (offline sync) and PoC-2 (AD integration) remain as Construction-phase validation activities. The architecture is sound; empirical validation deferred to Construction. |
+| 4 | Is the construction plan sufficiently detailed and backed by credible estimates? | **YES** | Implementation View defines 6 projects with dependency order. Build integration order specified (Infrastructure → Application → Domain → Presentation → Tests). Component inventory maps every component to UCs and Designer class IDs. |
+| 5 | Do ALL stakeholders agree the vision can be achieved with current plan + architecture? | **YES** | Stakeholder approved at LCO: "Yes, I agree to advance to the next phase." Architecture evolved within approved scope — no new scope added. Design file validated against architecture. |
+| 6 | Is actual resource expenditure vs. planned acceptable? | **YES** | Elaboration Iteration 1 produced complete architectural baseline within budget. All 4+1 views baselined in one iteration. No rework needed — Inception findings all resolved. |
+
+### Open Architecture Issues
+
+| Issue | Severity | Resolution Path | Target |
+|---|---|---|---|
+| AD protocol decision (LDAP vs OAuth2) | Medium | Spike with Miguel Torres in Construction Iteration 1. Architecture isolates decision behind IAuthProvider — no structural impact either way. | Construction Iteration 1 |
+| PoC-1 (Offline Sync) empirical validation | Medium | Execute in Construction Iteration 1. Sequence diagram validates design; executable test confirms implementation. | Construction Iteration 1 |
+| PoC-2 (AD Integration) empirical validation | Medium | Execute in Construction Iteration 1. IAuthProvider interface allows swap without rippling. | Construction Iteration 1 |
+
+### Risk Resolution Status
+
+| Risk | RPN | Status | Architectural Mitigation |
+|---|---|---|---|
+| RISK-T01 (Offline fault tolerance) | 63 | **Mitigated (design)** | SQLite buffer + Sync Queue + Network Health Monitor. Validated by UC-001 sequence diagram and Process View activity diagram. |
+| RISK-T03 (Sync conflict) | 48 | **Mitigated (design)** | Conflict detection by (employeeId, timestamp) uniqueness. SyncRecord status tracking (PENDING/SYNCED/SKIPPED). Validated by UC-001 sequence diagram. |
+| RISK-T02 (AD auth protocol) | 35 | **Mitigated (design)** | IAuthProvider interface isolates protocol. ADR-003 documents decision. Spike with Miguel Torres pending. |
+| RISK-R01 (AD data mapping) | 30 | **Mitigated (design)** | Override flag on Employee entity. Three-way merge logic (skip/merge/import). Validated by UC-007 sequence diagram. |
+| RISK-T04 (Performance) | 20 | **Addressed** | Server-rendered pages, indexed search, async I/O. Performance targets in Size and Performance section. |
+| RISK-T05 (Design file) | 12 | **Resolved** | Design file assessed — no architectural impact. COMP-P1 through COMP-P4 validated. |
+| RISK-E01 (Windows Server hosting) | 12 | **Addressed** | Single-node deployment diagram. No cloud dependency. |
+| RISK-S01 (Scope creep) | 12 | **Monitored** | Scope Guard enforced. No scope expansion in Elaboration. |
+| RISK-S02 (Adoption) | 16 | **Monitored** | Architecture supports acceptance criteria. UI Designer produced wireframes. |
+
+### LAM Verdict
+
+**Architecture is stable and ready for Construction.** All 4+1 views are baselined with UML diagrams. The top 3 architecturally significant use cases are validated through sequence diagrams. Three open issues (AD protocol, PoC-1, PoC-2) are scheduled for Construction Iteration 1 — the architecture isolates each behind interfaces so they can be resolved without structural changes.
 ## Traceability
 
 | Element | Traces From | Link Type | Traces To |
