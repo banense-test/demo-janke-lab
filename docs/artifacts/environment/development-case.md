@@ -3,12 +3,13 @@
 |---|---|
 | Phase | Elaboration |
 | Status | Draft |
-| Milestone Target | End of Elaboration (LAM) |
-| Iteration | 1 (Cycle 1) |
+| Milestone Target | LCA (Lifecycle Architecture) |
+| Iteration | 2 (Cycle 1) |
 | Author | ProcessEngineer |
 | Prior Phase | Inception (LCO approved — GO verdict, 2026-07-07) |
-| Governance Re-recorded | 2026-07-07 — DC classification, optional triggers, version policy all re-confirmed for Elaboration iteration 1 |
-
+| Prior Iteration | Elaboration Iteration 1 (LCA: CONDITIONAL NO-GO — auto-iterate to Cycle 2) |
+| Governance Re-recorded | 2026-07-07 — DC classification, optional triggers, version policy all re-confirmed for Elaboration iteration 2 |
+| Finding DC-F2 Status | RESOLVED — RPN values corrected to authoritative Risk List values (RISK-T01: 63/High, RISK-T02: 35/Significant, RISK-T03: 48/High) |
 ## Tailoring Overview
 
 This Development Case specifies project-specific **deltas** over the IARI DC baseline. The baseline defines 24 active roles, 16 CORE artifacts, 6 OPTIONAL artifacts, and a canonical discipline-intensity matrix. This document declares only deviations from that baseline — it does not restate it.
