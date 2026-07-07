@@ -7,203 +7,143 @@
 | Phase | Inception |
 | Status | Draft |
 | Iteration | 2 (Cycle 1) |
-| Milestone Target | End of Inception (LCO) |
 | Author | Deployment Manager |
-| Deployment Mode | Custom-Built (internal intranet application) |
+| Milestone Target | End of Inception (LCO) |
 
-## Deployment Mode Selection
+## Deployment Mode
 
-**Mode: Custom-Built**
-
-The Employee Portal is a custom-built internal web application for Cuba Corp (200 employees, 3 offices). It is hosted on an internal Windows Server within the corporate network, with no external access.
-
-Rationale:
-- Single organization with known, fixed user base (200 employees)
-- Internal infrastructure (Windows Server) — no cloud, no app store, no download
-- Tailored to Cuba Corp's AD infrastructure and corporate network topology
-- Installation performed by IT staff, not by end users
+**Custom-Built** — The Employee Portal is developed specifically for Cuba Corp's intranet and deployed on internal infrastructure. No cloud hosting, no external access, no shrink-wrap packaging.
 
 ## Target User Community
 
-| Audience | Size | Access Method | Location |
-|---|---|---|---|
-| Cuba Corp Employees | 200 | Browser (Chrome/Edge) via corporate network | 3 offices (HQ + 2 branches) |
-| HR Administrator (Laura Gómez) | 1 | Browser via corporate network | HQ |
-| IT/Maintenance (Miguel Torres) | 1 | Browser + server access | HQ |
+- **200 employees** across **3 offices** (Havana, Santiago, Camagüey)
+- HR staff (news publishing, directory management, clocking reports)
+- General employees (clock in/out, read news, directory lookup)
+- IT/Maintenance (Miguel Torres — server administration, AD integration)
 
-## Target Environments
+## Target Environment
 
-| Environment | Purpose | Hosting | Status |
-|---|---|---|---|
-| Development | Coding, unit testing | Developer workstation | Active (Elaboration) |
-| Production | Live portal for 200 employees | Internal Windows Server | Planned (Transition) |
+| Element | Detail |
+|---|---|
+| Hosting | Internal Windows Server (no cloud) |
+| Web Server | Kestrel (bundled with .NET 10) |
+| Database | PostgreSQL 16.x (same server) |
+| Offline Buffer | SQLite (co-deployed, file-based) |
+| Authentication | Active Directory via LDAP/OAuth2 (existing corporate AD server) |
+| Client Browsers | Chrome and Edge (current versions only) |
+| Network | Corporate intranet only — no external access |
+| Availability | Mon–Fri 7:00–19:00 with fault tolerance |
 
-Note: For a 200-user intranet application on a single server, a separate staging environment is not initially warranted. Smoke tests will run on the production server during a maintenance window before go-live. [RECOMMENDATION — requires CR: If the stakeholder desires a separate staging environment, it can be added in Elaboration.]
-
-## Deployment Topology
-
-The following deployment diagram shows the target physical topology for the Employee Portal. This is consistent with the SAD Deployment View (COMP-001 through COMP-004).
+## Deployment Topology Sketch
 
 ```plantuml
 @startuml
 skinparam shadowing false
 skinparam defaultFontName "Segoe UI"
-skinparam node {
-  BackgroundColor #e3f2fd
-  BorderColor #37474f
-}
-skinparam component {
-  BackgroundColor #f5f5f5
-  BorderColor #37474f
-}
-skinparam database {
-  BackgroundColor #fff3e0
-  BorderColor #37474f
-}
-skinparam cloud {
-  BackgroundColor #e8f5e9
-  BorderColor #37474f
-}
 
-title Employee Portal — Deployment Topology (Inception Baseline)
+title Employee Portal — Inception Deployment Topology Sketch
 
-node "Windows Server\n(Internal - Cuba Corp HQ)" as WIN_SRV {
-  component "Employee Portal\n.NET 10 / Kestrel\n(Razor Pages)" as PORTAL
+node "Windows Server\n(Internal Corporate Network)" as WIN_SRV {
+  component "Employee Portal\n(.NET 10 / Kestrel)" as PORTAL
   database "PostgreSQL\nDatabase" as PGDB
-  component "SQLite\nOffline Buffer" as SQLITE
+  database "Local SQLite\n(Offline Buffer)" as SQLITE
 }
 
 node "Active Directory Server\n(Existing Corporate)" as AD_SRV {
-  component "AD / LDAP\nService" as AD_SVC
+  component "AD / LDAP Service" as AD_SVC
 }
 
 node "Employee Workstation\n(Chrome / Edge)" as WS {
   component "Browser" as BROWSER
 }
 
-cloud "Corporate Network\n(3 Offices: HQ + 2 Branches)" as NET
+cloud "Corporate Network\n(3 Offices)" as NET
 
-BROWSER --> NET : HTTP/HTTPS
-NET --> PORTAL : Razor Pages\n(HTML5/CSS3)
-PORTAL --> PGDB : EF Core / Npgsql\n(TCP 5432)
-PORTAL --> SQLITE : local file I/O\n(offline buffer only)
-PORTAL --> AD_SVC : LDAP/OAuth2\n(TCP 389/636)
+BROWSER --> NET : HTTP/HTTPS (intranet)
+NET --> PORTAL : Razor Pages (HTML5/CSS3)
+PORTAL --> PGDB : EF Core (TCP 5432)
+PORTAL --> SQLITE : local file I/O (offline buffer)
+PORTAL --> AD_SVC : LDAP/OAuth2 (TCP 389/636)
 
 note bottom of PORTAL
   Deployment Mode: Custom-Built
-  Target Users: 200 employees, 3 offices
-  Availability: Mon-Fri 7:00-19:00
-  Offline: 5-min network drop tolerance
-  (SQLite buffer to PostgreSQL sync)
+  Target: 200 employees, 3 offices
+  Hosting: Internal Windows Server (no cloud)
+  Offline: SQLite buffer for 5-min network drops
 end note
 
 note right of AD_SRV
   AD Integration:
   Auth + employee data sync
   LDAP vs OAuth2 undecided
-  (Elaboration spike with Miguel Torres)
+  Elaboration spike planned
 end note
 
 @enduml
 ```
 
-## Rollout Approach
-
-The rollout follows a single-server deployment with a smoke-test gate before go-live.
-
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam defaultFontName "Segoe UI"
-
-title Employee Portal - Deployment Rollout Activity
-
-start
-:Prepare Windows Server
-(.NET 10 runtime, PostgreSQL);
-:Install Employee Portal
-application package;
-:Configure AD connection
-(LDAP/OAuth2 - TBD spike);
-:Run smoke tests
-(portal accessible, AD auth works);
-if (Smoke tests pass?) then (yes)
-  :Deploy to production
-  (internal corporate network);
-  :Notify HR Director
-  of go-live;
-  :Monitor first 48 hours
-  (availability, performance);
-  if (Issues detected?) then (yes)
-    :Rollback to previous version
-    or apply hotfix;
-  else (no)
-    :Deployment successful;
-  endif
-else (no)
-  :Fix deployment issues;
-  :Re-attempt deployment;
-endif
-stop
-
-@enduml
-```
-
-## Rollback Criteria
-
-| Criterion | Trigger | Action |
-|---|---|---|
-| Portal inaccessible after deployment | Smoke test failure or user reports within first 48h | Revert to previous application version; investigate |
-| AD authentication failure | Users cannot log in after deployment | Verify AD connection config; revert if unresolved within 30 min |
-| Data loss detected | Clock-in/out records missing or corrupted | Stop portal, restore PostgreSQL from backup, investigate SQLite sync |
-| Performance degradation | Page load > 5s or clock-in > 2s (2x threshold) | Investigate; consider rollback if unresolved within 1 hour |
-
 ## Deployment Constraints
 
-| Constraint | Source | Impact on Deployment |
-|---|---|---|
-| Internal Windows Server hosting only | CON-005 | No cloud deployment; all components on single server |
-| Chrome/Edge only | CON-007 | No cross-browser testing needed; simplifies deployment validation |
-| AD authentication via LDAP/OAuth2 | CON-004 | AD server must be reachable; auth method TBD (Elaboration spike) |
-| Offline fault tolerance (5 min) | NFR: Offline Fault Tolerance | SQLite buffer must be configured on same server; sync logic tested before go-live |
-| Availability: Mon–Fri 7:00–19:00 | NFR: Availability window | Deployment windows: weekends or after 19:00 weekdays |
-
-## Deployment Risks (from Risk List)
-
-| Risk ID | Description | RPN | Deployment Impact |
+| ID | Constraint | Source | Impact |
 |---|---|---|---|
-| RISK-T01 | Offline fault tolerance failure | 30 | SQLite sync must be validated before go-live; rollback if data loss detected |
-| RISK-T02 | AD integration (LDAP vs OAuth2 undecided) | 35 | Auth method must be resolved in Elaboration spike before deployment can proceed |
-| RISK-E01 | Windows Server capacity/availability | 12 | Single server is SPOF; no failover for 200 users (acceptable per SAD) |
+| DC-001 | Backend: .NET 10, Frontend: Razor Pages | Declared (Technical) | Kestrel web server; no SPA build pipeline |
+| DC-002 | Database: PostgreSQL | Declared (Technical) | PostgreSQL on same Windows Server |
+| DC-003 | Auth via Active Directory (LDAP/OAuth2) | Declared (Architectural) | Portal connects to AD server (TCP 389/636) |
+| DC-004 | Internal Windows Server hosting (no cloud) | Declared (Operational) | On-premises installation only |
+| DC-005 | Chrome and Edge only | Declared (Technical) | Simplified browser support |
+| DC-006 | Mon–Fri 7:00–19:00 availability with fault tolerance | Declared NFR | Graceful restart; offline buffer |
+| DC-007 | 5-min offline fault tolerance, zero data loss | Declared NFR | SQLite offline buffer co-deployed |
 
-## Planned Use Cases for Future Releases
+## Deployment Risks
 
-| Use Case | ID | Priority | Target Phase |
+| Risk | RPN | Mitigation | Phase |
 |---|---|---|---|
-| Clock In/Out | UC-001 | Must | Elaboration (architecturally significant — offline sync) |
-| View Clocking History | UC-002 | Should | Construction |
-| Review and Export Clockings | UC-003 | Should | Construction |
-| Publish News | UC-004 | Should | Construction |
-| Read News | UC-005 | Should | Construction |
-| Search Directory | UC-006 | Should | Construction |
-| Manage Directory | UC-007 | Should | Construction |
+| AD integration method undecided (LDAP vs OAuth2) | 35 | Elaboration spike with Miguel Torres; fallback to local auth | Elaboration |
+| AD data sync failure during deployment | 30 | Manual data import fallback; test sync before go-live | Elaboration |
+| Single-server SPOF for 200 users | 20 | Acceptable for intranet scale; [RECOMMENDATION — requires CR: reverse proxy if >500 users] | Transition |
 
-## Known Issues and Limitations
+## Bill of Materials (Inception Baseline)
 
-| Issue | Status | Mitigation |
+| Item | Version | Purpose | Status |
+|---|---|---|---|
+| .NET 10 SDK | 10.0.x | Application runtime and build | To be installed on Windows Server |
+| PostgreSQL | 16.x | Primary database | To be installed on Windows Server |
+| SQLite | (bundled with .NET) | Offline buffer for clock in/out | Co-deployed with application |
+| Kestrel | (bundled with .NET 10) | Web server | No separate install needed |
+| Chrome / Edge | Current versions | Client browsers | Already on workstations |
+| Active Directory | Existing corporate AD | Authentication + employee data sync | Already deployed |
+
+## Deployment Activities Roadmap
+
+| Activity | Phase | Detail |
 |---|---|---|
-| AD auth method (LDAP vs OAuth2) undecided | Open — Elaboration spike with Miguel Torres | Deployment cannot proceed until resolved; fallback to local auth documented in Risk List |
-| Single server is SPOF | Accepted — 200 users, intranet only | No failover planned; [RECOMMENDATION — requires CR: Add secondary server if availability requirements increase] |
-| No separate staging environment | Accepted — single-server intranet app | Smoke tests on production server during maintenance window |
-| Offline sync mechanism not yet validated | Open — Elaboration PoC | RISK-T01 drives Elaboration proof-of-concept |
+| Deployment strategy + topology sketch | Inception | This document |
+| AD integration spike + deployment config | Elaboration | LDAP vs OAuth2 decision; test deployment on dev server |
+| CI/CD pipeline definition | Elaboration | Build → test → deploy stages for dev environment |
+| Staging deployment + integration test | Construction | Deploy to staging; AD + PostgreSQL + offline sync test |
+| Beta deployment + feedback program | Construction/Transition | Limited beta with HR staff; structured feedback |
+| Production deployment + acceptance | Transition | Two-gate acceptance: dev-site then install-site |
+| Release Notes + training material | Transition | Per DC §5.1; user documentation and installation guide |
+
+## Two-Gate Acceptance Plan (Preview)
+
+| Gate | Location | Criteria |
+|---|---|---|
+| Gate 1: Development Site | IT test environment | All UCs pass; AD integration verified; offline sync tested |
+| Gate 2: Install Site | Production Windows Server | Acceptance criteria met; HR sign-off; 80% adoption plan active |
 
 ## Traceability
 
 | Element | Traces From | Link Type | Traces To |
 |---|---|---|---|
-| Deployment Mode (Custom-Built) | Vision (Product Position), CON-005 | Derives | SAD Deployment View |
-| Deployment Topology | SAD (Deployment View), COMP-001–COMP-004 | Refines | Deployment Model (if triggered) |
-| Rollout Approach | SAD (Deployment Notes) | Derives | Release Notes (Transition — full version) |
-| Rollback Criteria | RISK-T01, RISK-T02, RISK-E01 | Derives | Iteration Plan (Transition) |
-| UC-001–UC-007 | Use-Case Model | Refers | Release Notes (Transition — feature list) |
-| Deployment Constraints | CON-004, CON-005, CON-007, NFRs | Derives | SAD, Supplementary Specification |
+| DC-001 | Declared constraint (Technical) | Derives | SAD Deployment View |
+| DC-002 | Declared constraint (Technical) | Derives | SAD Deployment View |
+| DC-003 | Declared constraint (Architectural) | Derives | SAD Deployment View, Supplementary Spec (Auth) |
+| DC-004 | Declared constraint (Operational) | Derives | SAD Deployment View |
+| DC-005 | Declared constraint (Technical) | Derives | SAD Deployment View |
+| DC-006 | Declared NFR (Availability) | Derives | Supplementary Spec (Reliability) |
+| DC-007 | Declared NFR (Offline Fault Tolerance) | Derives | SAD Deployment View, Supplementary Spec (Reliability) |
+| UC-001 | Vision FEAT-001, FEAT-010 | Refines | Offline buffer deployment (SQLite) |
+| UC-002 | Vision FEAT-002 | Refines | Standard web deployment |
+| UC-003 | Vision FEAT-003 | Refines | Standard web deployment |
+| AD Auth | Vision FEAT-009, Supplementary Spec | Derives | AD server connectivity (TCP 389/636) |
