@@ -1,13 +1,16 @@
 ## Document Control
-
 | Field | Value |
 |---|---|
 | Phase | Inception |
 | Status | Draft |
-| Iteration | 1 (Cycle 1) |
-| Milestone Target | End of Inception |
+| Iteration | 2 (Cycle 1) |
+| Milestone Target | End of Inception (LCO) |
 | Author | System Analyst |
 
+### Iteration 2 Changes
+
+- **F3 (Major) — Resolved:** AD Authentication cross-cutting mechanism confirmed in Supplementary Specification (REQ-001 through REQ-003). No standalone UC for authentication — all UCs include this mechanism via `<<include>>`.
+- No other findings target this artifact. Content preserved from iteration 1.
 ## Functionality
 
 ### Security
