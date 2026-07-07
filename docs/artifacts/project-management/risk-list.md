@@ -7,7 +7,6 @@
 | Iteration | 2 (Cycle 1) |
 | Author | Project Manager |
 ## Risk Classification
-
 Risks are classified using FMEA methodology: **Probability (P)** × **Impact (I)** = **Risk Priority Number (RPN)**. Detection capability is tracked as part of mitigation effectiveness.
 
 ### Probability Scale
@@ -38,12 +37,111 @@ Risks are classified using FMEA methodology: **Probability (P)** × **Impact (I)
 
 ### Risk Classification Structure
 
-![Risk Classification Structure](plantuml:RiskClassification)
+```plantuml
+@startuml
+title Risk Classification Structure — Iteration 2
 
-### Risk Heatmap — Identified Risks by Priority
+class Risk {
+  + id : string
+  + category : RiskCategory
+  + description : string
+  + probability : int
+  + impact : int
+  + rpn : int
+  + magnitude : Magnitude
+  + strategy : Strategy
+  + owner : string
+  + status : RiskStatus
+}
 
-![Risk Heatmap](plantuml:RiskHeatmap)
+enum RiskCategory {
+  Technical
+  Schedule
+  External
+}
 
+enum Magnitude {
+  High
+  Significant
+  Moderate
+  Minor
+  Low
+}
+
+enum Strategy {
+  Avoid
+  Transfer
+  Accept_Mitigate
+  Accept
+}
+
+enum RiskStatus {
+  Identified
+  Mitigation_Planned
+  Spike_Scheduled
+  Active
+  Resolved
+}
+
+Risk --> RiskCategory
+Risk --> Magnitude
+Risk --> Strategy
+Risk --> RiskStatus
+
+note right of Risk
+  FMEA: RPN = P × I
+  Updated Iteration 2:
+  - RISK-T01: Identified → Mitigation_Planned
+  - RISK-T02: Identified → Spike_Scheduled
+  - RISK-S01: Identified → Active
+  - RISK-T05: NEW — Design file impact
+end note
+@enduml
+```
+
+### Risk Heatmap — Identified Risks by Priority (9 Risks)
+
+```plantuml
+@startuml
+title Risk Heatmap — Iteration 2 (9 Risks)
+
+skinparam monochrome true
+
+rectangle "High (>35)" as High {
+  rectangle "RISK-T01\nOffline Fault Tolerance\nP=7 I=9 RPN=63" as T01 #FF6B6B
+  rectangle "RISK-T03\nSync Conflict\nP=6 I=8 RPN=48" as T03 #FF6B6B
+}
+
+rectangle "Significant (21-35)" as Sig {
+  rectangle "RISK-T02\nAD/LDAP Integration\nP=5 I=7 RPN=35" as T02 #FFA94D
+  rectangle "RISK-R01\nAD Schema Mismatch\nP=5 I=6 RPN=30" as R01 #FFA94D
+  rectangle "RISK-S02\nLow Adoption\nP=4 I=6 RPN=24" as S02 #FFA94D
+  rectangle "RISK-T05\nDesign File Impact\nP=4 I=6 RPN=24" as T05 #FFA94D
+}
+
+rectangle "Moderate (13-20)" as Mod {
+  rectangle "RISK-S01\nScope Creep\nP=4 I=5 RPN=20" as S01 #FFD43B
+  rectangle "RISK-T04\nConcurrent Performance\nP=3 I=5 RPN=15" as T04 #FFD43B
+}
+
+rectangle "Minor (7-12)" as Min {
+  rectangle "RISK-E01\nServer Constraints\nP=3 I=4 RPN=12" as E01 #A9E34B
+}
+
+High -[hidden]-> Sig
+Sig -[hidden]-> Mod
+Mod -[hidden]-> Min
+
+note bottom of T05
+  NEW in Iteration 2:
+  Stakeholder design file may
+  impact architecture, UC model,
+  and UI design — requires
+  evaluation by UI Designer
+  and Software Architect
+end note
+@enduml
+```
 ## Risk Register
 
 | ID | Category | Description | P | I | RPN | Magnitude | Strategy | Owner | Status |
