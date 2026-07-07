@@ -391,7 +391,6 @@ The architecture baseline is sound — all 4+1 views are complete, the executabl
 **Risk assessment:** The architecture is ready for Construction. The defects are cosmetic/consistency issues that do not undermine the architectural baseline's soundness. The IAuthProvider isolation pattern for AD auth (RISK-T02) is validated by analogy and the spike is correctly deferred to Construction.
 
 ## Traceability
-
 | Element | Traces From | Link Type | Traces To |
 |---|---|---|---|
 | Review Record (LCA) | All Elaboration artifacts | Reviews | LCA Milestone Gate |
@@ -402,3 +401,6 @@ The architecture baseline is sound — all 4+1 views are complete, the executabl
 | DM-F1 | Design Model Document Control | Derives | Design Model Document Control (corrective action) |
 | TC-F1 | Test Case execution summary | Derives | Test Case execution summary (corrective action) |
 | PR #4 | SAD PoC-1 reference, Architectural Proof-of-Concept artifact | References | Construction phase (productive code) |
+| BR-LCA-1 | DC §4 Classification (isBusinessProcessLed=false) | Reviews | LCA Milestone Gate (BM lens) |
+| BR-LCA-1 | Use-Case Model (system UCs present, no BM sections) | Reviews | LCA Milestone Gate (BM lens) |
+| BR-LCA-1 | Vision (requirements-driven, no BPL signal) | Reviews | LCA Milestone Gate (BM lens) |
