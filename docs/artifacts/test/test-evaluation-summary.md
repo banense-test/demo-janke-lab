@@ -92,26 +92,26 @@ Coverage priority is assigned based on architectural significance, risk priority
 | Test strategy alignment | Strategy traces to Vision acceptance criteria and Supplementary Spec REQs | All 5 acceptance criteria addressed |
 | Defect lifecycle | Formal lifecycle defined and agreed | State machine published |
 ## Test Summary
-
 ### Inception Test Status
 
 No test execution occurs in Inception. This section documents the **readiness assessment** for entering Elaboration testing.
 
 | Assessment Area | Status | Notes |
 |---|---|---|
-| Test strategy defined | ✅ Complete | Risk-based prioritization across 7 UCs |
+| Test strategy defined | ✅ Complete | Risk-based prioritization across 7 UCs; AD auth (ACT-003) identified as cross-cutting test concern |
 | Test infrastructure assessed | ⚠️ Partial | AD test environment needs confirmed; offline test scenario requires network simulation tooling (deferred to Elaboration) |
 | Test environment requirements identified | ✅ Complete | See Environmental Needs below |
 | Defect tracking process defined | ✅ Complete | SCM issue tracker; state machine published |
 | Test effort estimated | ✅ Complete | Order-of-magnitude: ~30-40% of total project effort |
+| AD auth test strategy | ✅ Complete | Cross-cutting `<<include>>` from all UCs; standalone AD integration test planned for Elaboration |
 
 ### Entry Criteria for Elaboration Testing
 
 1. ✅ Vision, Risk List, Use-Case Model, and Supplementary Specification available (all in Draft status)
 2. ✅ Test coverage priorities assigned to all 7 UCs
-3. ⚠️ AD test environment availability — requires coordination with Miguel Torres
-4. ⚠️ Offline test scenario design — requires SA PoC architecture (RISK-T01 mitigation)
-
+3. ✅ AD auth (ACT-003) identified as cross-cutting test concern with `<<include>>` from all UCs
+4. ⚠️ AD test environment availability — requires coordination with Miguel Torres
+5. ⚠️ Offline test scenario design — requires SA PoC architecture (RISK-T01 mitigation)
 ## Defects and Incidents
 
 ### Defect Lifecycle
