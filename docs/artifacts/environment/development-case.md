@@ -89,13 +89,11 @@ All 16 CORE artifacts are produced per IARI baseline ownership. No CORE artifact
 
 **Change from Inception:** Architectural Proof-of-Concept trigger newly FIRED in Elaboration Iteration 1 (trigger condition requires Elaboration phase). PoC-1 produced. All other triggers unchanged. Iteration 2 re-confirmation: trigger conditions unchanged, PoC artifact already exists.
 ## Optional Artifact Triggers
-
-Recorded via `record_optional_artifact_triggers`:
-- **FIRED:** Architectural Proof-of-Concept
+Recorded via `record_optional_artifact_triggers` (re-confirmed for Elaboration Iteration 2):
+- **FIRED:** Architectural Proof-of-Concept — PoC-1 (Offline Sync) produced in Iteration 1, CI Green 3/3. Trigger condition still holds (Elaboration + RISK-T01 RPN 63/High). PoC-2 (AD Integration) deferred to Construction per IAuthProvider isolation.
 - **NOT FIRED:** Data Model, Deployment Model, Glossary, User-Interface Prototype, Test Plan
 
-The Architectural Proof-of-Concept artifact is now sanctioned for production. The SoftwareArchitect owns this artifact. PoC scope per SAD: PoC-1 (Offline Sync — validates RISK-T01 mitigation), PoC-2 (AD Integration — validates RISK-T02 mitigation). PoC-3 (Design Integration — validates RISK-T05) is referenced but may be deferred based on risk evolution.
-
+The Architectural Proof-of-Concept artifact is sanctioned. The SoftwareArchitect/Implementer owns this artifact. PoC scope per SAD: PoC-1 (Offline Sync — validates RISK-T01 mitigation, COMPLETED), PoC-2 (AD Integration — validates RISK-T02 mitigation, DEFERRED to Construction).
 ## Roles and Ownership
 
 Per IARI baseline — 24 active roles, no reassignments, no merges. All CORE artifact ownership is fixed per the service-side allowlist. This Development Case does not modify any role assignments.
