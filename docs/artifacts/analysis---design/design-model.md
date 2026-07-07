@@ -539,138 +539,82 @@ CLK --> TS : clocking entity
 TS -> REPO : SaveAsync(clocking)
 REPO --> TS : success
 TS --> CTRL : Result<Clocking>.Ok(clocking)
-CTRL --> UI : ClockInConfirmation(timestamp)
-UI --> EMP : "Clocked In at HH:MM:SS"
+CTRL --> UI : ClockInConfirmation(clocking)
+UI --> EMP : Display confirmation with timestamp
 
-== Alternative Flow 1: Clock Out (Network DOWN) ==
-
-EMP -> UI : Click "Clock Out"
-UI -> CTRL : OnPostClockOut()
-CTRL -> TS : ClockOut(employeeId)
-TS -> NHM : CheckHealth()
-NHM --> TS : HealthStatus.DOWN
-TS -> SQ : Enqueue(clocking)
-SQ -> LOCAL : SaveClockingAsync(clocking)
-LOCAL --> SQ : localId = 42
-SQ -> LOCAL : SaveSyncRecordAsync(localId, SyncStatus.PENDING)
-LOCAL --> SQ : saved
-SQ --> TS : Result<int>.Ok(localId)
-TS --> CTRL : Result<Clocking>.Ok(clocking, syncPending: true)
-CTRL --> UI : ClockOutConfirmation(timestamp, "sync pending")
-UI --> EMP : "Clocked Out at HH:MM:SS (sync pending)"
-
-== Alternative Flow 2: Auto-Sync on Network Restore ==
-
-NHM -> TS : HealthChanged(HealthStatus.UP)
-TS -> SQ : Flush()
-SQ -> LOCAL : GetPendingSyncRecords()
-LOCAL --> SQ : List<SyncRecord> (N records)
-loop for each pending SyncRecord
-  SQ -> LOCAL : GetClockingByLocalId(localId)
-  LOCAL --> SQ : Clocking entity
-  SQ -> REPO : SaveAsync(clocking)
-  alt Duplicate (employeeId, timestamp) exists
-    REPO --> SQ : DuplicateDetected
-    SQ -> LOCAL : UpdateSyncStatus(localId, SyncStatus.SKIPPED)
-  else No conflict
-    REPO --> SQ : success
-    SQ -> LOCAL : UpdateSyncStatus(localId, SyncStatus.SYNCED)
-  end
-end
-SQ --> TS : SyncResult(synced: N-M, skipped: M)
-TS -> TS : LogInformation("Sync complete: {N-M} synced, {M} skipped")
-
-== Exception Flow: Transient PostgreSQL Failure ==
+== Alternative Flow: Offline Mode (Network DOWN) ==
 
 EMP -> UI : Click "Clock In"
 UI -> CTRL : OnPostClockIn()
 CTRL -> TS : ClockIn(employeeId)
 TS -> NHM : CheckHealth()
-NHM --> TS : HealthStatus.UP
-TS -> REPO : SaveAsync(clocking)
-REPO --> TS : Exception (timeout/deadlock)
-TS -> SQ : Enqueue(clocking)
-note right: Fallback to offline path\nensures zero data loss\n(REQ-014)
-SQ --> TS : Result<int>.Ok(localId)
-TS --> CTRL : Result<Clocking>.Ok(clocking, syncPending: true)
-CTRL --> UI : ClockInConfirmation(timestamp, "sync pending")
+NHM --> TS : HealthStatus.DOWN
+TS -> LOCAL : SaveClockingAsync(clocking)
+LOCAL --> TS : localId
+TS -> LOCAL : SaveSyncRecordAsync(localId, PENDING)
+LOCAL --> TS : success
+TS --> CTRL : Result<Clocking>.Ok(clocking, source=OFFLINE)
+CTRL --> UI : ClockInConfirmation(clocking, isOffline=true)
+UI --> EMP : Display confirmation + offline indicator (REQ-035)
+
+== Auto-Sync Flow (Network Restored) ==
+
+NHM -> TS : HealthStatus.UP (callback)
+TS -> SQ : FlushPendingSync()
+SQ -> LOCAL : GetPendingSyncRecords()
+LOCAL --> SQ : pendingRecords
+loop for each pending record
+  SQ -> REPO : SaveAsync(clocking)
+  alt success
+    SQ -> LOCAL : UpdateSyncStatus(localId, SYNCED)
+  else conflict (duplicate)
+    SQ -> LOCAL : UpdateSyncStatus(localId, SKIPPED)
+  end
+end
 
 @enduml
 ```
 
 #### SEQ-002: UC-004 Publish News — Audit Trail
 
-**Participating objects:** AdminNewsPage (CLS-004), NewsController (CLS-006), NewsService (CLS-010), NewsItem (CLS-015), IAuditLogger (INT-006), IRepository<NewsItem> (INT-002)
-
-**Design decisions validated:**
-- IAuditLogger formalizes audit as cross-cutting concern — every news publish produces an immutable AuditEntry (REQ-004, REQ-006)
-- Validation occurs in domain entity before persistence
-- Error handling distinguishes validation errors (user retry) from infrastructure failures (generic error + retry)
+**Participating objects:** AdminNewsPage (CLS-005), NewsController (CLS-006), NewsService (CLS-010), News (CLS-015), IAuditLogger (INT-006), IRepository<News> (INT-002)
 
 ```plantuml
 @startuml
 title SEQ-002: UC-004 Publish News — Design Realization
 
 actor "HR Admin" as HR
-participant "AdminNewsPage\n(CLS-004)" as UI
+participant "AdminNewsPage\n(CLS-005)" as UI
 participant "NewsController\n(CLS-006)" as CTRL
-participant "NewsService\n(CLS-010)" as NS
-participant "NewsItem\n(CLS-015)" as NEWS
-participant "IAuditLogger\n(INT-006)" as AUD
-participant "IRepository<NewsItem>\n(INT-002)" as REPO
+participant "NewsService\n(CLS-010)" as SVC
+participant "News\n(CLS-015)" as NEWS
+participant "IRepository<News>\n(INT-002)" as REPO
+participant "IAuditLogger\n(INT-006)" as AUDIT
 
-== Main Flow: Publish News Item ==
-
-HR -> UI : Fill form (title, body, category, isFeatured)
-UI -> CTRL : OnPostPublish(newsItem)
-CTRL -> NS : PublishNews(newsItem)
-NS -> NEWS : new NewsItem(title, body, category, isFeatured)
-NEWS --> NS : newsItem entity
-NS -> NEWS : Validate()
-NEWS --> NS : ValidationResult.Ok
-NS -> REPO : SaveAsync(newsItem)
-REPO --> NS : saved (id = Guid)
-NS -> AUD : Log("NewsItem", id, "PUBLISH", currentUser)
-AUD --> NS : logged
-NS --> CTRL : Result<NewsItem>.Ok(newsItem)
-CTRL --> UI : PublishConfirmation(title)
+HR -> UI : Fill form, click "Publish"
+UI -> CTRL : OnPostPublish(newsDto)
+CTRL -> SVC : PublishNews(newsDto, currentUser)
+SVC -> NEWS : new News(title, body, date, category, isFeatured)
+NEWS --> SVC : news entity
+SVC -> REPO : SaveAsync(news)
+REPO --> SVC : savedNews (Id assigned)
+SVC -> AUDIT : Log("News", savedNews.Id, "CREATE", currentUser)
+AUDIT --> SVC : success
+SVC --> CTRL : Result<News>.Ok(savedNews)
+CTRL --> UI : PublishConfirmation(savedNews)
 UI --> HR : "News published successfully"
 
-== Alternative Flow: Validation Error ==
-
-HR -> UI : Submit with empty title
-UI -> CTRL : OnPostPublish(newsItem)
-CTRL -> NS : PublishNews(newsItem)
-NS -> NEWS : Validate()
-NEWS --> NS : ValidationResult.Fail("Title required")
-NS --> CTRL : Result<NewsItem>.Fail(errors)
-CTRL --> UI : ValidationErrors(errors)
-UI --> HR : "Title is required" (inline error)
-
-== Exception Flow: Repository Failure ==
-
-HR -> UI : Submit valid news item
-UI -> CTRL : OnPostPublish(newsItem)
-CTRL -> NS : PublishNews(newsItem)
-NS -> NEWS : Validate()
-NEWS --> NS : ValidationResult.Ok
-NS -> REPO : SaveAsync(newsItem)
-REPO --> NS : Exception (DB connection lost)
-NS --> CTRL : Result<NewsItem>.Fail("Unable to save. Please try again.")
-CTRL --> UI : Error("Unable to save. Please try again.")
-UI --> HR : Error message with retry button
+note right of AUDIT
+  Audit entry is append-only.
+  Traces to REQ-004, REQ-005.
+end note
 
 @enduml
 ```
 
-#### SEQ-003: UC-006 Search Directory — Performance-Critical Read
+#### SEQ-003: UC-006 Search Directory — Performance
 
-**Participating objects:** DirectoryPage (CLS-007), DirectoryController (CLS-008), DirectoryService (CLS-011), IRepository<Employee> (INT-002)
-
-**Design decisions validated:**
-- Search delegates through DirectoryService to IRepository — no direct DB access from presentation layer
-- Performance constraint ≤2s (REQ-018) ensured by PostgreSQL indexes on fullName, department, office
-- isActive filter excludes departed employees from directory (UC-007 deactivation scenario)
+**Participating objects:** DirectoryPage (CLS-007), DirectoryController (CLS-008), DirectoryService (CLS-011), Employee (CLS-019), IRepository<Employee> (INT-002)
 
 ```plantuml
 @startuml
@@ -679,48 +623,22 @@ title SEQ-003: UC-006 Search Directory — Design Realization
 actor "Employee" as EMP
 participant "DirectoryPage\n(CLS-007)" as UI
 participant "DirectoryController\n(CLS-008)" as CTRL
-participant "DirectoryService\n(CLS-011)" as DS
+participant "DirectoryService\n(CLS-011)" as SVC
 participant "IRepository<Employee>\n(INT-002)" as REPO
 
-== Main Flow: Search by Name ==
+EMP -> UI : Type search query
+UI -> CTRL : OnGetSearch(query)
+CTRL -> SVC : Search(query)
+SVC -> REPO : QueryAsync(e => e.Name.Contains(query) || e.Department.Contains(query) || e.Office.Contains(query) && e.IsActive)
+REPO --> SVC : matchingEmployees
+SVC --> CTRL : List<EmployeeDto>
+CTRL --> UI : SearchResults(results)
+UI --> EMP : Display results table
 
-EMP -> UI : Enter "Juan" in search box
-UI -> CTRL : OnGet(query: "Juan", dept: null, office: null)
-CTRL -> DS : Search("Juan", null, null)
-DS -> REPO : QueryAsync(e => e.fullName.Contains("Juan") && e.isActive)
-REPO --> DS : List<Employee> (3 results)
-DS --> CTRL : List<Employee>
-CTRL --> UI : SearchResult(employees)
-UI --> EMP : List of 3 matching colleagues
-
-== Alternative Flow: Filter by Department ==
-
-EMP -> UI : Select dept = "IT", click Search
-UI -> CTRL : OnGet(query: "", dept: "IT", office: null)
-CTRL -> DS : Search("", "IT", null)
-DS -> REPO : QueryAsync(e => e.department == "IT" && e.isActive)
-REPO --> DS : List<Employee> (15 results)
-DS --> CTRL : List<Employee>
-CTRL --> UI : SearchResult(employees)
-UI --> EMP : List of 15 IT colleagues
-
-== Alternative Flow: No Results ==
-
-EMP -> UI : Enter "xyz" in search box
-UI -> CTRL : OnGet(query: "xyz", dept: null, office: null)
-CTRL -> DS : Search("xyz", null, null)
-DS -> REPO : QueryAsync(e => e.fullName.Contains("xyz") && e.isActive)
-REPO --> DS : List<Employee> (empty)
-DS --> CTRL : List<Employee> (empty)
-CTRL --> UI : SearchResult(empty)
-UI --> EMP : "No colleagues found matching 'xyz'"
-
-note right of DS
-  **Performance constraint**
-  Search must complete in ≤2s
-  (REQ-018). PostgreSQL index
-  on fullName, department, office
-  ensures sub-second query.
+note right of REPO
+  Query uses indexed columns.
+  Target: <2s response (REQ-033).
+  Acceptance: <10s total (REQ-008).
 end note
 
 @enduml
@@ -740,75 +658,62 @@ participant "ClockingController\n(CLS-002)" as CTRL
 participant "TimeTrackingService\n(CLS-009)" as TS
 participant "IRepository<Clocking>\n(INT-002)" as REPO
 
-== Main Flow: View Current Month Clockings ==
-
-EMP -> UI : Navigate to History page
-UI -> CTRL : OnGet(month: currentMonth)
-CTRL -> TS : GetClockings(employeeId, currentMonth)
-TS -> REPO : QueryAsync(c => c.employeeId == empId && c.timestamp.Month == month)
-REPO --> TS : List<Clocking> (22 entries)
-TS --> CTRL : List<Clocking>
-CTRL --> UI : ClockingHistory(clockings)
-UI --> EMP : Table of clockings for current month
-
-== Alternative Flow: No Clockings ==
-
-EMP -> UI : Navigate to History (new employee, no clockings)
-UI -> CTRL : OnGet(month: currentMonth)
-CTRL -> TS : GetClockings(employeeId, currentMonth)
-TS -> REPO : QueryAsync(c => c.employeeId == empId && c.timestamp.Month == month)
-REPO --> TS : List<Clocking> (empty)
-TS --> CTRL : List<Clocking> (empty)
-CTRL --> UI : ClockingHistory(empty)
-UI --> EMP : "No clockings recorded for this month"
+EMP -> UI : Click "My History"
+UI -> CTRL : OnGetHistory()
+CTRL -> TS : GetMonthlyClockings(employeeId, currentMonth)
+TS -> REPO : QueryAsync(c => c.EmployeeId == employeeId && c.Timestamp.Month == currentMonth)
+REPO --> TS : clockingsList
+TS --> CTRL : List<ClockingDto>
+CTRL --> UI : HistoryData(clockings)
+UI --> EMP : Display history table (date, time, type)
 
 @enduml
 ```
 
 #### SEQ-005: UC-003 Review and Export Clockings
 
-**Participating objects:** AdminClockingsPage (CLS-005), ClockingController (CLS-002), TimeTrackingService (CLS-009), IRepository<Clocking> (INT-002), IExportService (INT-004)
+**Participating objects:** AdminClockingsPage (CLS-004), ClockingController (CLS-002), TimeTrackingService (CLS-009), IExportService (INT-004), IRepository<Clocking> (INT-002)
 
 ```plantuml
 @startuml
 title SEQ-005: UC-003 Review and Export Clockings — Design Realization
 
 actor "HR Admin" as HR
-participant "AdminClockingsPage\n(CLS-005)" as UI
+participant "AdminClockingsPage\n(CLS-004)" as UI
 participant "ClockingController\n(CLS-002)" as CTRL
 participant "TimeTrackingService\n(CLS-009)" as TS
+participant "IExportService\n(INT-004)" as EXPORT
 participant "IRepository<Clocking>\n(INT-002)" as REPO
-participant "IExportService\n(INT-004)" as EXP
 
-== Main Flow: View All Employees' Clockings ==
+== View All Clockings ==
 
-HR -> UI : Select month = "July 2026", click View
-UI -> CTRL : OnGet(month: 7)
-CTRL -> TS : GetAllClockings(2026-07)
-TS -> REPO : QueryAsync(c => c.timestamp.Year == 2026 && c.timestamp.Month == 7)
-REPO --> TS : List<Clocking> (450 entries)
-TS --> CTRL : List<Clocking> grouped by employee
-CTRL --> UI : ClockingReport(clockings)
-UI --> HR : Table of all clockings (per employee)
+HR -> UI : Navigate to Admin > Clockings
+UI -> CTRL : OnGetAllClockings(monthFilter)
+CTRL -> TS : GetAllClockings(monthFilter)
+TS -> REPO : QueryAsync(c => c.Timestamp.Month == monthFilter)
+REPO --> TS : allClockings
+TS --> CTRL : List<ClockingDto>
+CTRL --> UI : ClockingsData(allClockings)
+UI --> HR : Display all employees' clockings
 
-== Alternative Flow: Export CSV ==
+== Export CSV ==
 
 HR -> UI : Click "Export CSV"
-UI -> CTRL : OnPostExport(month: 7)
-CTRL -> TS : ExportClockings(2026-07)
-TS -> REPO : QueryAsync(c => c.timestamp.Year == 2026 && c.timestamp.Month == 7)
-REPO --> TS : List<Clocking> (450 entries)
-TS -> EXP : GenerateCSV(clockings)
-EXP --> TS : byte[] (RFC 4180 CSV)
-TS --> CTRL : byte[]
-CTRL --> UI : FileResult("clockings-2026-07.csv", content)
-UI --> HR : File download dialog
+UI -> CTRL : OnPostExportCsv(monthFilter)
+CTRL -> TS : ExportClockings(monthFilter)
+TS -> REPO : QueryAsync(c => c.Timestamp.Month == monthFilter)
+REPO --> TS : clockings
+TS -> EXPORT : GenerateCSV(clockings)
+EXPORT --> TS : csvBytes
+TS --> CTRL : FileResult(csvBytes)
+CTRL --> UI : FileDownload(csvBytes)
+UI --> HR : Browser downloads CSV file
 
-note right of EXP
-  **IExportService interface**
+note right of EXPORT
+  RFC 4180 compliant CSV.
   Columns: employee, date,
   time-in, time-out, duration.
-  RFC 4180 compliant.
+  Target: <3s generation (REQ-038).
 end note
 
 @enduml
@@ -816,138 +721,99 @@ end note
 
 #### SEQ-006: UC-005 Read News
 
-**Participating objects:** NewsListPage (CLS-016), NewsDetailPage (CLS-017), NewsController (CLS-006), NewsService (CLS-010), IRepository<NewsItem> (INT-002)
+**Participating objects:** NewsListPage (CLS-005a), NewsDetailPage (CLS-005b), NewsController (CLS-006), NewsService (CLS-010), IRepository<News> (INT-002)
 
 ```plantuml
 @startuml
 title SEQ-006: UC-005 Read News — Design Realization
 
 actor "Employee" as EMP
-participant "NewsListPage\n(CLS-016)" as UI
+participant "NewsListPage\n(CLS-005a)" as LIST
+participant "NewsDetailPage\n(CLS-005b)" as DETAIL
 participant "NewsController\n(CLS-006)" as CTRL
-participant "NewsService\n(CLS-010)" as NS
-participant "IRepository<NewsItem>\n(INT-002)" as REPO
+participant "NewsService\n(CLS-010)" as SVC
+participant "IRepository<News>\n(INT-002)" as REPO
 
-== Main Flow: View News List (Default) ==
+EMP -> LIST : Navigate to News
+LIST -> CTRL : OnGetNewsList(categoryFilter?)
+CTRL -> SVC : GetNewsList(categoryFilter)
+SVC -> REPO : QueryAsync(n => n.Category == filter || filter == null)
+REPO --> SVC : newsList
+SVC --> CTRL : List<NewsDto> (sorted by date desc)
+CTRL --> LIST : NewsListData(news, featured)
+LIST --> EMP : Display featured banner + news list
 
-EMP -> UI : Navigate to News page
-UI -> CTRL : OnGet(category: null)
-CTRL -> NS : GetNewsList(null)
-NS -> REPO : QueryAsync(n => n.publishedDate <= DateTime.Now, orderBy: publishedDate DESC)
-REPO --> NS : List<NewsItem> (20 items)
-NS --> CTRL : List<NewsItem> (featured first, then by date)
-CTRL --> UI : NewsList(items)
-UI --> EMP : Featured banner + news list sorted by date
-
-== Alternative Flow: Filter by Category ==
-
-EMP -> UI : Click category "HR"
-UI -> CTRL : OnGet(category: "HR")
-CTRL -> NS : GetNewsList("HR")
-NS -> REPO : QueryAsync(n => n.category == Category.HR && n.publishedDate <= DateTime.Now)
-REPO --> NS : List<NewsItem> (5 items)
-NS --> CTRL : List<NewsItem>
-CTRL --> UI : NewsList(items)
-UI --> EMP : 5 HR news items
-
-== Alternative Flow: Read News Detail ==
-
-EMP -> UI : Click news title "New Policy"
-UI -> CTRL : OnGet(id: newsId) [NewsDetailPage]
-CTRL -> NS : GetNewsDetail(newsId)
-NS -> REPO : FindAsync(newsId)
-REPO --> NS : NewsItem
-NS --> CTRL : NewsItem
-CTRL --> UI : NewsDetail(item)
-UI --> EMP : Full news article
+EMP -> DETAIL : Click news item
+DETAIL -> CTRL : OnGetNewsDetail(id)
+CTRL -> SVC : GetNewsById(id)
+SVC -> REPO : GetByIdAsync(id)
+REPO --> SVC : news
+SVC --> CTRL : NewsDto
+CTRL --> DETAIL : NewsDetailData(news)
+DETAIL --> EMP : Display full article
 
 @enduml
 ```
 
-#### SEQ-007: UC-007 Manage Directory — AD Sync + Audit
+#### SEQ-007: UC-007 Manage Directory — AD Sync Conflict
 
-**Participating objects:** AdminDirectoryPage (CLS-008), DirectoryController (CLS-008), DirectoryService (CLS-011), Employee (CLS-016), IAuditLogger (INT-006), IAuthProvider (INT-001), IRepository<Employee> (INT-002)
-
-**Design decisions validated:**
-- IAuthProvider isolates AD protocol — LDAP/OAuth2 swap is a DI registration change (RISK-T02)
-- Override flag mechanism: HR local changes win when overrideFlag = true (RISK-R01)
-- Three-way merge: skip (override), merge (no override), import (new entry)
-- IAuditLogger logs every directory change with user, action, timestamp (REQ-005, REQ-006)
+**Participating objects:** AdminDirectoryPage (CLS-008a), DirectoryController (CLS-008), DirectoryService (CLS-011), Employee (CLS-019), IAuthProvider (INT-001), IAuditLogger (INT-006), IRepository<Employee> (INT-002)
 
 ```plantuml
 @startuml
-title SEQ-007: UC-007 Manage Directory — Design Realization (Update + AD Sync + Audit)
+title SEQ-007: UC-007 Manage Directory — Design Realization (Update + AD Sync)
 
 actor "HR Admin" as HR
-participant "AdminDirectoryPage\n(CLS-008)" as UI
+participant "AdminDirectoryPage\n(CLS-008a)" as UI
 participant "DirectoryController\n(CLS-008)" as CTRL
-participant "DirectoryService\n(CLS-011)" as DS
-participant "Employee\n(CLS-016)" as EMP_CLS
-participant "IAuditLogger\n(INT-006)" as AUD
+participant "DirectoryService\n(CLS-011)" as SVC
+participant "Employee\n(CLS-019)" as EMP_CLS
 participant "IAuthProvider\n(INT-001)" as AD
+participant "IAuditLogger\n(INT-006)" as AUDIT
 participant "IRepository<Employee>\n(INT-002)" as REPO
 
-== Main Flow: Update Employee Entry ==
+== Update Non-AD Field (Extension Phone) ==
 
-HR -> UI : Edit "Juan Pérez" → change extension to "4567"
-UI -> CTRL : OnPostUpdate(employee)
-CTRL -> DS : UpdateEmployee(employee)
-DS -> EMP_CLS : Validate(changes)
-EMP_CLS --> DS : ValidationResult.Ok
-DS -> REPO : SaveAsync(employee)
-REPO --> DS : saved
-DS -> AUD : Log("Employee", employee.id, "UPDATE", currentUser)
-AUD --> DS : logged
-DS --> CTRL : Result<Employee>.Ok(employee)
-CTRL --> UI : UpdateConfirmation("Juan Pérez updated")
-UI --> HR : "Employee updated successfully"
+HR -> UI : Edit employee, change extension
+UI -> CTRL : OnPostUpdate(id, field, value)
+CTRL -> SVC : UpdateField(id, "Extension", "2150")
+SVC -> REPO : GetByIdAsync(id)
+REPO --> SVC : employee
+SVC -> EMP_CLS : Extension = "2150"
+SVC -> REPO : SaveAsync(employee)
+REPO --> SVC : saved
+SVC -> AUDIT : Log("Employee", id, "UPDATE", currentUser)
+SVC --> CTRL : Result.Ok
+CTRL --> UI : Confirmation
+UI --> HR : "Updated successfully"
 
-== Alternative Flow: AD Sync with Override Conflict ==
+== Update AD-Synced Field (Department) with Override ==
 
-HR -> UI : Click "Sync from AD"
-UI -> CTRL : OnPostSyncAD()
-CTRL -> DS : SyncFromAD()
-DS -> AD : FetchAllEmployeesAsync()
-AD --> DS : List<ADEmployeeRecord> (200 records)
-loop for each AD record
-  DS -> REPO : FindByAdIdAsync(adId)
-  alt Local entry exists, overrideFlag = true
-    REPO --> DS : existing (override)
-    DS -> DS : Skip — local override wins
-  else Local entry exists, no override
-    REPO --> DS : existing
-    DS -> EMP_CLS : Merge(local, adRecord)
-    EMP_CLS --> DS : merged
-    DS -> REPO : SaveAsync(merged)
-    DS -> AUD : Log("Employee", id, "AD_SYNC", "SYSTEM")
-  else No local entry
-    DS -> EMP_CLS : CreateFromAD(adRecord)
-    EMP_CLS --> DS : new Employee
-    DS -> REPO : SaveAsync(new)
-    DS -> AUD : Log("Employee", id, "AD_IMPORT", "SYSTEM")
-  end
-end
-DS --> CTRL : SyncResult(updated: 180, skipped: 15, imported: 5)
-CTRL --> UI : SyncSummary(result)
-UI --> HR : "Sync complete: 180 updated, 15 skipped (override), 5 imported"
-
-== Exception Flow: AD Unavailable ==
-
-HR -> UI : Click "Sync from AD"
-UI -> CTRL : OnPostSyncAD()
-CTRL -> DS : SyncFromAD()
-DS -> AD : FetchAllEmployeesAsync()
-AD --> DS : Exception (LDAP connection refused)
-DS --> CTRL : Result<SyncResult>.Fail("AD server unavailable. Please try again later.")
-CTRL --> UI : Error("AD server unavailable")
-UI --> HR : Error message with retry button
+HR -> UI : Edit employee, change department
+UI -> CTRL : OnPostUpdate(id, "Department", "Operations")
+CTRL -> SVC : UpdateField(id, "Department", "Operations")
+SVC -> REPO : GetByIdAsync(id)
+REPO --> SVC : employee
+SVC -> CTRL : AdSyncConflictWarning(field="Department")
+CTRL --> UI : Show conflict dialog (REQ-041)
+UI --> HR : "This field is synced with AD. Override?"
+HR -> UI : Click "Confirm Override"
+UI -> CTRL : OnPostUpdateWithOverride(id, "Department", "Operations")
+CTRL -> SVC : UpdateFieldWithOverride(id, "Department", "Operations")
+SVC -> EMP_CLS : Department = "Operations", overrideFlag = true
+SVC -> REPO : SaveAsync(employee)
+REPO --> SVC : saved
+SVC -> AUDIT : Log("Employee", id, "UPDATE_OVERRIDE", currentUser)
+SVC --> CTRL : Result.Ok
+CTRL --> UI : Confirmation
+UI --> HR : "Updated with AD override"
 
 note right of AD
   **IAuthProvider interface**
   AD protocol isolated behind
   interface. LDAP/OAuth2 swap
   is a DI registration change.
-  RISK-T02 (RPN 35).
+  RISK-T02 (RPN 30).
 end note
 
 @enduml
@@ -964,6 +830,537 @@ end note
 | UC-005 | Read News | SEQ-006 | Main, Category Filter, Detail View | Low — read-only |
 | UC-006 | Search Directory | SEQ-003 | Main, Dept Filter, No Results | Medium — performance constraint |
 | UC-007 | Manage Directory | SEQ-007 | Update, AD Sync, AD Unavailable | High — AD sync + audit |
+
+### UI Storyboards — Stakeholder Validation Flows
+
+> **Contributed by User-Interface Designer (Elaboration Iteration 2)** — Per work order directive: "Create storyboards visualizing critical use-case flows for stakeholder validation." These activity diagrams show the user-facing interaction sequences with Employee/System swimlanes, distinct from the sequence diagrams above which show object collaborations. Storyboards are the stimulus material for prototype validation sessions with stakeholders.
+
+#### SB-001: UC-001 Clock In/Out — Storyboard
+
+**Traces to:** UC-001 Main Flow, AF-1 (offline), EF-1 (session expired)
+**Usability requirements:** REQ-009, REQ-030, REQ-031, REQ-035, REQ-036
+
+```plantuml
+@startuml
+title Storyboard — UC-001: Clock In/Out (Interaction Flow)
+
+|Employee|
+|System|
+
+|Employee|
+start
+:Access portal home page;
+
+|System|
+:Authenticate via AD\n(<<include>>);
+if (AD reachable?) then (yes)
+  :Auth succeeds;
+  :Check current clocking status;
+  if (Clocked in?) then (yes)
+    :Display "Clock Out" button\n(REQ-030: primary visual element);
+  else (no)
+    :Display "Clock In" button\n(REQ-030: primary visual element);
+  endif
+
+  |Employee|
+  :Click Clock In/Out button;
+
+  |System|
+  :Record exact timestamp;
+  :Display confirmation with time\n(REQ-031: within 1 second);
+  |Employee|
+  :View confirmation;
+  stop
+else (no — network drop)
+  |System|
+  if (Cached session valid?\n<=5min offline) then (yes)
+    :Use cached session;
+    :Record timestamp locally;
+    :Queue for sync;
+    :Display confirmation\n(REQ-031);
+    :Show offline indicator\n(REQ-035);
+    |Employee|
+    :View confirmation;
+    stop
+  else (no — >5min)
+    |System|
+    :Display "Session expired —\nnetwork connection required"\n(REQ-036);
+    |Employee|
+    :Wait for network restore;
+    stop
+  endif
+endif
+
+@enduml
+```
+
+#### SB-002: UC-005 Read News — Storyboard
+
+**Traces to:** UC-005 Main Flow
+**Usability requirements:** REQ-011, REQ-034
+
+```plantuml
+@startuml
+title Storyboard — UC-005: Read News (Interaction Flow)
+
+|Employee|
+|System|
+
+|Employee|
+start
+:Navigate to News page\n(via nav bar);
+
+|System|
+:Load news list sorted by date desc\n(REQ-034);
+:Display featured news banner at top\n(REQ-011);
+:Display category filter\n(General, HR, IT, Events);
+
+|Employee|
+:View news list;
+
+if (Filter by category?) then (yes)
+  |Employee|
+  :Click category filter;
+
+  |System|
+  :Filter news by selected category;
+  :Update list in place;
+  |Employee|
+  :View filtered results;
+else (no)
+endif
+
+|Employee|
+:Click news item to read;
+
+|System|
+:Display full news article\n(NewsDetail page);
+
+|Employee|
+:Read article;
+:Click "Back" to return to list;
+
+|System|
+:Return to news list;
+stop
+
+@enduml
+```
+
+#### SB-003: UC-006 Search Directory — Storyboard
+
+**Traces to:** UC-006 Main Flow
+**Usability requirements:** REQ-008, REQ-033
+
+```plantuml
+@startuml
+title Storyboard — UC-006: Search Directory (Interaction Flow)
+
+|Employee|
+|System|
+
+|Employee|
+start
+:Navigate to Directory page\n(via nav bar);
+
+|System|
+:Display search input\nand empty results;
+
+|Employee|
+:Type search query\n(name, dept, or office);
+
+|System|
+:Filter results in real-time\n(REQ-033: within 2 seconds);
+:Display matching entries:\nname, title, dept, office, email, ext;
+
+if (Results found?) then (yes)
+  |Employee|
+  :Scan results;
+  :Find colleague's info\n(REQ-008: <=10 seconds);
+  stop
+else (no results)
+  |System|
+  :Display "No results found";
+  |Employee|
+  :Refine search query;
+  |System|
+  :Update results;
+  |Employee|
+  :View updated results;
+  stop
+endif
+
+@enduml
+```
+
+#### SB-004: UC-004 Publish News — Storyboard
+
+**Traces to:** UC-004 Main Flow
+**Usability requirements:** REQ-039, REQ-043
+
+```plantuml
+@startuml
+title Storyboard — UC-004: Publish News (Interaction Flow)
+
+|HR Administrator|
+|System|
+
+|HR Administrator|
+start
+:Navigate to Admin > News\n(via nav bar, HR role only);
+
+|System|
+:Display news publishing form\n(REQ-039: all fields on one screen);
+:Auto-fill date field;
+
+|HR Administrator|
+:Enter title;
+:Select category from dropdown;
+:Enter body text;
+if (Mark as featured?) then (yes)
+  :Check "Featured" checkbox;
+else (no)
+endif
+:Click "Publish";
+
+|System|
+:Validate required fields;
+if (Valid?) then (yes)
+  :Save news item;
+  :Log audit trail entry;
+  :Display confirmation: "News published successfully";
+  |HR Administrator|
+  :View confirmation;
+  stop
+else (no)
+  |System|
+  :Highlight missing fields\nwith plain-language guidance\n(REQ-043);
+  |HR Administrator|
+  :Correct fields;
+  :Click "Publish" again;
+  |System|
+  :Validate and save;
+  stop
+endif
+
+@enduml
+```
+
+### UI Wireframes — Primary Screens
+
+> **Contributed by User-Interface Designer** — Salt wireframe mockups for the four primary screens. These are the stimulus material for prototype validation sessions. The Implementer builds from these wireframes in Construction.
+
+#### WF-001: Login Page
+
+```plantuml
+@startuml
+salt
+title Wireframe — Login Page (UC-001 through UC-007 <<include>>)
+
+{
+  "Employee Portal"
+  --
+  {SI "Corporate Username" }
+  {SI "Password"          }
+  [  Sign In  ]
+  --
+  "© Cuba Corp — Internal Use Only"
+}
+@enduml
+```
+
+**Design rationale:** Minimal login page — only username and password fields. No registration link (AD-managed accounts). Corporate branding for familiarity. REQ-001 (AD auth) is the underlying mechanism.
+
+#### WF-002: Home / Clock In-Out Page
+
+```plantuml
+@startuml
+salt
+title Wireframe — Home / Clock In-Out Page (UC-001)
+
+{
+  "Employee Portal"              [Home] [News] [Directory]  [Admin v]
+  --
+  {#
+    Status: | Clocked Out |
+  }
+  --
+  {
+    {
+      [   Clock In   ]
+    }
+  }
+  --
+  "Last clocking: 2026-07-06 17:32 — Out"
+  --
+  [My History]
+  --
+  {#
+    "Offline mode — clocking will sync when connection is restored"
+  }
+}
+@enduml
+```
+
+**Design rationale:**
+- Clock In/Out button is the primary visual element (REQ-030): top-center, large, high-contrast
+- Status label visible above button — employee knows current state before acting
+- "My History" link provides quick access to UC-002
+- Offline indicator banner appears only when network drops (REQ-035) — hidden when online
+- Navigation bar consistent across all pages (REQ-042): Home, News, Directory, Admin (HR only)
+- Admin dropdown visible only for HR role (REQ-037)
+
+#### WF-003: Directory Search Page
+
+```plantuml
+@startuml
+salt
+title Wireframe — Directory Search Page (UC-006)
+
+{
+  "Employee Portal"              [Home] [News] [Directory*]  [Admin v]
+  --
+  {SI "Search by name, department, or office..." }
+  --
+  {#
+    Name |Title |Department |Office |Email |Ext
+    Juan Pérez |Developer |IT |Havana |jperez@cubacorp.com |2101
+    María López |HR Specialist |HR |Santiago |mlopez@cubacorp.com |2205
+    Carlos Ruiz |Accountant |Finance |Havana |cruiz@cubacorp.com |2108
+  }
+}
+@enduml
+```
+
+**Design rationale:**
+- Single search input accepts name, department, or office — reduces cognitive load (Nielsen #6: recognition over recall)
+- Results table shows all required fields: name, title, department, office, email, extension
+- Real-time filtering (REQ-033) — no "Search" button needed; results update as user types
+- Active page highlighted in nav bar (Directory*) for orientation (REQ-042)
+- Target: colleague's phone/email found in ≤10 seconds from home page (REQ-008, acceptance criterion)
+
+#### WF-004: Admin News Publishing Page
+
+```plantuml
+@startuml
+salt
+title Wireframe — Admin News Publishing Page (UC-004)
+
+{
+  "Employee Portal"              [Home] [News] [Directory]  [Admin: Clockings | News* | Directory]
+  --
+  "Publish News"
+  --
+  {SI "Title"                    }
+  {SI "Date (auto-filled)"       }
+  {CB "Featured (banner at top)" }
+  {D "Category"                  }
+  {TA "Body"                     }
+  --
+  [  Publish  ]    [  Cancel  ]
+}
+@enduml
+```
+
+**Design rationale:**
+- All required fields on one screen — no multi-step wizard (REQ-039, acceptance criterion: HR publishes without technical assistance)
+- Date auto-filled to reduce input burden
+- Category dropdown: General, HR, IT, Events (matches declared scope)
+- Featured checkbox controls banner display on news list page
+- Body text area provides ample space for article content
+- Cancel button provides emergency exit (Nielsen #3: user control and freedom)
+
+### Navigation Topology — State Machine
+
+> **Contributed by User-Interface Designer** — Formal UML state machine defining all screens, transitions, and guard conditions. Verified for reachability (all screens reachable from Login), no dead-end screens (every screen has nav bar with "Home" link), and explicit terminal states (logout from all content screens).
+
+```plantuml
+@startuml
+title Employee Portal — Navigation Topology (State Machine)
+
+skinparam state {
+  BackgroundColor #ecf0f1
+  BorderColor #2c3e50
+  FontName "Segoe UI"
+}
+skinparam note {
+  BackgroundColor #fffde7
+  BorderColor #f57f17
+}
+
+[*] --> Login : [portal accessed]
+
+state Login {
+  Login : Screen: Login Page
+  Login : AD credentials input
+  Login : REQ-001 (AD auth)
+}
+
+Login --> Home : [auth success]
+Login --> Login : [auth failure — retry]
+Login --> SessionExpired : [cached session expired\n>5min offline (EF-1)]
+
+state Home {
+  Home : Screen: Home/Clock Page
+  Home : Clock In/Out button (REQ-030)
+  Home : Status label
+  Home : Offline indicator (REQ-035)
+}
+
+Home --> Home : [clock in/out clicked\n→ confirmation (REQ-031)]
+Home --> History : [click "My History"]
+Home --> NewsList : [click "News" in nav]
+Home --> Directory : [click "Directory" in nav]
+Home --> AdminClockings : [click "Admin > Clockings"\nguard: role=HR]
+Home --> AdminNews : [click "Admin > News"\nguard: role=HR]
+Home --> AdminDirectory : [click "Admin > Directory"\nguard: role=HR]
+
+state History {
+  History : Screen: Clocking History
+  History : Current month table (REQ-032)
+}
+
+History --> Home : [click "Home"]
+History --> NewsList : [click "News"]
+History --> Directory : [click "Directory"]
+
+state NewsList {
+  NewsList : Screen: News List
+  NewsList : Featured banner (REQ-034)
+  NewsList : Category filter (REQ-011)
+}
+
+NewsList --> NewsDetail : [click news item]
+NewsList --> Home : [click "Home"]
+NewsList --> Directory : [click "Directory"]
+
+state NewsDetail {
+  NewsDetail : Screen: News Detail
+  NewsDetail : Full article view
+}
+
+NewsDetail --> NewsList : [click "Back"]
+NewsDetail --> Home : [click "Home"]
+
+state Directory {
+  Directory : Screen: Directory Search
+  Directory : Real-time filter (REQ-033)
+  Directory : Results: name, title, dept, office, email, ext
+}
+
+Directory --> Home : [click "Home"]
+Directory --> NewsList : [click "News"]
+
+state AdminClockings {
+  AdminClockings : Screen: Admin Clockings
+  AdminClockings : All employees' clockings
+  AdminClockings : Export CSV button (REQ-038)
+}
+
+AdminClockings --> Home : [click "Home"]
+AdminClockings --> AdminNews : [click "Admin > News"]
+AdminClockings --> AdminDirectory : [click "Admin > Directory"]
+
+state AdminNews {
+  AdminNews : Screen: Admin News Publishing
+  AdminNews : Form: title, body, date, category, featured (REQ-039)
+}
+
+AdminNews --> AdminNews : [submit → confirmation]
+AdminNews --> Home : [click "Home"]
+AdminNews --> AdminClockings : [click "Admin > Clockings"]
+AdminNews --> AdminDirectory : [click "Admin > Directory"]
+
+state AdminDirectory {
+  AdminDirectory : Screen: Admin Directory Management
+  AdminDirectory : Entry list with edit/deactivate (REQ-040)
+  AdminDirectory : AD sync conflict dialog (REQ-041)
+}
+
+AdminDirectory --> AdminDirectory : [edit → save → confirmation\nor AD conflict dialog]
+AdminDirectory --> Home : [click "Home"]
+AdminDirectory --> AdminClockings : [click "Admin > Clockings"]
+AdminDirectory --> AdminNews : [click "Admin > News"]
+
+state SessionExpired {
+  SessionExpired : Screen: Session Expired
+  SessionExpired : "Session expired —\nnetwork connection required" (REQ-036)
+}
+
+SessionExpired --> Login : [network restored]
+
+state ErrorGeneric {
+  ErrorGeneric : Screen: Error Page
+  ErrorGeneric : Plain language + recovery (REQ-043)
+}
+
+Home --> ErrorGeneric : [unexpected error]
+NewsList --> ErrorGeneric : [unexpected error]
+Directory --> ErrorGeneric : [unexpected error]
+AdminClockings --> ErrorGeneric : [unexpected error]
+AdminNews --> ErrorGeneric : [unexpected error]
+AdminDirectory --> ErrorGeneric : [unexpected error]
+ErrorGeneric --> Home : [click "Try Again"]
+
+Home --> [*] : [logout]
+NewsList --> [*] : [logout]
+Directory --> [*] : [logout]
+History --> [*] : [logout]
+AdminClockings --> [*] : [logout]
+AdminNews --> [*] : [logout]
+AdminDirectory --> [*] : [logout]
+
+note right of Home
+  **Reachability verified:**
+  All 11 screens reachable from Login.
+  No dead-end screens — every screen
+  has nav bar with "Home" link.
+  ErrorGeneric reachable from all
+  content screens.
+  SessionExpired reachable only from
+  Login (offline >5min).
+end note
+
+@enduml
+```
+
+### Screen Inventory
+
+| Screen ID | Screen Name | State in Topology | UC Traces | Wireframe |
+|---|---|---|---|---|
+| SCR-001 | Login Page | Login | UC-001–UC-007 (<<include>>) | WF-001 |
+| SCR-002 | Home / Clock Page | Home | UC-001 | WF-002 |
+| SCR-003 | Clocking History | History | UC-002 | — |
+| SCR-004 | News List | NewsList | UC-005 | — |
+| SCR-005 | News Detail | NewsDetail | UC-005 | — |
+| SCR-006 | Directory Search | Directory | UC-006 | WF-003 |
+| SCR-007 | Admin Clockings | AdminClockings | UC-003 | — |
+| SCR-008 | Admin News Publishing | AdminNews | UC-004 | WF-004 |
+| SCR-009 | Admin Directory Management | AdminDirectory | UC-007 | — |
+| SCR-010 | Session Expired | SessionExpired | UC-001 EF-1 | — |
+| SCR-011 | Error Page | ErrorGeneric | All UCs (error handling) | — |
+
+### Prototype Validation Plan
+
+| Session | Participants | Method | Tasks | Usability Criteria Measured |
+|---|---|---|---|---|
+| VP-1 | 5 untrained employees | Think-aloud usability test | Clock in/out from home page | REQ-009 (≥80% success, ≤30s), REQ-030, REQ-031 |
+| VP-2 | 5 employees | Timed task | Find colleague's phone/email from portal home | REQ-008 (≤10s), REQ-033 |
+| VP-3 | Laura Gómez (HR Director) | Guided walkthrough | Publish a news item with featured banner | REQ-039, REQ-011 |
+| VP-4 | 3 employees | Observation | Filter news by category; navigate between pages | REQ-034, REQ-042 |
+| VP-5 | 3 employees | Error injection | Trigger offline mode; observe response | REQ-035, REQ-036 |
+
+### Storyboard Coverage
+
+| UC ID | Use Case | Storyboard | Wireframe | Validation Session |
+|---|---|---|---|---|
+| UC-001 | Clock In/Out | SB-001 | WF-002 | VP-1, VP-5 |
+| UC-002 | View Clocking History | (covered by Navigation Topology) | — | VP-1 |
+| UC-003 | Review and Export Clockings | (covered by Navigation Topology) | — | — |
+| UC-004 | Publish News | SB-004 | WF-004 | VP-3 |
+| UC-005 | Read News | SB-002 | — | VP-4 |
+| UC-006 | Search Directory | SB-003 | WF-003 | VP-2 |
+| UC-007 | Manage Directory | (covered by Navigation Topology) | — | — |
 ## Design Packages and Classes
 ### Data Classes — O/R Mapping (Database Designer Contribution)
 
