@@ -15,7 +15,6 @@
 5. **Re-assess LCO milestone readiness** — Determine whether all open Major findings are resolved and the project is viable to proceed to Elaboration
 6. **Maintain coarse roadmap** — Verify milestone dates and iteration boundaries remain valid; adjust if rework reveals new schedule risk
 ## Plan and Milestones
-
 ### Project Context — Coarse Cross-Iteration Roadmap
 
 This section carries the coarse-grained project roadmap. Fine-grained Gantt details are provided ONLY for the current iteration. Subsequent iterations receive fine-grained plans when they become the current or next iteration.
@@ -33,65 +32,127 @@ This section carries the coarse-grained project roadmap. Fine-grained Gantt deta
 
 | Phase | Iteration | Duration | Calendar Window | Primary Focus |
 |---|---|---|---|---|
-| Inception | 1 | 2 weeks | Jul 6 – Jul 17 | Scope, risks, architecture candidate, UC model |
+| Inception | 1 | 1 week | Jul 6 – Jul 7 | Scope, risks, architecture candidate, UC model (initial) |
+| Inception | 2 | 1.5 weeks | Jul 8 – Jul 17 | Corrective: resolve F1–F3, S2; LCO re-assessment |
 | Elaboration | 1 | 2 weeks | Jul 20 – Jul 31 | PoC: offline sync + AD integration; architecture baseline |
 | Elaboration | 2 | 2 weeks | Aug 3 – Aug 14 | Complete design for all UCs; data model; UI mockups; test plan |
 | Construction | 1 | 2 weeks | Aug 17 – Aug 28 | Implement UC-001 (Clock In/Out + offline), UC-002 (News), AD auth |
 | Construction | 2 | 2 weeks | Aug 31 – Sep 11 | Implement UC-003 (Directory); integration; load testing |
 | Transition | 1 | 2 weeks | Sep 14 – Sep 25 | Deploy to Windows Server; UAT; adoption tracking |
 
-**Total: 6 iterations** — within the 6 ± 3 rule. Distribution: [1, 2, 2, 1] across phases. Elaboration is stretched to 2 iterations due to high architectural risk (offline fault tolerance + AD integration). Transition is compressed to 1 iteration (internal deployment, no user training program required).
+**Total: 7 iterations** — within the 6 ± 3 rule (high end justified by corrective iteration). Distribution: [2, 2, 2, 1] across phases. The additional Inception iteration was triggered by 4 open Major findings at the LCO review. Elaboration is stretched to 2 iterations due to high architectural risk (offline fault tolerance + AD integration). Transition is compressed to 1 iteration (internal deployment, no user training program required).
 
 #### Rubber Profile Justification
 
 | Phase | Schedule % | Iteration Count % | Justification |
 |---|---|---|---|
-| Inception | ~10% | ~17% (1 of 6) | Standard — small scope, clear stakeholder vision |
-| Elaboration | ~30% | ~33% (2 of 6) | Stretched — offline fault tolerance and AD integration are high-magnitude risks requiring PoC validation |
-| Construction | ~33% | ~33% (2 of 6) | Compressed from 50% — 3 use cases are moderate complexity; .NET 10 + Razor Pages is well-understood |
-| Transition | ~17% | ~17% (1 of 6) | Compressed from 10% — internal deployment, no external users, no training program |
+| Inception | ~15% | ~29% (2 of 7) | Stretched from 10% — corrective iteration required for LCO findings (F1–F3, S2) |
+| Elaboration | ~30% | ~29% (2 of 7) | Stretched — offline fault tolerance and AD integration are high-magnitude risks requiring PoC validation |
+| Construction | ~33% | ~29% (2 of 7) | Compressed from 50% — 3 use cases are moderate complexity; .NET 10 + Razor Pages is well-understood |
+| Transition | ~17% | ~14% (1 of 7) | Compressed — internal deployment, no external users, no training program |
 
 #### Agent Role Assignment Profile
 
-| Role | Inception | Elaboration | Construction | Transition |
-|---|---|---|---|---|
-| SystemAnalyst | **High** | Medium | — | — |
-| SoftwareArchitect | **High** | **High** | — | — |
-| ProjectManager | **High** | Medium | Medium | **High** |
-| Designer | Medium | **High** | Low | — |
-| DatabaseDesigner | — | Medium | Medium | — |
-| UIDesigner | — | Medium | — | — |
-| Implementer | — | — | **High** | Low |
-| TestDesigner | — | Medium | **High** | **High** |
-| Deployer | — | — | — | **High** |
-| Business Modeling | INACTIVE | INACTIVE | INACTIVE | INACTIVE |
+| Role | Inception Iter 1 | Inception Iter 2 | Elaboration | Construction | Transition |
+|---|---|---|---|---|---|
+| SystemAnalyst | **High** | **High** | Medium | — | — |
+| SoftwareArchitect | **High** | Medium | **High** | — | — |
+| ProjectManager | **High** | **High** | Medium | Medium | **High** |
+| Designer | Medium | Low | **High** | Low | — |
+| DatabaseDesigner | — | — | Medium | Medium | — |
+| UIDesigner | — | **High** | Medium | — | — |
+| Implementer | — | — | — | **High** | Low |
+| TestDesigner | — | Medium | Medium | **High** | **High** |
+| Deployer | — | — | — | — | **High** |
+| Business Modeling | INACTIVE | INACTIVE | INACTIVE | INACTIVE | INACTIVE |
 
-**Parallelism note:** Maximum concurrent roles = 7 (Elaboration). This is justified by the need to resolve architectural risk while simultaneously producing design artifacts. No further parallelism increase is planned — coordination overhead would exceed marginal benefit.
+**Parallelism note:** Maximum concurrent roles in Inception Iteration 2 = 5 (SystemAnalyst, UIDesigner, SoftwareArchitect, TestManager, ProjectManager). This is justified by the need to resolve findings across multiple artifacts simultaneously. No further parallelism increase is planned — coordination overhead would exceed marginal benefit.
 
 ### Coarse Roadmap — Milestones and Iteration Flow
 
-![Coarse Roadmap](plantuml:CoarseRoadmap)
+```plantuml
+@startuml
+title Inception Iteration 2 — Corrective Workflow
 
-### Fine-Grained Gantt — Inception Iteration 1
+|System Analyst|
+start
+:Resolve F1: Remove [DERIVED] from UC-002;
+:Resolve F2: Remove [DERIVED] from UC-003;
+:Resolve F3: Refactor AD Auth to Supplementary Spec;
+:Update UC Model traceability;
 
-![Inception Iteration 1 Gantt](plantuml:InceptionGantt)
+|UI Designer|
+:Resolve S2: Review employee-portal-design.html;
+:Assess design impact on UC Model & Design Model;
+
+|Software Architect|
+:Assess design file impact on SAD;
+:Resolve F5: Verify SAD artifact type;
+
+|Test Manager|
+:Resolve F4: Update TES coverage table;
+
+|Project Manager|
+:Update Risk List (RISK-T05 status);
+:Evolve Iteration Plan for Iteration 2;
+:Update Iteration Assessment;
+:LCO Re-assessment;
+
+|Review Coordinator|
+:LCO Milestone Re-Review;
+stop
+@enduml
+```
+
+### Fine-Grained Gantt — Inception Iteration 2
+
+```plantuml
+@startuml
+title Inception Iteration 2 — LCO Re-assessment Flow
+
+start
+:Check F1-F3 status (UC Model rework);
+if (F1-F3 Resolved?) then (yes)
+  :Check S2 status (Design file incorporated);
+  if (S2 Resolved?) then (yes)
+    :Check F4-F5 status;
+    if (F4-F5 Resolved?) then (yes)
+      :LCO Milestone: PASS;
+      :Transition to Elaboration;
+    else (no)
+      :LCO Milestone: CONDITIONAL PASS;
+      :Minor findings deferred to Elaboration Iter 1;
+    endif
+  else (no)
+    :LCO Milestone: ITERATION REQUIRED;
+    :Schedule Inception Iteration 3;
+  endif
+else (no)
+  :LCO Milestone: ITERATION REQUIRED;
+  :Schedule Inception Iteration 3;
+endif
+stop
+@enduml
+```
 
 #### Task Summary
 
-| Task ID | Task | Owner Role | Duration | Start | End | Dependencies |
-|---|---|---|---|---|---|---|
-| T1 | Conceive project & identify risks | ProjectManager | 2d | Jul 6 | Jul 7 | — |
-| T2 | Develop Risk List | ProjectManager | 2d | Jul 8 | Jul 9 | T1 |
-| T3 | Develop Iteration Plan + Coarse Roadmap | ProjectManager | 3d | Jul 8 | Jul 10 | T1 |
-| T4 | Author Vision Document | SystemAnalyst | 3d | Jul 6 | Jul 8 | — |
-| T5 | Author Use Case Model | SystemAnalyst | 4d | Jul 9 | Jul 14 | T4 |
-| T6 | Author Supplementary Specification | SystemAnalyst | 3d | Jul 10 | Jul 14 | T4 |
-| T7 | Initial Architecture Candidate | SoftwareArchitect | 4d | Jul 9 | Jul 14 | T4 |
-| T8 | Initial Analysis Classes | Designer | 3d | Jul 13 | Jul 15 | T5 |
-| T9 | Risk List Review & Update | ProjectManager | 1d | Jul 16 | Jul 16 | T2 |
-| T10 | Iteration Plan Finalization | ProjectManager | 1d | Jul 16 | Jul 16 | T3 |
-| T11 | LCO Milestone Review | ReviewCoordinator | 1d | Jul 17 | Jul 17 | T6, T7, T8, T9, T10 |
-
+| Task ID | Task | Owner Role | Duration | Start | End | Dependencies | Finding |
+|---|---|---|---|---|---|---|---|
+| T1 | Remove [DERIVED] from UC-002 (Read News) | SystemAnalyst | 1d | Jul 8 | Jul 8 | — | F1 |
+| T2 | Remove [DERIVED] from UC-003 (Employee Directory) | SystemAnalyst | 1d | Jul 8 | Jul 8 | — | F2 |
+| T3 | Refactor AD Auth: UC-004/UC-007 → Supplementary Spec | SystemAnalyst | 2d | Jul 9 | Jul 10 | T1, T2 | F3 |
+| T4 | Update UC Model traceability | SystemAnalyst | 1d | Jul 10 | Jul 10 | T3 | F1–F3 |
+| T5 | Review employee-portal-design.html | UIDesigner | 2d | Jul 8 | Jul 9 | — | S2 |
+| T6 | Assess design impact on UC Model & Design Model | UIDesigner | 1d | Jul 10 | Jul 10 | T5, T3 | S2 |
+| T7 | Assess design file impact on SAD | SoftwareArchitect | 1d | Jul 10 | Jul 10 | T5 | S2 |
+| T8 | Verify SAD artifact type registration | SoftwareArchitect | 1d | Jul 10 | Jul 10 | — | F5 |
+| T9 | Update TES coverage table after UC renumbering | TestManager | 1d | Jul 11 | Jul 11 | T4 | F4 |
+| T10 | Update Risk List (RISK-T05 status) | ProjectManager | 1d | Jul 8 | Jul 8 | — | — |
+| T11 | Evolve Iteration Plan for Iteration 2 | ProjectManager | 2d | Jul 8 | Jul 9 | — | — |
+| T12 | Update Iteration Assessment | ProjectManager | 1d | Jul 11 | Jul 11 | T4, T6, T9 | — |
+| T13 | LCO Re-assessment | ProjectManager | 1d | Jul 14 | Jul 14 | T4, T6, T7, T9 | — |
+| T14 | LCO Milestone Re-Review | ReviewCoordinator | 1d | Jul 17 | Jul 17 | T13 | — |
 ## Resources
 
 ### Agent Role Assignments — Inception Iteration 1
