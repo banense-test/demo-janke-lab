@@ -81,8 +81,77 @@ end note
 | REQ-013 | Offline fault tolerance: clock in/out continues during network drops up to 5 minutes | Zero data loss; auto-sync on network restore | Declared NFR (Offline), STK-003 | UC-001 |
 | REQ-014 | No data loss during offline-to-online sync | 100% of queued clockings synced | Declared NFR (Offline) | UC-001 |
 | REQ-015 | System recovers gracefully from brief network interruptions | Portal resumes normal operation without manual restart | STK-002 | All UCs |
-| REQ-024 | Database backup performed daily with point-in-time recovery capability | Daily backup; RPO ≤ 24 hours; RTO ≤ 2 hours [ASSUMPTION — requires validation] | Implied NFR — clocking data critical for payroll; stakeholders would reject system with no backup | UC-001, UC-002, UC-003 |
-| REQ-025 | Concurrent user capacity during peak clock-in window (09:00–09:30) | Response time within declared thresholds at 50 concurrent users [ASSUMPTION — requires validation] | Implied NFR — 200 employees, peak morning clock-in rush | UC-001, All UCs |
+| REQ-024 | Nightly full database backup (pg_dump) retained 30 rolling days | Nightly backup at 01:00 Mon–Fri; RPO ≤ 24h for general portal data (news, directory, audit trail) | Stakeholder confirmation (Elaboration Iter 1) — replaces prior [ASSUMPTION] | UC-004, UC-005, UC-006, UC-007 |
+| REQ-025 | Concurrent user capacity during peak clock-in window (09:00–09:30) | Response time within declared thresholds at 50 concurrent users | Stakeholder confirmation (Elaboration Iter 1) — replaces prior [ASSUMPTION] | UC-001, All UCs |
+| REQ-026 | PostgreSQL WAL archiving enabled for Point-In-Time Recovery of clocking data | RPO ≤ 15 minutes for clocking data (payroll-critical); WAL replay to point-in-time | Stakeholder confirmation (Elaboration Iter 1) | UC-001, UC-002, UC-003 |
+| REQ-027 | Backup copies stored OFF the primary Windows Server (NAS or Office 2 server) | 100% of backups on separate physical hardware; no cloud per CON-005 | Stakeholder confirmation (Elaboration Iter 1), CON-005 | UC-001, UC-002, UC-003, UC-004, UC-007 |
+| REQ-028 | Monthly test-restore verification of backup integrity | 1 test-restore per month; restore verified against checksum | Stakeholder confirmation (Elaboration Iter 1) | UC-001, UC-002, UC-003 |
+| REQ-029 | Monthly full backup (pg_dump) retained 12 months for payroll audit support | 12 monthly backups retained; supports payroll audit trail requirements | Stakeholder confirmation (Elaboration Iter 1) | UC-001, UC-002, UC-003 |
+
+**Backup & Recovery Strategy — Component Diagram:**
+
+```plantuml
+@startuml
+title Backup & Recovery Strategy — Component Diagram
+
+skinparam componentStyle rectangle
+skinparam componentBorderColor #2c3e50
+skinparam componentBackgroundColor #ecf0f1
+
+package "Primary Windows Server (Office 1)" {
+  component "Employee Portal\n(.NET 10 + Razor Pages)" as PORTAL
+  database "PostgreSQL\n(clockings, news,\ndirectory, audit)" as PGDB
+  component "WAL Archive\n(PITR capability)" as WAL
+}
+
+package "Off-Server Backup Target\n(NAS or Office 2 Server)" {
+  database "Nightly Full Backup\n(pg_dump, 30-day retention)" as NIGHTLY
+  database "Monthly Full Backup\n(pg_dump, 12-month retention)" as MONTHLY
+}
+
+cloud "No Cloud\n(per CON-005 constraint)" as NOCLOUD #ffcccc
+
+PORTAL --> PGDB : reads/writes
+PGDB --> WAL : continuous WAL archiving
+PGDB ..> NIGHTLY : nightly pg_dump\n(01:00 Mon-Fri)
+PGDB ..> MONTHLY : monthly pg_dump\n(1st of month)
+
+NIGHTLY --> NOCLOUD : NOT permitted
+note right of NOCLOUD
+  Cloud backup explicitly
+  prohibited by CON-005.
+  Off-server copy lives on
+  internal NAS or Office 2.
+end note
+
+note bottom of WAL
+  RPO ≤ 15 min for clocking data
+  (WAL replay to point-in-time)
+  RTO ≤ 2h (full restore + WAL replay)
+end note
+
+note bottom of NIGHTLY
+  Retained 30 rolling days
+  Covers general portal data
+  (news, directory, audit trail)
+end note
+
+note bottom of MONTHLY
+  Retained 12 months
+  Supports payroll audit
+  requirements for clocking data
+end note
+
+@enduml
+```
+
+**Rationale — Backup Strategy Alignment:**
+
+- **Availability window alignment:** Backups run at 01:00 (outside Mon–Fri 7:00–19:00 business window) — no impact on portal availability.
+- **Audit trail preservation:** Nightly and monthly pg_dump captures the full database including audit trail tables (news authorship, directory changes) — preserves REQ-004/REQ-005/REQ-006 traceability.
+- **Payroll-critical data:** Clocking data gets enhanced protection via WAL archiving (RPO ≤15 min) because losing a full day of clock-ins corrupts payroll. General portal data (news, directory) tolerates 24h RPO via nightly backup.
+- **No cloud:** Off-server copy targets an internal NAS or Office 2 server — consistent with CON-005 (internal Windows Server, no cloud).
+- **RTO ≤ 2h:** Full restore from pg_dump + WAL replay estimated within 2 hours — acceptable given the 12-hour business window (7:00–19:00).
 ## Performance
 
 | ID | Requirement | Threshold | Source | Traces To |
