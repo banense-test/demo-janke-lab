@@ -132,7 +132,6 @@ end note
 | HTML5 / CSS3 | Razor Pages rendering |
 
 ## Traceability
-
 | Element | Traces From | Link Type | Traces To |
 |---|---|---|---|
 | REQ-001 | CON-004, STK-002 | Refines | All UCs (<<include>> auth) |
@@ -158,6 +157,8 @@ end note
 | REQ-021 | CON-003, STK-004 | Refines | — |
 | REQ-022 | STK-003 | Refines | UC-006, UC-007 |
 | REQ-023 | CON-004, STK-001 | Refines | UC-007 |
+| REQ-024 | Implied NFR (backup/recovery) | Refines | UC-001, UC-002, UC-003 |
+| REQ-025 | Implied NFR (concurrent capacity) | Refines | UC-001, All UCs |
 | DC-001 through DC-007 | CON-001 through CON-007 | Refines | Architecture Document |
 | INT-001 | CON-004 | Refines | Architecture Document |
 | INT-002 | CON-007 | Refines | Architecture Document |
