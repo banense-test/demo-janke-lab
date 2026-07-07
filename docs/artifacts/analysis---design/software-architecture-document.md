@@ -454,7 +454,6 @@ The following PoCs are planned for the Elaboration phase to validate the top tec
 The PoC will be developed on a dedicated `feature/poc-offline-sync` branch in Elaboration, merged to main only after success criteria are met. The AD spike will be on `feature/spike-ad-integration`.
 
 ## Traceability
-
 | Element | Traces From | Link Type | Traces To |
 |---|---|---|---|
 | COMP-P1 | UC-001 | Derives | (Designer: ACL-001) |
@@ -476,4 +475,7 @@ The PoC will be developed on a dedicated `feature/poc-offline-sync` branch in El
 | ADR-001 | DC-001, DC-002, DC-005 | — | All COMP elements |
 | ADR-002 | REQ-013, REQ-014, RISK-T01, RISK-T03 | — | COMP-D4, COMP-I3 |
 | ADR-003 | REQ-001, DC-004, RISK-T02 | — | COMP-I1, INT_AUTH |
-| PoC Plan | RISK-T01, RISK-T03, RISK-T02, RISK-R01 | — | Elaboration prototype |
+| Design File Assessment | RISK-T05, S2 (Review Record) | Derives | COMP-P1, COMP-P2, COMP-P3, COMP-P4, ADR-001 |
+| PoC-1 (Offline Sync) | RISK-T01, RISK-T03 | — | COMP-D4, COMP-I3 |
+| PoC-2 (AD Integration) | RISK-T02, RISK-R01 | — | COMP-I1 |
+| PoC-3 (Design Integration) | RISK-T05 | — | COMP-P1, COMP-P2, COMP-P3, COMP-P4 |
