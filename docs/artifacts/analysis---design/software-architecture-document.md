@@ -28,7 +28,6 @@ This document presents the **candidate architecture** for the Employee Portal us
 | Use-Case | Architecturally significant UCs prioritized | Prioritized list |
 
 ## Architectural Goals and Constraints
-
 ### Goals
 
 1. **Simplicity over enterprise patterns:** 200 users, 3 offices, intranet-only — the architecture must be proportional to this scale. No microservices, no message queues, no container orchestration.
@@ -61,6 +60,25 @@ This document presents the **candidate architecture** for the Employee Portal us
 | Frontend | Razor Pages (built-in) | 10.0 | .NET 10 SDK |
 | Database | PostgreSQL | 16+ | Stakeholder constraint |
 
+### Design File Impact Assessment (S2 — Resolved)
+
+**Source:** `docs/inputs/employee-portal-design.html` (stakeholder-provided design reference, SHA `7ca177d`)
+
+**Evaluation:** The design file is a static HTML mockup communicating layout, components, states, palette, and typography for the Employee Portal. It covers three main views (Clock In/Out, Read News, Employee Directory) plus HR Administrator actions (publish news, export clocking report, manage directory).
+
+**Architectural impact:**
+
+| Design Element | SAD Component | Impact |
+|---|---|---|
+| Clock In/Out page with toggle button (green/red states) | COMP-P1 (Clock In/Out Page) | Confirms state-driven UI; no architectural change — state management is presentation-layer concern |
+| News page with category filter and featured banner | COMP-P2 (News Page) | Confirms server-rendered list with filter; no architectural change |
+| Directory search page | COMP-P3 (Directory Page) | Confirms search-by-name/department/office; no architectural change |
+| HR Admin panel (publish, export, manage) | COMP-P4 (HR Admin Panel) | Confirms single admin panel for all HR actions; no architectural change |
+| Razor Pages, no SPA, inline CSS | ADR-001 (Layered Architecture) | Validates ADR-001 — server-rendered pages, no frontend framework |
+| Design tokens (palette, typography, spacing) | — | UI Designer concern; no architectural impact. Design tokens are presentation-layer constants, not architectural mechanisms. |
+| Segoe UI font family, Chrome/Edge target | DC-007 (Browser support) | Confirms constraint; no change |
+
+**Conclusion:** The design file introduces **no new architectural requirements**. It validates the existing component decomposition (COMP-P1 through COMP-P4) and confirms ADR-001 (Razor Pages, no SPA). The design tokens and visual specifications are delegated to the UI Designer and do not affect the architectural views. RISK-T05 (design file integration risk) is mitigated by this assessment — the design aligns with the architecture.
 ## Use-Case View
 
 ### Architecturally Significant Use Cases — Prioritized
