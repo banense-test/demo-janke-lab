@@ -1,13 +1,12 @@
 ## Document Control
-
 | Field | Value |
 |---|---|
 | Phase | Inception |
 | Status | Draft |
-| Milestone Target | End of Inception |
-| Iteration | 1 (Cycle 1) |
+| Milestone Target | End of Inception (LCO) |
+| Iteration | 2 (Cycle 1) |
 | Author | ProcessEngineer |
-
+| Governance Re-recorded | 2026-07-07 — DC classification, optional triggers, version policy all re-confirmed for iteration 2 |
 ## Tailoring Overview
 
 This Development Case specifies project-specific **deltas** over the IARI DC baseline. The baseline defines 24 active roles, 16 CORE artifacts, 6 OPTIONAL artifacts, and a canonical discipline-intensity matrix. This document declares only deviations from that baseline — it does not restate it.
