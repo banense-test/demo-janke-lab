@@ -1,22 +1,50 @@
-# Employee Portal — Infrastructure as Code Base
-# Inception baseline: skeleton only
+# Employee Portal — Infrastructure-as-Code Base
+# Inception baseline: skeleton only; to be filled in Elaboration
 #
-# For a single-server intranet deployment, full Kubernetes/Helm is not required.
-# This file serves as a placeholder for infrastructure configuration scripts
-# that will be developed in Elaboration/Construction phases.
+# Deployment: Single Windows Server (on-premises, no cloud)
+# Components: .NET 10 app (Kestrel), PostgreSQL, SQLite offline buffer
 #
-# Deployment target: Internal Windows Server (no cloud, no containers required)
-# Components: .NET 10 Kestrel, PostgreSQL, SQLite (offline buffer)
+# NOTE: Since this is an on-premises Windows Server deployment (no cloud),
+# traditional Helm/K8s charts may not apply. This file serves as a
+# configuration manifest for the deployment artifacts and scripts.
 #
-# TODO (Elaboration): Replace with PowerShell DSC or Ansible playbook
-# for Windows Server configuration management.
-#
-# Key infrastructure tasks for future phases:
-# 1. Install .NET 10 runtime on Windows Server
-# 2. Install and configure PostgreSQL (TCP 5432)
-# 3. Configure firewall rules (HTTP/HTTPS inbound, TCP 5432 local, TCP 389/636 to AD)
-# 4. Create service account for portal application
-# 5. Configure AD connection (LDAP/OAuth2 — method TBD Elaboration spike)
-# 6. Set up SQLite offline buffer directory with appropriate permissions
-# 7. Configure Windows Service for Kestrel auto-start
-# 8. Set up PostgreSQL backup schedule
+# Elaboration will determine whether to use:
+#   - PowerShell DSC scripts for Windows Server configuration
+#   - Docker Compose for containerized deployment
+#   - Direct install scripts for bare-metal Windows Server
+
+apiVersion: v1
+name: employee-portal
+description: Employee Portal infrastructure configuration for Cuba Corp
+version: 0.1.0
+appVersion: '0.1.0-inception'
+
+type: application
+
+# Deployment targets
+targets:
+  dev:
+    description: Development environment (IT test server)
+    server: TBD
+  staging:
+    description: Staging environment (pre-production)
+    server: TBD
+  production:
+    description: Production Windows Server
+    server: TBD
+
+# Components to deploy
+components:
+  - name: employee-portal-app
+    runtime: dotnet10
+    server: kestrel
+    port: 5000
+  - name: postgresql
+    version: '16'
+    port: 5432
+  - name: sqlite-offline-buffer
+    type: file-based
+    path: ./data/offline.db
+  - name: ad-integration
+    protocol: TBD  # LDAP or OAuth2 — Elaboration spike
+    port: 389

@@ -1,69 +1,44 @@
 # Employee Portal — Deployment Workflow Skeleton
-# Inception baseline: structure only, steps to be filled in Elaboration/Construction
+# Inception baseline: structure only; stages to be filled in Elaboration/Construction
 #
-# Deployment Mode: Custom-Built (internal Windows Server)
-# Target: Internal corporate network, no cloud
-#
-name: Deploy Employee Portal
+# Deployment mode: Custom-Built (internal Windows Server, no cloud)
+# Target: 200 employees, 3 offices, corporate intranet
+
+name: Employee Portal Deploy
 
 on:
   push:
     branches:
       - main
-    tags:
-      - 'v*'
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Target environment'
-        required: true
-        type: choice
-        options:
-          - production
+      - 'elaboration/**'
+      - 'construction/**'
+      - 'transition/**'
+  pull_request:
+    branches:
+      - main
 
 env:
-  DOTNET_VERSION: '10.0'
-  PROJECT_PATH: 'src/EmployeePortal/EmployeePortal.csproj'
+  DOTNET_VERSION: '10.0.x'
+  POSTGRES_VERSION: '16'
 
 jobs:
-  # Phase: Elaboration — fill build + test steps
   build:
     name: Build
     runs-on: windows-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-      - name: Restore dependencies
-        run: dotnet restore ${{ env.PROJECT_PATH }}
+      - name: Restore
+        run: dotnet restore
       - name: Build
-        run: dotnet build ${{ env.PROJECT_PATH }} --configuration Release --no-restore
-      # TODO (Elaboration): Add test step
-      # TODO (Elaboration): Add publish step
-      # TODO (Transition): Add deployment to Windows Server
-      #   - Package as self-contained or framework-dependent
-      #   - Deploy via PowerShell remoting or file copy to Windows Server
-      #   - Run smoke tests (portal accessible, AD auth works)
-      #   - Notify HR Director of go-live
+        run: dotnet build --configuration Release --no-restore
+      # TODO (Elaboration): Add unit test step
+      # TODO (Elaboration): Add integration test step with PostgreSQL service container
 
-  # Phase: Transition — fill deploy steps
-  deploy:
-    name: Deploy to Production
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: windows-latest
-    environment:
-      name: production
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      # TODO (Transition): Implement deployment to internal Windows Server
-      # - Download build artifact
-      # - Deploy to Windows Server (PowerShell remoting / file copy)
-      # - Configure AD connection (LDAP/OAuth2)
-      # - Run smoke tests
-      # - Monitor first 48 hours
-      # - Rollback if criteria triggered
+  # TODO (Elaboration): Add deploy-dev job — deploy to dev Windows Server
+  # TODO (Construction): Add deploy-staging job — deploy to staging environment
+  # TODO (Transition): Add deploy-production job — deploy to production Windows Server
+  # TODO (Transition): Add acceptance gate checks — dev-site then install-site
