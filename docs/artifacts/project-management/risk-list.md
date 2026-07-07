@@ -155,7 +155,6 @@ end note
 | RISK-T04 | Technical | Performance under concurrent clock-in: 200 employees clocking in simultaneously at shift start may exceed 1-second response threshold | 3 | 5 | 15 | **Moderate** | Accept (mitigate) | Software Architect | Identified |
 | RISK-E01 | External | Windows Server hosting constraints: internal server may have limited resources, patching windows, or configuration restrictions | 3 | 4 | 12 | **Minor** | Accept | Technical Advisor (Miguel Torres) | Identified |
 ## Risk Mitigation and Contingency
-
 ### RISK-T01: Offline Fault Tolerance (RPN 63 — HIGH)
 
 | Attribute | Value |
@@ -165,6 +164,7 @@ end note
 | **Contingency** | If PoC proves the approach infeasible within Elaboration, reduce the offline window requirement from 5 minutes to 2 minutes (stakeholder negotiation), or implement a manual fallback where HR records clockings on paper and enters them post-restoration. |
 | **Detection** | Network monitoring on Windows Server; application health check endpoint; log entries for queued operations. |
 | **Feasibility Impact** | If unresolvable, the offline fault tolerance NFR must be descoped or relaxed — this is a stakeholder decision. |
+| **Status Update (Iter 2)** | SAD addresses offline sync strategy; PoC deferred to Elaboration Iteration 1. Status: Identified → **Mitigation Planned**. |
 
 ### RISK-T03: Data Sync Conflict on Network Restore (RPN 48 — HIGH)
 
@@ -183,6 +183,7 @@ end note
 | **Mitigation** | Early spike in Elaboration Iteration 1: validate LDAP connectivity from .NET 10 on Windows Server, test authentication flow, and document AD connection parameters with Miguel Torres. Use System.DirectoryServices.Protocols or Novell.Directory.Ldap.NETStandard. |
 | **Contingency** | If AD integration proves problematic, implement a fallback authentication mode using local credentials (bcrypt-hashed) with a migration path to AD. This is a temporary measure — AD remains the target. |
 | **Detection** | Authentication failure rate monitoring; AD connection health check. |
+| **Status Update (Iter 2)** | Elaboration spike with Miguel Torres confirmed in Iteration Plan. Status: Identified → **Spike Scheduled**. |
 
 ### RISK-R01: AD Schema Mismatch (RPN 30 — SIGNIFICANT)
 
@@ -202,6 +203,16 @@ end note
 | **Contingency** | If adoption is below 60% at 6 weeks, escalate to Laura Gómez for mandatory usage directive. Conduct a user feedback survey to identify barriers. |
 | **Detection** | Weekly adoption dashboard: unique logins, clocking events per day, directory searches. |
 
+### RISK-T05: Design File Impact on Architecture and UC Model (RPN 24 — SIGNIFICANT) — NEW
+
+| Attribute | Value |
+|---|---|
+| **Trigger** | Stakeholder-provided design file (`docs/inputs/employee-portal-design.html`) contains UI/UX specifications that conflict with or extend the current architecture, UC model, or data model |
+| **Mitigation** | UI Designer and Software Architect evaluate the design file in Iteration 2 for impact on Use Case Model, Design Model, and SAD. Identify any architectural changes required. Incorporate design constraints into Elaboration planning. |
+| **Contingency** | If the design file requires significant architectural changes, extend Elaboration by 1 iteration or reduce Construction scope to accommodate rework. If the design is purely cosmetic (CSS/layout), no architectural impact — incorporate in Construction. |
+| **Detection** | Design review report comparing design file to current SAD and UC Model; gap analysis documented. |
+| **Source** | Review Record finding S2 (stakeholder input, 2026-07-07) |
+
 ### RISK-S01: Scope Creep (RPN 20 — MODERATE)
 
 | Attribute | Value |
@@ -210,6 +221,7 @@ end note
 | **Mitigation** | Enforce Change Control Board process: all scope additions require a Change Request assessed for impact. Project Manager rejects verbal scope additions. Scope boundary documented in Vision (SystemAnalyst) and referenced in every Iteration Plan. |
 | **Contingency** | If a critical scope addition is approved, reduce existing iteration scope to accommodate — do not extend schedule without stakeholder approval. |
 | **Detection** | CR log review each iteration; scope baseline comparison. |
+| **Status Update (Iter 2)** | S2 design file introduction is a scope input, not creep — but must be managed through CCM. Status: Identified → **Active**. |
 
 ### RISK-T04: Performance Under Concurrent Clock-In (RPN 15 — MODERATE)
 
@@ -228,7 +240,6 @@ end note
 | **Mitigation** | Coordinate with Miguel Torres on server specifications, IIS/Kestrel configuration, and PostgreSQL installation. Document deployment requirements early in Elaboration. |
 | **Contingency** | If server resources are insufficient, request a VM allocation or resource upgrade from IT. |
 | **Detection** | Server resource monitoring; deployment dry-run in Elaboration. |
-
 ## Traceability
 
 | Element | Traces From | Link Type | Traces To |
