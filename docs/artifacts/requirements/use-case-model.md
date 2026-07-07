@@ -1,12 +1,11 @@
 ## Document Control
-
 | Field | Value |
 |---|---|
 | Phase | Elaboration |
 | Status | Draft |
-| Iteration | 1 (Cycle 1) |
+| Iteration | 2 (Cycle 1) |
 | Milestone Target | End of Elaboration |
-| Author | System Analyst |
+| Author | System Analyst / Requirements Specifier |
 
 ### Elaboration Iteration 1 Changes
 
@@ -15,6 +14,12 @@
 - UC-004 and UC-007 activity diagrams added showing audit trail integration and AD sync conflict handling.
 - All UC specifications preserved from Inception baseline; activity diagrams and scenario walkthroughs added for Elaboration depth (~80% detail).
 
+### Elaboration Iteration 2 Changes
+
+- **Consolidated Software Requirements Specification (SRS) appended** per work order: "Produce consolidated Software Requirements Specification from all use cases and supplementary requirements."
+- SRS consolidates all 7 use cases (UC-001 through UC-007) and all 45 requirements (REQ-001 through REQ-045) into a single traceable specification with FURPS+ categorization.
+- No findings from Review Record (Elaboration Iter 1) target the Use-Case Model — UC specifications preserved from Iteration 1 baseline.
+- Traceability expanded: SRS section adds full STK → FEAT → UC → REQ traceability matrix covering all declared scope elements.
 ## Use-Case Diagram
 
 ```plantuml
