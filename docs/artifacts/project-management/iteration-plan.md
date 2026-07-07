@@ -8,15 +8,12 @@
 | Author | Project Manager |
 | Prior Iteration | 1 (Cycle 1) — LCO verdict: iteration REQUIRED (4 open Major findings) |
 ## Iteration Objectives
-
-1. **Establish project scope and boundaries** — Confirm the 4 declared use cases (UC-001 Clock In/Out, UC-002 Read News, UC-003 Employee Directory, AD Authentication) and 4 NFRs as the complete scope ceiling
-2. **Identify and classify initial risks** — Produce a Risk List with all risks classified by probability × impact, with mitigation and contingency plans
-3. **Produce initial architecture candidate** — Software Architect delivers a candidate architecture addressing the primary technical risk (offline fault tolerance)
-4. **Author Vision and Use Case Model** — SystemAnalyst produces the Vision Document and Use Case Model capturing stakeholder needs and system use cases
-5. **Author Supplementary Specification** — SystemAnalyst captures NFRs (performance, availability, audit, offline tolerance) as formal requirements
-6. **Produce initial analysis classes** — Designer creates preliminary analysis classes from the Use Case Model
-7. **Assess LCO milestone readiness** — Determine whether the project is viable to proceed to Elaboration
-
+1. **Resolve Use-Case Model findings F1–F3** — System Analyst removes `[DERIVED]` markers from UC-002 and UC-003 (stakeholder confirmed processes per S1), refactors AD Authentication from standalone UCs (UC-004/UC-007) to Supplementary Specification constraint with `<<include>>` per Scope Guard Rule 7
+2. **Incorporate stakeholder design file (S2)** — UI Designer reviews `docs/inputs/employee-portal-design.html`, assesses impact on UC Model, Design Model, and SAD; Software Architect evaluates architectural impact
+3. **Resolve minor findings F4–F5** — Test Manager updates TES coverage table after UC renumbering (F4); Software Architect verifies SAD artifact type registration (F5)
+4. **Update Risk List** — Project Manager updates RISK-T05 status based on design file review outcome; verify all risk mitigations remain valid post-rework
+5. **Re-assess LCO milestone readiness** — Determine whether all open Major findings are resolved and the project is viable to proceed to Elaboration
+6. **Maintain coarse roadmap** — Verify milestone dates and iteration boundaries remain valid; adjust if rework reveals new schedule risk
 ## Plan and Milestones
 
 ### Project Context — Coarse Cross-Iteration Roadmap
