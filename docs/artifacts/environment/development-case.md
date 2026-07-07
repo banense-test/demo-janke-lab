@@ -116,54 +116,42 @@ Per IARI baseline — 24 active roles, no reassignments, no merges. All CORE art
 | ProcessEngineer | This Development Case + environment verification |
 
 ## Guidelines and Procedures
-
-### Process Workflow — Elaboration Discipline Tailoring
+### Process Workflow — Elaboration Iteration 2 (DC-F2 Resolution)
 
 ```plantuml
 @startuml
-title Elaboration Discipline Workflow — Process Engineer Tailoring
+title Elaboration Iteration 2 — Process Engineer Workflow (DC-F2 Resolution)
 
 start
-:Load Inception Development Case;
-:Read Review Record (Inception findings);
-:Read Iteration Assessment (lessons learned);
-:Read Risk List (risk profile changes);
-:Read SAD (architecture baseline);
-:Read UC Model (requirements baseline);
+:Read Review Record (Elaboration Iter 1 findings);
+:Identify DC-F2: RPN values incorrect in DC;
+:Read authoritative Risk List for correct RPN values;
 
-partition "Re-evaluate Triggers" {
-  :Check OPTIONAL artifact triggers;
-  if (Architectural PoC trigger?\nElaboration + technical risk?) then (yes)
-    :Fire: Architectural Proof-of-Concept;
-  else (no)
-    :Not fired: PoC;
-  endif
-  if (Data Model trigger?\nData-centric OR >10 entities?) then (yes)
-    :Fire: Data Model;
-  else (no)
-    :Not fired: Data Model;
-  endif
-  if (Deployment Model trigger?\nDistributed/multi-node?) then (yes)
-    :Fire: Deployment Model;
-  else (no)
-    :Not fired: Deployment Model;
-  endif
+partition "Resolve DC-F2" {
+  :Correct RISK-T01: RPN 35→63, Significant→High;
+  :Correct RISK-T02: RPN 30→35 (Significant confirmed);
+  :Correct RISK-T03: RPN 24→48, Significant→High;
+  :Update Tailoring Overview (Organization Assessment);
+  :Update Artifacts and Templates (Optional triggers);
+  :Update Traceability (RPN references);
+  :Update Document Control (iteration 2, DC-F2 resolved);
 }
 
-partition "Refine Tailoring" {
-  :Update Document Control -> Elaboration;
-  :Confirm discipline intensity per canonical matrix;
-  :Record Inception lessons learned in tailoring;
-  :Update tool assessment (CI/build/test config);
-  :Integrate SAD architecture decisions into design tailoring;
-  :Integrate UC Model into requirements tailoring;
+partition "Process Improvement" {
+  :Add RPN governance rule to lessons learned;
+  :Add PoC cross-reference rule;
+  :Add metadata verification rule;
+  :Re-record optional artifact triggers;
+  :Re-record version policy;
 }
 
-partition "Persist" {
-  :Generate activity diagram (this workflow);
-  :Generate class diagram (role-artifact matrix);
-  :Upsert Development Case (Elaboration delta);
-  :Record optional artifact triggers;
+partition "Verify" {
+  :Cross-check all RPN values against Risk List;
+  if (All RPNs match authoritative source?) then (yes)
+    :DC-F2 RESOLVED;
+  else (no)
+    :Re-read Risk List and correct;
+  endif
 }
 
 stop
@@ -199,7 +187,7 @@ class Designer {
 }
 
 class DatabaseDesigner {
-  + Design Model (data sections)
+  + Data schema (SAD Data View)
 }
 
 class UserInterfaceDesigner {
@@ -208,6 +196,7 @@ class UserInterfaceDesigner {
 
 class Implementer {
   + Implementation Model
+  + Architectural Proof-of-Concept
 }
 
 class TestDesigner {
@@ -220,207 +209,72 @@ class TestManager {
 
 class ProjectManager {
   + Iteration Plan
-  + Iteration Assessment
   + Risk List
+  + Iteration Assessment
 }
 
 class Reviewer {
   + Review Record
 }
 
-class ChangeControlManager {
-  + Change Request
-}
-
 class ConfigurationManager {
-  + CI/CD Configuration
-}
-
-class TechnicalWriter {
-  + User Documentation
-}
-
-class DeploymentManager {
-  + Deployment Model (if triggered)
+  + CI/CD pipeline
+  + Baseline tagging
 }
 
 ProcessEngineer --> DevelopmentCase : owns
 SystemAnalyst --> UseCaseModel : owns
-SystemAnalyst --> SupplementarySpec : owns
-SystemAnalyst --> Vision : owns
+SystemAnalyst --> SupplementarySpecification : owns
 SoftwareArchitect --> SAD : owns
-Designer --> DesignModel : contributes
-DatabaseDesigner --> DesignModel : contributes
-UserInterfaceDesigner --> DesignModel : contributes
+Designer --> DesignModel : co-owns
+UserInterfaceDesigner --> DesignModel : co-owns
+DatabaseDesigner --> SAD : contributes
 Implementer --> ImplementationModel : owns
+Implementer --> ArchitecturalPoC : owns
 TestDesigner --> TestCase : owns
-TestManager --> TestEvalSummary : owns
+TestManager --> TestEvaluationSummary : owns
 ProjectManager --> IterationPlan : owns
 ProjectManager --> RiskList : owns
 ProjectManager --> IterationAssessment : owns
 Reviewer --> ReviewRecord : owns
-ChangeControlManager --> ChangeRequest : owns
-TechnicalWriter --> UserDocumentation : owns
-
-DevelopmentCase ..> UseCaseModel : governs
-DevelopmentCase ..> SAD : governs
-DevelopmentCase ..> DesignModel : governs
-DevelopmentCase ..> ImplementationModel : governs
-DevelopmentCase ..> TestCase : governs
+ConfigurationManager --> CICDPipeline : owns
 
 note right of ProcessEngineer
-  Elaboration focus:
-  - Re-evaluate OPTIONAL triggers
-  - Integrate discipline-expert input
-  - Verify tool environment
-  - Record version policy
+  RPN Governance Rule (DC-F2):
+  DC references Risk List RPNs
+  by ID only. Values are READ-ONLY
+  from Risk List — never independently
+  assessed in DC.
 end note
-
-note right of DevelopmentCase
-  Override delta over IARI baseline.
-  Does NOT redefine roster or
-  CORE artifact ownership.
-end note
-
-@enduml
 ```
 
-### Environment Preparation Checklist
+### Process Rules (Iteration 2 Additions)
 
-```plantuml
-@startuml
-title Elaboration Iteration 1 — Environment Preparation Checklist
+| Rule | Source Finding | Description |
+|---|---|---|
+| RPN Governance | DC-F2, RL-F1 | DC must reference Risk List RPNs by ID. Any RPN value cited in DC must be verified against the authoritative Risk List before upsert. Never independently assess RPN in DC. |
+| PoC Cross-Reference | SAD-F2 | When an optional artifact (e.g., PoC) is produced, all artifacts referencing it must be updated in the same iteration to reflect its existence. |
+| Metadata Verification | SAD-F3 | Document Control milestone target must match the current phase exit criterion (LCA for Elaboration, not LAM). Verify on every section update. |
 
-start
-:Process Engineer: Prepare Environment for Elaboration;
-
-partition "Tool Configuration Verification" {
-  if (Build pipeline configured?\n(.github/workflows .NET 10)) then (yes)
-    :Verify build runs green;
-  else (no)
-    :Flag gap: build pipeline\nneeds Configuration Manager;
-    note right: Gap logged in DC for\nConfigurationManager to address
-  endif
-  
-  if (Test framework configured?\n(xUnit for .NET 10)) then (yes)
-    :Verify test runner executes;
-  else (no)
-    :Flag gap: test framework\ndeferred to Construction;
-    note right: Elaboration focus is\narchitecture validation
-  endif
-  
-  if (Modeling tool available?\n(PlantUML)) then (yes)
-    :Verify UML rendering;
-  else (no)
-    :Block: modeling tool required;
-  endif
-}
-
-partition "Process Readiness" {
-  if (Development Case updated\nfor Elaboration?) then (yes)
-    :Confirm tailoring sections complete;
-  else (no)
-    :Complete DC tailoring first;
-  endif
-  
-  if (Optional triggers\nre-evaluated?) then (yes)
-    :Confirm: PoC fired, others not;
-  else (no)
-    :Re-evaluate triggers;
-  endif
-  
-  if (Version policy\nrecorded?) then (yes)
-    :Confirm: .NET 10, PostgreSQL LTS;
-  else (no)
-    :Record version policy;
-  endif
-}
-
-partition "Discipline Expert Integration" {
-  :SAD input: architecture baseline stable;
-  :UC Model input: 7 UCs fully specified;
-  :Risk List input: 2 Significant risks (T01, T02);
-  :Integrate into DC tailoring sections;
-}
-
-:Environment ready for Elaboration;
-stop
-@enduml
-```
-
-### Discipline-Specific Tailoring (Integrated from Discipline Experts)
-
-#### Requirements Discipline
-
-- **Active roles:** SystemAnalyst, RequirementsSpecifier
-- **Artifacts:** Use-Case Model (7 UCs — UC-001 through UC-007), Supplementary Specification, Vision
-- **Elaboration focus:** UC specifications at 80%+ detail with activity diagrams and scenario walkthroughs. UC-001 (Clock In/Out) is architecturally significant — drives offline sync design. AD authentication is a Supplementary Specification constraint with `<<include>>` from all UCs, NOT a standalone UC (per Scope Guard Rule 7).
-- **Guideline reference:** `CONTRIBUTING.md` (to be authored by SystemAnalyst for UC specification conventions)
-- **Inception lesson applied:** DERIVED markers used with precision — only when STK-NNN verbatim describes the UC process. F1-F3 findings resolved by removing incorrect DERIVED markers and refactoring cross-cutting mechanisms.
-
-#### Analysis & Design Discipline
-
-- **Active roles:** SoftwareArchitect, Designer, DatabaseDesigner, UserInterfaceDesigner, CapsuleDesigner
-- **Artifacts:** Software Architecture Document (baseline — 4+1 views complete), Design Model (in progress), Architectural Proof-of-Concept (OPTIONAL — triggered)
-- **Elaboration focus:** Architecture baseline stabilization. SAD has all 4+1 views: Logical (component diagram), Process (offline sync concurrency), Deployment (single-node Windows Server), Implementation (package diagram), Data (full schema), Use-Case (sequence diagrams for top 3 UCs). Design Mechanisms section maps all analysis mechanisms to concrete solutions.
-- **PoC scope:** PoC-1 (Offline Sync — RISK-T01), PoC-2 (AD Integration — RISK-T02). PoC-3 (Design Integration — RISK-T05) referenced.
-- **Key architectural decisions:** ADR-001 (layered architecture), ADR-002 (offline sync via SQLite local store + Network Health Monitor), ADR-003 (AD auth isolated behind IAuthProvider — spike deferred to Construction).
-- **Integration order:** Infrastructure → Application → Presentation (bottom-up per SAD).
-- **Guideline reference:** `CONTRIBUTING.md` (to be authored by SoftwareArchitect for coding standards, design conventions)
-
-#### Implementation Discipline
-
-- **Active roles:** Implementer, Integrator
-- **Artifacts:** Implementation Model
-- **Elaboration focus:** Medium intensity. Implementation Model planning. Bottom-up integration order per SAD. AD integration isolated behind IAuthProvider interface — spike deferred to Construction.
-- **Guideline reference:** `CONTRIBUTING.md` (to be authored by Implementer for build conventions, code style)
-
-#### Test Discipline
-
-- **Active roles:** TestManager, TestAnalyst, TestDesigner, Tester
-- **Artifacts:** Test Evaluation Summary (from Inception), Test Case (design begins in Elaboration)
-- **Elaboration focus:** Medium intensity. Test Case design for architecturally significant UCs (UC-001 offline sync, UC-007 AD integration). Test framework (xUnit) configuration deferred to Construction per canonical intensity.
-- **Guideline reference:** `CONTRIBUTING.md` (to be authored by TestDesigner for test conventions)
-
-#### Configuration & Change Management Discipline
-
-- **Active roles:** ChangeControlManager, ConfigurationManager
-- **Artifacts:** Change Request (narrative ledger from Construction onwards), CI/CD configuration
-- **Elaboration focus:** Medium intensity. CI pipeline configuration (`.github/workflows`). Baseline tagging and CI gate enforcement deferred to Elaboration. CI triggers on all branch families for push and PR.
-- **Guideline reference:** `.github/workflows` (owned by ConfigurationManager), `CONTRIBUTING.md` (collaborative)
-
-#### Project Management Discipline
-
-- **Active roles:** ProjectManager, ManagementReviewer
-- **Artifacts:** Iteration Plan, Iteration Assessment, Risk List
-- **Elaboration focus:** Medium intensity. Risk List updates for RISK-T01, RISK-T02, RISK-T03 mitigation tracking. Iteration Plan for Elaboration scope. Iteration Assessment at end of iteration.
-
-#### Deployment Discipline
-
-- **Active roles:** DeploymentManager
-- **Artifacts:** Deployment section in SAD (Physical View)
-- **Elaboration focus:** Low intensity. Single-node topology. Deployment Model OPTIONAL artifact NOT triggered — Physical View in SAD is sufficient.
-
-### Version Policy
-
-Recorded via `record_version_policy`:
+### Version Policy (Re-confirmed for Iteration 2)
 
 | Ecosystem | Package | Pinned Version | LTS Only | Rationale |
 |---|---|---|---|---|
-| framework | .NET 10 | 10.0 | No | Stakeholder constraint: Backend .NET 10 with REST API. Framework pin governs all NuGet package resolution. |
-| framework | PostgreSQL | 16 | Yes | Stakeholder constraint: PostgreSQL on internal Windows Server. LTS version for enterprise stability. |
+| framework | .NET | 10 | Yes | Stakeholder constraint: Backend .NET 10 with REST API. Enterprise standard. |
+| nuget | Npgsql.EntityFrameworkCore.PostgreSQL | 10.0.2 | Yes | Stakeholder constraint: PostgreSQL. SAD confirms version. |
+| nuget | Microsoft.EntityFrameworkCore.Sqlite | 10.0.9 | Yes | Offline sync local store. SAD confirms version. |
+| framework | PostgreSQL | 16 | Yes | Stakeholder constraint: PostgreSQL on internal Windows Server. LTS for stability. |
 
-The SoftwareArchitect resolves specific NuGet package versions (e.g., Npgsql EF Core provider) against the .NET 10 framework pin. SAD confirms: EF Core 10.0.9, Npgsql 10.0.2, EF Core Sqlite 10.0.9.
+The SoftwareArchitect resolves specific NuGet package versions against the .NET 10 framework pin. SAD confirms: EF Core 10.0.9, Npgsql 10.0.2, EF Core Sqlite 10.0.9.
 
 ### Tool Configuration Gaps (Flagged for Discipline Experts)
 
 | Gap | Owner | Action Required | Due |
 |---|---|---|---|
-| Build pipeline not yet configured | ConfigurationManager | Configure `.github/workflows` for .NET 10 build + test | Elaboration iteration 1 |
+| Build pipeline not yet configured | ConfigurationManager | Configure `.github/workflows` for .NET 10 build + test | Elaboration iteration 2 |
 | Test framework not yet configured | TestDesigner / ConfigurationManager | Configure xUnit for .NET 10 | Construction iteration 1 (per canonical intensity) |
-| `CONTRIBUTING.md` not yet authored | Each discipline expert | Author discipline-specific guideline sections | Elaboration iteration 1 |
-| Baseline tagging not enforced | ConfigurationManager | Implement CI gate enforcement | Elaboration (deferred from Inception) |
-
+| `CONTRIBUTING.md` not yet authored | Each discipline expert | Author discipline-specific guideline sections | Elaboration iteration 2 |
+| Baseline tagging not enforced | ConfigurationManager | Implement CI gate enforcement | Elaboration iteration 2 |
 ## Traceability
 | Element | Traces From | Link Type | Traces To |
 |---|---|---|---|
