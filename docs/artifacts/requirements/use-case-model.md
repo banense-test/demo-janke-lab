@@ -781,16 +781,429 @@ end
 | S3 | Update department (AD-synced field) with override | Laura (HR Admin) | Selects María → changes dept from IT to Operations → system flags AD conflict → HR chooses override → saves | Entry saved with manual_override_flag=true; audit trail logs override; AD sync will not overwrite this field |
 | S4 | Deactivate departing employee | Laura (HR Admin) | Selects Juan → clicks Deactivate → confirms | Entry marked inactive; not visible in directory search; audit trail entry created |
 ## Traceability
+### Use-Case to Requirement Traceability
 
 | Element | Traces From | Link Type | Traces To |
 |---|---|---|---|
-| UC-001 | FEAT-001, FEAT-010 | Refines | ACL-001 (future), TC-001 (future) |
-| UC-002 | FEAT-002 | Refines | ACL-001 (future), TC-002 (future) |
-| UC-003 | FEAT-003 | Refines | ACL-002 (future), TC-003 (future) |
-| UC-004 | FEAT-004, FEAT-006 | Refines | ACL-003 (future), TC-004 (future) |
-| UC-005 | FEAT-005 | Refines | ACL-003 (future), TC-005 (future) |
-| UC-006 | FEAT-007 | Refines | ACL-004 (future), TC-006 (future) |
-| UC-007 | FEAT-008 | Refines | ACL-004 (future), TC-007 (future) |
+| UC-001 | FEAT-001, FEAT-010 | Refines | REQ-001, REQ-003, REQ-009, REQ-013, REQ-014, REQ-015, REQ-016, REQ-017, REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-030, REQ-031, REQ-035, REQ-036, TC-001 |
+| UC-002 | FEAT-002 | Refines | REQ-001, REQ-003, REQ-016, REQ-026, REQ-027, REQ-028, REQ-029, REQ-032, REQ-042, TC-002 |
+| UC-003 | FEAT-003 | Refines | REQ-001, REQ-002, REQ-003, REQ-016, REQ-026, REQ-027, REQ-028, REQ-029, REQ-037, REQ-038, TC-003 |
+| UC-004 | FEAT-004, FEAT-006 | Refines | REQ-001, REQ-002, REQ-003, REQ-004, REQ-006, REQ-016, REQ-019, REQ-024, REQ-027, REQ-037, REQ-039, TC-004 |
+| UC-005 | FEAT-005 | Refines | REQ-001, REQ-003, REQ-011, REQ-016, REQ-019, REQ-024, REQ-034, REQ-042, TC-005 |
+| UC-006 | FEAT-007 | Refines | REQ-001, REQ-003, REQ-008, REQ-016, REQ-018, REQ-022, REQ-024, REQ-033, REQ-042, TC-006 |
+| UC-007 | FEAT-008 | Refines | REQ-001, REQ-002, REQ-003, REQ-005, REQ-006, REQ-022, REQ-023, REQ-024, REQ-027, REQ-037, REQ-040, REQ-041, TC-007 |
 | ACT-001 | STK-003 | — | UC-001, UC-002, UC-005, UC-006 |
 | ACT-002 | STK-001 | — | UC-003, UC-004, UC-007 |
 | ACT-003 | STK-002, CON-004 | — | <<include>> from all UCs |
+
+### Consolidated Software Requirements Specification (SRS)
+
+**Purpose:** This section consolidates all use cases and supplementary requirements into a single traceable specification, per Elaboration Iteration 2 work order. It serves as the definitive requirements baseline for downstream Analysis & Design, Implementation, and Test disciplines.
+
+#### SRS Scope
+
+The Employee Portal SRS covers 7 use cases (UC-001 through UC-007) and 45 requirements (REQ-001 through REQ-045) organized by FURPS+ category. All requirements trace to declared stakeholder needs (STK-001 through STK-004), features (FEAT-001 through FEAT-011), and business objectives (OBJ-001 through OBJ-003).
+
+#### SRS — Requirements Traceability Model
+
+```plantuml
+@startuml
+title Employee Portal — Requirements Traceability Model
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+package "Stakeholders" {
+  actor "Laura Gómez\n(HR Director)" as STK01
+  actor "Miguel Torres\n(Tech Advisor)" as STK02
+  actor "Cuba Corp\nEmployees" as STK03
+  actor "Miguel\n(Maintainer)" as STK04
+}
+
+package "Business Objectives" {
+  usecase "OBJ-001\nReduce HR mgmt\ntime 50%" as OBJ01
+  usecase "OBJ-002\nEliminate Excel\nfor time tracking" as OBJ02
+  usecase "OBJ-003\n80% adoption\nin 3 months" as OBJ03
+}
+
+package "Features" {
+  usecase "FEAT-001\nClock In/Out" as F01
+  usecase "FEAT-002\nView History" as F02
+  usecase "FEAT-003\nExport Clockings" as F03
+  usecase "FEAT-004\nPublish News" as F04
+  usecase "FEAT-005\nRead News" as F05
+  usecase "FEAT-007\nSearch Directory" as F07
+  usecase "FEAT-008\nManage Directory" as F08
+  usecase "FEAT-009\nAD Auth" as F09
+  usecase "FEAT-010\nOffline Tolerance" as F10
+  usecase "FEAT-011\nAudit Trail" as F11
+}
+
+package "Use Cases" {
+  usecase "UC-001\nClock In/Out" as UC01
+  usecase "UC-002\nView History" as UC02
+  usecase "UC-003\nExport Clockings" as UC03
+  usecase "UC-004\nPublish News" as UC04
+  usecase "UC-005\nRead News" as UC05
+  usecase "UC-006\nSearch Directory" as UC06
+  usecase "UC-007\nManage Directory" as UC07
+}
+
+package "Requirements (FURPS+)" {
+  usecase "REQ-001..003\nSecurity" as R_SEC
+  usecase "REQ-004..006\nAudit Trail" as R_AUD
+  usecase "REQ-008..011\nUsability" as R_USA
+  usecase "REQ-012..015\nReliability" as R_REL
+  usecase "REQ-016..019\nPerformance" as R_PERF
+  usecase "REQ-020..023\nSupportability" as R_SUP
+  usecase "REQ-024..029\nBackup/Recovery" as R_BKP
+  usecase "REQ-030..045\nUI Usability" as R_UI
+}
+
+STK01 --> OBJ01
+STK03 --> OBJ02
+STK03 --> OBJ03
+
+OBJ01 --> F01
+OBJ01 --> F03
+OBJ01 --> F04
+OBJ01 --> F05
+OBJ01 --> F07
+OBJ01 --> F08
+OBJ02 --> F01
+OBJ03 --> F01
+
+STK01 --> F03
+STK01 --> F04
+STK01 --> F08
+STK01 --> F11
+STK02 --> F09
+STK02 --> F10
+STK03 --> F01
+STK03 --> F02
+STK03 --> F05
+STK03 --> F07
+STK03 --> F10
+
+F01 --> UC01
+F02 --> UC02
+F03 --> UC03
+F04 --> UC04
+F05 --> UC05
+F07 --> UC06
+F08 --> UC07
+F09 --> R_SEC
+F10 --> UC01
+F10 --> R_REL
+F11 --> R_AUD
+
+UC01 --> R_PERF
+UC01 --> R_REL
+UC01 --> R_UI
+UC04 --> R_AUD
+UC05 --> R_USA
+UC06 --> R_USA
+UC06 --> R_PERF
+UC07 --> R_AUD
+UC07 --> R_SUP
+
+@enduml
+```
+
+#### SRS — FURPS+ Requirements Coverage
+
+```plantuml
+@startuml
+title SRS — Requirements Coverage by FURPS+ Category
+
+skinparam packageStyle rectangle
+skinparam usecaseBorderColor #2c3e50
+skinparam usecaseBackgroundColor #ecf0f1
+
+package "Functionality" #lightblue {
+  usecase "REQ-001\nAD Authentication" as R01
+  usecase "REQ-002\nHR Role-Based Access" as R02
+  usecase "REQ-003\nIntranet-Only Access" as R03
+  usecase "REQ-004\nNews Audit Trail" as R04
+  usecase "REQ-005\nDirectory Audit Trail" as R05
+  usecase "REQ-006\nImmutable Audit Entries" as R06
+  usecase "REQ-007\nNo Per-User Licensing" as R07
+}
+
+package "Usability" #lightgreen {
+  usecase "REQ-008\nDirectory find ≤10s" as R08
+  usecase "REQ-009\n80% zero-training clocking" as R09
+  usecase "REQ-010\nChrome/Edge responsive" as R10
+  usecase "REQ-011\nNews filter intuitive" as R11
+  usecase "REQ-030..036\nEmployee UI requirements" as R30
+  usecase "REQ-037..041\nHR Admin UI requirements" as R37
+  usecase "REQ-042..045\nCross-cutting UI" as R42
+}
+
+package "Reliability" #lightyellow {
+  usecase "REQ-012\n99% uptime 7-19 Mon-Fri" as R12
+  usecase "REQ-013\nOffline 5-min tolerance" as R13
+  usecase "REQ-014\nZero data loss on sync" as R14
+  usecase "REQ-015\nGraceful recovery" as R15
+  usecase "REQ-024..029\nBackup & Recovery" as R24
+}
+
+package "Performance" #lightcoral {
+  usecase "REQ-016\nPage load <3s" as R16
+  usecase "REQ-017\nClock in/out <1s" as R17
+  usecase "REQ-018\nDirectory search ≤2s" as R18
+  usecase "REQ-019\nNews page <3s" as R19
+}
+
+package "Supportability" #lightgrey {
+  usecase "REQ-020\n.NET 10 standard patterns" as R20
+  usecase "REQ-021\nPG schema versioned" as R21
+  usecase "REQ-022\n3-office configurable" as R22
+  usecase "REQ-023\nAD sync + HR override" as R23
+}
+
+note bottom of R13
+  Architecturally significant:
+  drives offline sync design
+  (RISK-T01, RPN 63)
+end note
+
+note bottom of R17
+  Drives local-first
+  clocking architecture
+end note
+
+@enduml
+```
+
+#### SRS — Use Case to Requirement Allocation
+
+```plantuml
+@startuml
+title SRS — Use Case to Requirement Allocation Matrix
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam usecaseBorderColor #2c3e50
+skinparam usecaseBackgroundColor #ecf0f1
+
+package "Use Cases" {
+  usecase "UC-001\nClock In/Out" as UC01
+  usecase "UC-002\nView History" as UC02
+  usecase "UC-003\nExport Clockings" as UC03
+  usecase "UC-004\nPublish News" as UC04
+  usecase "UC-005\nRead News" as UC05
+  usecase "UC-006\nSearch Directory" as UC06
+  usecase "UC-007\nManage Directory" as UC07
+}
+
+package "Functional Requirements" {
+  usecase "REQ-001\nAD Auth (all UCs)" as R01
+  usecase "REQ-002\nHR Role Access" as R02
+  usecase "REQ-003\nIntranet Only" as R03
+  usecase "REQ-004\nNews Audit" as R04
+  usecase "REQ-005\nDir Audit" as R05
+  usecase "REQ-006\nImmutable Audit" as R06
+}
+
+package "NFRs" {
+  usecase "REQ-008..011\nUsability" as R08
+  usecase "REQ-012..015\nReliability" as R12
+  usecase "REQ-016..019\nPerformance" as R16
+  usecase "REQ-020..023\nSupportability" as R20
+  usecase "REQ-024..029\nBackup/Recovery" as R24
+  usecase "REQ-030..045\nUI Usability" as R30
+}
+
+UC01 ..> R01 : <<include>>
+UC01 ..> R12 : offline
+UC01 ..> R16 : <1s response
+UC01 ..> R30 : UI reqs
+
+UC02 ..> R01 : <<include>>
+UC02 ..> R30 : history UI
+
+UC03 ..> R01 : <<include>>
+UC03 ..> R02 : HR only
+UC03 ..> R30 : export UI
+UC03 ..> R24 : backup
+
+UC04 ..> R01 : <<include>>
+UC04 ..> R02 : HR only
+UC04 ..> R04 : audit
+UC04 ..> R06 : immutable
+UC04 ..> R30 : form UI
+
+UC05 ..> R01 : <<include>>
+UC05 ..> R08 : usability
+UC05 ..> R16 : <3s load
+UC05 ..> R30 : news UI
+
+UC06 ..> R01 : <<include>>
+UC06 ..> R08 : ≤10s find
+UC06 ..> R16 : ≤2s search
+UC06 ..> R30 : search UI
+
+UC07 ..> R01 : <<include>>
+UC07 ..> R02 : HR only
+UC07 ..> R05 : audit
+UC07 ..> R06 : immutable
+UC07 ..> R20 : AD sync
+UC07 ..> R30 : admin UI
+
+@enduml
+```
+
+#### SRS — Consolidated Requirements Register
+
+**Functionality — Security**
+
+| ID | Requirement | Threshold | Source | Traces To UCs |
+|---|---|---|---|---|
+| REQ-001 | All portal access requires Active Directory authentication via LDAP/OAuth2 | 100% of sessions authenticated | CON-004, STK-002, FEAT-009 | All UCs (<<include>>) |
+| REQ-002 | HR Administrator role distinguishes from regular Employee role for admin panel access | Role-based access control on UC-003, UC-004, UC-007 | STK-001, FEAT-003/004/008 | UC-003, UC-004, UC-007 |
+| REQ-003 | No access from outside the corporate network | Portal bound to internal network only | CON-006, STK-002 | All UCs |
+
+**Functionality — Audit Trail**
+
+| ID | Requirement | Threshold | Source | Traces To UCs |
+|---|---|---|---|---|
+| REQ-004 | Audit trail records who, what, when for every news publishing action | 100% of publish/edit/delete events logged | Declared NFR (Audit), FEAT-011 | UC-004 |
+| REQ-005 | Audit trail records who, what, when for every directory change | 100% of create/update/deactivate events logged | Declared NFR (Audit), FEAT-011 | UC-007 |
+| REQ-006 | Audit trail entries are traceable and immutable | Entries cannot be modified or deleted | Declared NFR (Audit) | UC-004, UC-007 |
+
+**Functionality — Licensing**
+
+| ID | Requirement | Threshold | Source | Traces To UCs |
+|---|---|---|---|---|
+| REQ-007 | No per-user licensing costs (internal open-source or included runtime) | .NET 10 (free), PostgreSQL (free) | CON-001, CON-003 | — |
+
+**Usability — Employee (ACT-001)**
+
+| ID | Requirement | Threshold | Source | Traces To UCs |
+|---|---|---|---|---|
+| REQ-008 | Employee finds colleague's phone/email in under 10 seconds | ≤10 seconds from directory page load to result display | Acceptance Criteria, FEAT-007 | UC-006 |
+| REQ-009 | 80% of employees complete at least one clocking with no prior training | ≥80% first-use success rate without training; ≤3 clicks from home page | Acceptance Criteria, OBJ-003, FEAT-001 | UC-001 |
+| REQ-010 | Portal is responsive and accessible from Chrome and Edge | Renders correctly at ≥1280px and ≥768px viewport widths | CON-007 | All UCs |
+| REQ-011 | News page shows featured banner and category filter intuitively | 100% of test users identify category filter without instruction | STK-003, FEAT-005 | UC-005 |
+| REQ-030 | Clock In/Out button is the primary visual element on the home page | Button top-center, min 200px width, high-contrast; status label visible above | Acceptance Criteria, FEAT-001 | UC-001 |
+| REQ-031 | Clocking confirmation is immediately visible | Confirmation within 1 second; includes exact recorded timestamp | Acceptance Criteria, Performance NFR | UC-001 |
+| REQ-032 | Clocking history displays current month in chronological order | Date, time, type (In/Out) sorted descending; ≤31 rows × 2 entries | UC-002 flow, FEAT-002 | UC-002 |
+| REQ-033 | Directory search provides real-time filtering | Results update within 2 seconds; show name, title, dept, office, email, extension | REQ-008, UC-006 flow | UC-006 |
+| REQ-034 | News list sorted by date descending with category filter visible | Most recent first; filter (General, HR, IT, Events) visible; featured banner at top | UC-005 flow, FEAT-005 | UC-005 |
+| REQ-035 | Offline status indicator visible when network drops | Banner/icon within 3 seconds; message: "Offline mode — clocking will sync when connection is restored" | UC-001 AF-1, FEAT-010 | UC-001 |
+| REQ-036 | Session expiry message is clear and actionable | "Session expired — network connection required"; no ambiguous error codes | UC-001 EF-1 | UC-001 |
+
+**Usability — HR Administrator (ACT-002)**
+
+| ID | Requirement | Threshold | Source | Traces To UCs |
+|---|---|---|---|---|
+| REQ-037 | HR admin panel accessible from visible navigation element | Admin link visible for HR role only; not visible to regular employees | REQ-002, FEAT-003/004/008 | UC-003, UC-004, UC-007 |
+| REQ-038 | CSV export button clearly labeled, produces download within 3 seconds | Button labeled "Export CSV"; progress indicator if >1 second | UC-003 flow, FEAT-003 | UC-003 |
+| REQ-039 | News publishing form has all required fields on one screen | Title, body, date (auto-filled), category dropdown, featured checkbox — no wizard | UC-004 flow, FEAT-004 | UC-004 |
+| REQ-040 | Directory management panel shows entry list with edit/deactivate actions | Table: name, dept, office columns; Edit/Deactivate per row; Create New at top | UC-007 flow, FEAT-008 | UC-007 |
+| REQ-041 | AD sync conflict warning is clear and offers override choice | Warning dialog: "This field is synced with AD. Override will prevent future AD updates." Confirm/Cancel | UC-007 S3 scenario | UC-007 |
+
+**Usability — Cross-Cutting**
+
+| ID | Requirement | Threshold | Source | Traces To UCs |
+|---|---|---|---|---|
+| REQ-042 | Consistent navigation bar across all pages | Same structure (Home, News, Directory, [Admin]) on every page; active page highlighted | Nielsen Heuristic #4 | All UCs |
+| REQ-043 | Error messages use plain language with recovery guidance | No raw exception codes; every error includes suggested action | Nielsen Heuristic #9 | All UCs |
+| REQ-044 | All interactive elements have visible focus indicators for keyboard navigation | Focus outline visible on all controls; tab order follows visual order | Nielsen Heuristic #6 | All UCs |
+| REQ-045 | Page load provides visual feedback | Loading indicator visible within 500ms; no blank screen >1 second | Performance NFR, Nielsen Heuristic #1 | All UCs |
+
+**Reliability**
+
+| ID | Requirement | Threshold | Source | Traces To UCs |
+|---|---|---|---|---|
+| REQ-012 | Portal available Monday–Friday 7:00–19:00 | ≥99% uptime during business hours | Declared NFR (Availability) | All UCs |
+| REQ-013 | Offline fault tolerance: clock in/out continues during network drops up to 5 minutes | Zero data loss; auto-sync on network restore | Declared NFR (Offline), FEAT-010 | UC-001 |
+| REQ-014 | No data loss during offline-to-online sync | 100% of queued clockings synced | Declared NFR (Offline) | UC-001 |
+| REQ-015 | System recovers gracefully from brief network interruptions | Portal resumes normal operation without manual restart | STK-002 | All UCs |
+| REQ-024 | Nightly full database backup (pg_dump) retained 30 rolling days | Nightly at 01:00 Mon–Fri; RPO ≤ 24h for general portal data | Stakeholder confirmation (Elab Iter 1) | UC-004, UC-005, UC-006, UC-007 |
+| REQ-025 | Concurrent user capacity during peak clock-in window (09:00–09:30) | Response time within thresholds at 50 concurrent users | Stakeholder confirmation (Elab Iter 1) | UC-001, All UCs |
+| REQ-026 | PostgreSQL WAL archiving for PITR of clocking data | RPO ≤ 15 minutes for clocking data (payroll-critical) | Stakeholder confirmation (Elab Iter 1) | UC-001, UC-002, UC-003 |
+| REQ-027 | Backup copies stored off primary Windows Server (NAS or Office 2) | 100% on separate physical hardware; no cloud per CON-005 | Stakeholder confirmation (Elab Iter 1) | UC-001, UC-002, UC-003, UC-004, UC-007 |
+| REQ-028 | Monthly test-restore verification of backup integrity | 1 test-restore per month; verified against checksum | Stakeholder confirmation (Elab Iter 1) | UC-001, UC-002, UC-003 |
+| REQ-029 | Monthly full backup retained 12 months for payroll audit support | 12 monthly backups retained | Stakeholder confirmation (Elab Iter 1) | UC-001, UC-002, UC-003 |
+
+**Performance**
+
+| ID | Requirement | Threshold | Source | Traces To UCs |
+|---|---|---|---|---|
+| REQ-016 | Page load time | < 3 seconds | Declared NFR (Performance) | All UCs |
+| REQ-017 | Clock in/out operation response time | < 1 second | Declared NFR (Performance) | UC-001 |
+| REQ-018 | Directory search response time | ≤ 2 seconds | Acceptance Criteria (10s total; 2s search leaves 8s margin) | UC-006 |
+| REQ-019 | News page load with featured banner and category filter | < 3 seconds | Declared NFR (Performance) | UC-005 |
+
+**Supportability**
+
+| ID | Requirement | Threshold | Source | Traces To UCs |
+|---|---|---|---|---|
+| REQ-020 | Maintainable codebase using standard .NET 10 patterns | Follows .NET conventions; no exotic frameworks | CON-001, STK-004 | — |
+| REQ-021 | PostgreSQL schema is documented and version-controlled | Schema migrations tracked | CON-003, STK-004 | — |
+| REQ-022 | Application configurable for 3-office deployment without code changes | Office list is data-driven, not hardcoded | STK-003 | UC-006, UC-007 |
+| REQ-023 | Employee data synchronized with AD; manual override available for HR | AD sync + HR admin panel coexist | CON-004, STK-001 | UC-007 |
+
+**Design Constraints**
+
+| ID | Constraint | Detail | Source |
+|---|---|---|---|
+| DC-001 | Backend framework | .NET 10 with REST API | CON-001 |
+| DC-002 | Frontend technology | Razor Pages (no SPA) | CON-002 |
+| DC-003 | Database | PostgreSQL | CON-003 |
+| DC-004 | Authentication | Active Directory via LDAP/OAuth2 | CON-004 |
+| DC-005 | Hosting | Internal Windows Server, no cloud | CON-005 |
+| DC-006 | Network access | Corporate intranet only, no external access | CON-006 |
+| DC-007 | Browser support | Chrome and Edge (current versions) only | CON-007 |
+
+**Interfaces**
+
+| ID | Interface | Type | Direction | Detail |
+|---|---|---|---|---|
+| INT-001 | Active Directory | External system | Portal → AD | LDAP/OAuth2 for authentication; employee data sync (name, email, department) |
+| INT-002 | Browser (Chrome/Edge) | User agent | Portal → Browser | HTTP/HTTPS responses rendered as Razor Pages |
+| INT-003 | PostgreSQL | Database | Portal → DB | Standard ADO.NET / EF Core connection |
+
+**Applicable Standards**
+
+| Standard | Applicability |
+|---|---|
+| LDAPv3 | AD authentication protocol |
+| OAuth2 | Alternative AD authentication protocol (decision pending — Stability: Low) |
+| CSV (RFC 4180) | Clocking export format |
+| HTTP/HTTPS | Web transport |
+| HTML5 / CSS3 | Razor Pages rendering |
+
+#### SRS — Consolidated Use Case Summary
+
+| UC ID | Name | Actor | MoSCoW | Stability | Arch. Sig.? | Key Requirements | Scenarios |
+|---|---|---|---|---|---|---|---|
+| UC-001 | Clock In/Out | Employee | Must | Low | **Yes** — offline sync | REQ-001, 003, 009, 013, 014, 015, 016, 017, 025, 030, 031, 035, 036 | S1: Normal clock in; S2: Offline clock in; S3: Sync conflict on restore |
+| UC-002 | View Clocking History | Employee | Must | High | No | REQ-001, 003, 016, 032, 042 | S1: View current month; S2: Empty month (no clockings yet) |
+| UC-003 | Review and Export Clockings | HR Admin | Must | Medium | No | REQ-001, 002, 003, 016, 037, 038 | S1: View all clockings; S2: Export CSV; S3: Filter by employee |
+| UC-004 | Publish News | HR Admin | Must | Medium | No | REQ-001, 002, 003, 004, 006, 016, 019, 037, 039 | S1: Publish new news; S2: Edit existing; S3: Mark as featured |
+| UC-005 | Read News | Employee | Must | High | No | REQ-001, 003, 011, 016, 019, 034, 042 | S1: Browse all news; S2: Filter by category; S3: Read featured news |
+| UC-006 | Search Directory | Employee | Must | High | No | REQ-001, 003, 008, 016, 018, 022, 033, 042 | S1: Search by name; S2: Filter by department; S3: Filter by office |
+| UC-007 | Manage Directory | HR Admin | Must | Medium | No | REQ-001, 002, 003, 005, 006, 022, 023, 037, 040, 041 | S1: Create entry; S2: Update local field; S3: Override AD-synced field; S4: Deactivate employee |
+
+#### SRS — Full Stakeholder-to-Requirement Traceability
+
+| Stakeholder | Need/Constraint | Feature | Use Case | Requirements |
+|---|---|---|---|---|
+| STK-001 (Laura Gómez, HR Director) | Reduce HR management time by 50% | FEAT-003, FEAT-004, FEAT-006, FEAT-008, FEAT-011 | UC-003, UC-004, UC-007 | REQ-002, 004, 005, 006, 023, 037, 038, 039, 040, 041 |
+| STK-002 (Miguel Torres, Tech Advisor) | AD authentication; offline fault tolerance; internal hosting | FEAT-009, FEAT-010 | (cross-cutting <<include>>) | REQ-001, 003, 012, 013, 014, 015, DC-001..007, INT-001..003 |
+| STK-003 (Cuba Corp Employees) | Easy time tracking; news access; directory lookup; zero-training adoption | FEAT-001, FEAT-002, FEAT-005, FEAT-007, FEAT-010 | UC-001, UC-002, UC-005, UC-006 | REQ-008, 009, 010, 011, 016, 017, 018, 030..036, 042..045 |
+| STK-004 (Miguel, Maintainer) | Maintainable codebase; documented schema | (supportability) | — | REQ-020, 021, DC-001, DC-003 |
+
+#### SRS — Acceptance Criteria to Requirement Mapping
+
+| Acceptance Criterion | Traces To | Verification Method |
+|---|---|---|
+| Employee can clock in/out without HR/dev help | UC-001, REQ-009, REQ-030, REQ-031 | Usability test: 5 untrained employees, ≤30s task completion |
+| HR Administrator can publish news without technical assistance | UC-004, REQ-039 | Usability test: HR publishes news item in ≤2 minutes |
+| Any employee finds colleague's phone/email in under 10 seconds | UC-006, REQ-008, REQ-018, REQ-033 | Timed task: home page → directory → search → result ≤10s |
+| 80% of employees complete at least one clocking with no prior training | UC-001, REQ-009 | Post-launch metric: 80% of 200 employees clock within first week |
+| System works temporarily offline (5-min network drop, no data loss) | UC-001 AF-1, REQ-013, REQ-014 | Integration test: disconnect network, clock in/out, reconnect, verify sync |
