@@ -14,7 +14,6 @@
 | Test Verdict Summary | 7 PASS, 1 PASS (partial), 1 NOT EXECUTABLE, 11 BLOCKED |
 | CRs Logged | #5 (Major — PoC tests excluded from CI), #6 (Minor — placeholder smoke test), #7 (Major — sync-over-async), #8 (Minor — reflection) |
 ## Test Scope
-
 ### Purpose
 
 This artifact defines the test case catalog for the Employee Portal architecture baseline. Each test case traces to a use-case scenario (main flow, alternative flow, or exception flow) from the Use-Case Model and targets a **plausible failure mode** — not a confirmation that the system works. The test model is the verification counterpart of the use-case model.
@@ -23,9 +22,11 @@ This artifact defines the test case catalog for the Employee Portal architecture
 
 | UC ID | Name | Architectural Significance | Risk Priority |
 |---|---|---|---|
-| UC-001 | Clock In/Out | Offline sync (COMP-D4/COMP-I3/COMP-I5), SQLite concurrency, cached session | RISK-T01 (RPN 40) — highest |
+| UC-001 | Clock In/Out | Offline sync (COMP-D4/COMP-I3/COMP-I5), SQLite concurrency, cached session | RISK-T01 (RPN 63) — highest |
 | UC-004 | Publish News | Audit trail mechanism (IAuditLogger/AuditInterceptor) | RISK-T04 — medium |
-| UC-007 | Manage Directory | Audit trail + AD sync conflict handling, override flag | RISK-T02 (RPN 35) — high |
+| UC-007 | Manage Directory | Audit trail + AD sync conflict handling, override flag | RISK-T02 (RPN 30) — high |
+
+> **RPN Reconciliation (RL-F1 fix):** RISK-T01 RPN corrected from 40 → 63 and RISK-T02 RPN corrected from 35 → 30 to match the authoritative Risk List. Prior iteration carried inconsistent values; this update aligns with the Project Manager's authoritative source.
 
 ### Measurable Testing Goals per Quality Dimension
 
@@ -42,200 +43,107 @@ This artifact defines the test case catalog for the Employee Portal architecture
 
 ### Test Types Mapped to Quality Dimensions
 
-| Test Type | Quality Dimension | Test Level | Description |
+| Quality Dimension | Test Type | Applicable TCs | Tooling |
 |---|---|---|---|
-| Functional Test | Functionality | Unit, Integration, System | Verify each UC flow produces correct observable output |
-| Boundary Value Test | Functionality | Unit | Test edge cases: empty search, max field length, first/last day of month |
-| Adversarial / Negative Test | Functionality, Reliability | Integration, System | Invalid inputs, expired sessions, concurrent duplicate clockings |
-| Offline Sync Test | Reliability | Integration | Network drop simulation, queue integrity, sync-on-restore, conflict detection |
-| Concurrency Test | Performance, Reliability | Integration | 50 parallel clock-in operations against SQLite with SemaphoreSlim |
-| Performance Test | Performance | System | Response time measurement under load (xUnit + BenchmarkDotNet) |
-| Audit Trail Test | Functionality, Reliability | Integration | Verify audit entries created on news publish, directory create/update/deactivate |
-| Role-Based Access Test | Functionality, Security | Integration | Employee role blocked from admin operations; HR role permitted |
-| Usability Test | Usability | Acceptance | Click-count measurement, task completion without training |
+| Functionality | Functional Integration | TC-001..TC-008, TC-013..TC-020 | xUnit, WebApplicationFactory, FluentAssertions |
+| Reliability | Fault Tolerance / Offline | TC-005, TC-006, TC-007, TC-008 | OfflineSimulator (DRV-03), NetworkHealthStub (STUB-02) |
+| Performance | Load / Response Time | TC-009, TC-010, TC-016 | BenchmarkDotNet, ConcurrencyDriver (DRV-04) |
+| Usability | Interaction Efficiency | TC-001 (click count), TC-011, TC-017 | Manual + automated click-count assertion |
+
+### Stubs and Drivers for Integration Test
+
+| ID | Type | Name | Simulates | Used By |
+|---|---|---|---|---|
+| STUB-01 | Stub | AuthProviderStub | IAuthProvider (COMP-I1) — AD LDAP/OAuth2 | All TCs requiring authenticated user |
+| STUB-02 | Stub | NetworkHealthStub | INetworkHealth (COMP-I5) — network up/down | TC-005, TC-006, TC-007, TC-008 |
+| STUB-03 | Stub | AuditLoggerStub | IAuditLogger — audit entry recording | TC-013, TC-018, TC-019, TC-020 |
+| DRV-01 | Driver | WebApplicationFactory | ASP.NET Core integration test host | All integration-level TCs |
+| DRV-03 | Driver | OfflineSimulator | Network drop + restore cycle | TC-005, TC-006, TC-007, TC-008 |
+| DRV-04 | Driver | ConcurrencyDriver | 50 concurrent clock-in requests | TC-009, TC-010 |
 
 ### Test Automation Architecture
-
-The following component diagram defines the test infrastructure: framework, stubs, drivers, and real dependencies used across all test cases.
 
 ```plantuml
 @startuml
 title Test Automation Architecture — Employee Portal
 
-skinparam componentStyle rectangle
-skinparam backgroundColor #fefefe
-skinparam component {
-  BackgroundColor<<test_framework>> #e8f5e9
-  BackgroundColor<<stub>> #fff3e0
-  BackgroundColor<<driver>> #e3f2fd
-  BackgroundColor<<sut>> #fce4ec
-  BackgroundColor<<real>> #f3e5f5
+package "Test Project (EmployeePortal.Tests)" {
+  component "WebApplicationFactory\n(DRV-01)" as DRV01 <<driver>>
+  component "AuthProviderStub\n(STUB-01)" as STUB01 <<stub>>
+  component "NetworkHealthStub\n(STUB-02)" as STUB02 <<stub>>
+  component "AuditLoggerStub\n(STUB-03)" as STUB03 <<stub>>
+  component "OfflineSimulator\n(DRV-03)" as DRV03 <<driver>>
+  component "ConcurrencyDriver\n(DRV-04)" as DRV04 <<driver>>
+  component "Test Data Builder\n(TDB)" as TDB <<utility>>
+  component "xUnit Test Runner" as RUNNER <<framework>>
+  component "FluentAssertions" as FLUENT <<library>>
+  component "BenchmarkDotNet" as BENCH <<library>>
 }
 
-package "System Under Test (SUT)" <<sut>> {
-  component "Employee Portal\n(.NET 10 + Razor Pages)" as SUT <<sut>>
+package "System Under Test" {
+  component "ClockingController" as CC <<boundary>>
+  component "ClockingService" as CS <<control>>
+  component "NewsController" as NC <<boundary>>
+  component "NewsService" as NS <<control>>
+  component "DirectoryController" as DC <<boundary>>
+  component "DirectoryService" as DS <<control>>
   component "IAuthProvider" as IAUTH <<interface>>
   component "INetworkHealth" as INET <<interface>>
-  component "IAuditLogger" as ILOG <<interface>>
-  component "Offline Sync Manager\n(COMP-D4)" as SYNC <<sut>>
-  component "Local Cache\n(COMP-I3, SQLite)" as CACHE <<sut>>
+  component "IAuditLogger" as IAUDIT <<interface>>
+  component "LocalCache\n(SQLite)" as CACHE <<entity>>
+  component "PostgreSQL" as PG <<entity>>
 }
 
-package "Test Framework" <<test_framework>> {
-  component "xUnit Test Runner" as XUNIT <<test_framework>>
-  component "Test Fixtures\n(Shared Context)" as FIX <<test_framework>>
-  component "Test Data Builder" as TDB <<test_framework>>
-  component "Assertions Library" as ASSERT <<test_framework>>
-}
+DRV01 --> CC : HTTP requests
+DRV01 --> NC : HTTP requests
+DRV01 --> DC : HTTP requests
+STUB01 ..|> IAUTH : implements
+STUB02 ..|> INET : implements
+STUB03 ..|> IAUDIT : implements
+DRV03 --> STUB02 : controls network state
+DRV04 --> DRV01 : concurrent requests
+TDB --> PG : seed/cleanup
+RUNNER --> DRV01 : orchestrates
+RUNNER --> BENCH : perf tests
+CC --> CS
+CS --> CACHE
+CS --> PG
+NC --> NS
+NS --> PG
+DC --> DS
+DS --> PG
 
-package "Test Stubs (Substitutes)" <<stub>> {
-  component "AuthProviderStub\n(IAuthProvider mock)" as STUB_AUTH <<stub>>
-  component "NetworkHealthStub\n(INetworkHealth mock)" as STUB_NET <<stub>>
-  component "AuditLoggerStub\n(IAuditLogger capture)" as STUB_LOG <<stub>>
-  component "AD LDAP Stub\n(In-memory directory)" as STUB_AD <<stub>>
-}
-
-package "Test Drivers" <<driver>> {
-  component "WebApplicationFactory\n(Integration test host)" as DRV_WEB <<driver>>
-  component "HttpClient Driver\n(API-level tests)" as DRV_HTTP <<driver>>
-  component "OfflineSimulator\n(Network drop/restore)" as DRV_OFFLINE <<driver>>
-  component "ConcurrencyDriver\n(Parallel clock-in stress)" as DRV_CONC <<driver>>
-}
-
-package "Real Dependencies (Integration)" <<real>> {
-  component "PostgreSQL (Test DB)" as REAL_PG <<real>>
-  component "SQLite (Local Cache)" as REAL_SQLITE <<real>>
-}
-
-XUNIT --> FIX
-XUNIT --> ASSERT
-FIX --> TDB
-FIX --> DRV_WEB
-FIX --> STUB_AUTH
-FIX --> STUB_NET
-FIX --> STUB_LOG
-
-DRV_WEB --> SUT
-DRV_HTTP --> SUT
-DRV_OFFLINE --> INET
-DRV_CONC --> SUT
-
-STUB_AUTH ..|> IAUTH
-STUB_NET ..|> INET
-STUB_LOG ..|> ILOG
-STUB_AD --> STUB_AUTH
-
-SUT --> REAL_PG : (integration tier)
-SUT --> CACHE
-CACHE --> REAL_SQLITE
-
-SUT --> IAUTH
-SUT --> INET
-SUT --> ILOG
-SUT --> SYNC
-SYNC --> CACHE
-
-note bottom of STUB_AUTH
-  Returns configurable
-  auth results without
-  real AD/LDAP server.
-  AD spike deferred to
+note right of STUB01
+  AD integration isolated behind
+  IAuthProvider per Elaboration
+  decision. Spike deferred to
   Construction.
 end note
 
-note bottom of DRV_OFFLINE
-  Simulates network drop
-  by toggling INetworkHealth
-  IsAvailable flag.
-  Tests offline sync path
-  (UC-001 AF-1, EF-1, EF-2).
-end note
-
-note bottom of DRV_CONC
-  Spawns N parallel threads
-  each performing clock-in
-  to test SQLite SemaphoreSlim
-  concurrency (REQ-025:
-  50 concurrent users).
+note right of DRV03
+  Simulates network drop ≤5 min
+  and restore. Verifies zero
+  data loss on sync.
 end note
 
 @enduml
 ```
 
-**Stubs and Drivers Summary:**
-
-| ID | Name | Type | Substitutes / Drives | Used By Test Cases |
-|---|---|---|---|---|
-| STUB-01 | AuthProviderStub | Stub | IAuthProvider — returns configurable auth results | TC-001 through TC-020 (all) |
-| STUB-02 | NetworkHealthStub | Stub | INetworkHealth — toggles IsAvailable flag | TC-005, TC-006, TC-007, TC-008 |
-| STUB-03 | AuditLoggerStub | Stub | IAuditLogger — captures audit entries for assertion | TC-013, TC-014, TC-017, TC-018, TC-019 |
-| STUB-04 | AD LDAP Stub | Stub | In-memory AD directory for user lookup | TC-001, TC-002, TC-017, TC-019 |
-| DRV-01 | WebApplicationFactory | Driver | Integration test host (ASP.NET Core) | All integration-level TCs |
-| DRV-02 | HttpClient Driver | Driver | API-level HTTP requests | TC-003, TC-010, TC-011, TC-012 |
-| DRV-03 | OfflineSimulator | Driver | Network drop/restore simulation | TC-005, TC-006, TC-007, TC-008 |
-| DRV-04 | ConcurrencyDriver | Driver | Parallel thread stress (50 users) | TC-009, TC-010 |
-
-### Test Case Lifecycle
-
-The following state diagram defines the lifecycle of every test case in this catalog:
+### Test Case Derivation Workflow
 
 ```plantuml
 @startuml
-title Test Case Lifecycle — State Diagram
-
-[*] --> Designed : Test case specified
-Designed --> Reviewed : Peer review pass
-Reviewed --> Scripted : Automation code written
-Scripted --> Ready : Test passes dry-run
-Ready --> Executed : Test run against build
-Executed --> Passed : Actual = Expected
-Executed --> Failed : Actual != Expected
-Executed --> Blocked : Environment unavailable
-Failed --> Designed : Defect found, update case
-Failed --> Scripted : Fix applied, re-script
-Blocked --> Ready : Environment restored
-Passed --> RegressionReady : Added to regression suite
-RegressionReady --> Executed : Regression run triggered
-RegressionReady --> [*] : Feature retired
-Passed --> [*] : Acceptance sign-off
-
-note right of Designed
-  Preconditions, input data,
-  expected outcome, pass/fail
-  criteria all specified.
-end note
-
-note right of Scripted
-  xUnit test method + fixtures
-  + stubs/drivers wired.
-end note
-
-note right of Failed
-  Defect logged with:
-  - Steps to reproduce
-  - Actual vs expected
-  - Environment snapshot
-end note
-
-note right of RegressionReady
-  Automated, deterministic,
-  included in CI pipeline
-  regression suite.
-end note
-
-@enduml
-```
-
-### Test Workflow — UC to Test Case Derivation
-
-The following activity diagram shows how use-case scenarios are systematically transformed into test cases:
-
-```plantuml
-@startuml
-title Test Workflow — Use-Case to Test-Case Lifecycle
+title Test Case Derivation — UC to TC Lifecycle
 
 start
-:Identify architecturally significant UCs
+:Load Use-Case Model
+(UC-001, UC-004, UC-007);
+:Read Supplementary Specification
+(NFRs, constraints);
+:Read SAD
+(architectural mechanisms);
+:Identify architecturally
+significant UCs
 (UC-001, UC-004, UC-007);
 :Read UC main flow, alt flows, exception flows;
 :Derive test scenarios per flow
@@ -254,6 +162,8 @@ partition "Per Test Case" {
   (UI, API, DB, cache);
   :Flag automation feasibility
   (automatable / manual / deferred);
+  :Assign blocking reason
+  if not executable;
 }
 
 :Map test case to UC scenario
@@ -279,7 +189,6 @@ stop
 
 @enduml
 ```
-
 ## Test Case Catalog
 ### TC-001: Clock In — Main Flow (Happy Path)
 
