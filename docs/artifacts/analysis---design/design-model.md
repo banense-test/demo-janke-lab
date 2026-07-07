@@ -964,6 +964,138 @@ end note
 
 The design model is organized into four packages corresponding to the SAD's layered architecture. Each package contains design classes with full signatures — visibility, parameters, return types, and relationships. All cross-layer communication is via interfaces (INT-001 through INT-006).
 
+#### Package Overview — Layer Dependencies
+
+The following diagram shows the four design packages, their contained classes, and the interface-based boundaries between layers. The Application layer depends only on interfaces (INT-001 through INT-006); the Infrastructure layer realizes those interfaces. The Domain layer has zero outgoing dependencies. The Presentation layer delegates to Application services via controllers.
+
+```plantuml
+@startuml
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam package {
+  BorderColor #37474f
+  FontSize 12
+}
+skinparam interface {
+  BackgroundColor #fffde7
+  BorderColor #f57f17
+}
+
+title Design Model — Package Organization & Layer Dependencies
+
+package "Presentation\n(SUB-PRES)" as PRES {
+  class "HomePage\n(CLS-001)" as CLS001
+  class "HistoryPage\n(CLS-002)" as CLS002
+  class "AdminClockingsPage\n(CLS-003)" as CLS003
+  class "AdminNewsPage\n(CLS-004)" as CLS004
+  class "NewsListPage\n(CLS-005)" as CLS005
+  class "NewsDetailPage\n(CLS-006)" as CLS006
+  class "DirectoryPage\n(CLS-007)" as CLS007
+  class "AdminDirectoryPage\n(CLS-008)" as CLS008
+  class "ClockingController\n(CLS-009)" as CLS009
+  class "NewsController\n(CLS-010)" as CLS010
+  class "DirectoryController\n(CLS-011)" as CLS011
+}
+
+package "Application\n(SUB-APP)" as APP {
+  class "TimeTrackingService\n(CLS-012)" as CLS012
+  class "NewsService\n(CLS-013)" as CLS013
+  class "DirectoryService\n(CLS-014)" as CLS014
+  class "AuditInterceptor\n(CLS-015)" as CLS015
+  class "SyncQueue\n(CLS-016)" as CLS016
+}
+
+package "Domain\n(SUB-DOM)" as DOM {
+  class "Clocking\n(CLS-017)" as CLS017
+  class "NewsItem\n(CLS-018)" as CLS018
+  class "Employee\n(CLS-019)" as CLS019
+  class "AuditEntry\n(CLS-020)" as CLS020
+  class "SyncRecord\n(CLS-021)" as CLS021
+  class "ADEmployeeRecord\n(CLS-022)" as CLS022
+  class "SyncResult\n(CLS-023)" as CLS023
+  class "Result<T>\n(CLS-024)" as CLS024
+  class "ValidationResult\n(CLS-025)" as CLS025
+}
+
+package "Infrastructure\n(SUB-INFRA)" as INFRA {
+  class "PostgresRepository<T>\n(CLS-026)" as CLS026
+  class "SqliteLocalStore\n(CLS-027)" as CLS027
+  class "LdapAuthProvider\n(CLS-028)" as CLS028
+  class "CsvExporter\n(CLS-029)" as CLS029
+  class "TcpHealthMonitor\n(CLS-030)" as CLS030
+  class "EfAuditLogger\n(CLS-031)" as CLS031
+  class "PortalDbContext\n(CLS-032)" as CLS032
+  class "LocalDbContext\n(CLS-033)" as CLS033
+}
+
+' Interfaces at boundaries
+interface "IAuthProvider\n(INT-001)" as INT001
+interface "IRepository<T>\n(INT-002)" as INT002
+interface "ILocalStore\n(INT-003)" as INT003
+interface "IExportService\n(INT-004)" as INT004
+interface "INetworkHealth\n(INT-005)" as INT005
+interface "IAuditLogger\n(INT-006)" as INT006
+
+' Presentation -> Application (via controllers, concrete within same deployable)
+PRES --> APP : delegates
+
+' Application -> Domain (uses entities)
+APP ..> DOM : uses
+
+' Application -> Infrastructure interfaces (depends on abstractions)
+CLS012 ..> INT002
+CLS012 ..> INT003
+CLS012 ..> INT004
+CLS012 ..> INT005
+CLS013 ..> INT002
+CLS013 ..> INT006
+CLS014 ..> INT001
+CLS014 ..> INT002
+CLS014 ..> INT006
+CLS015 ..> INT006
+CLS016 ..> INT002
+CLS016 ..> INT003
+
+' Infrastructure realizes interfaces
+CLS026 ..|> INT002
+CLS027 ..|> INT003
+CLS028 ..|> INT001
+CLS029 ..|> INT004
+CLS030 ..|> INT005
+CLS031 ..|> INT006
+
+' Infrastructure -> Domain (EF Core mappings)
+INFRA ..> DOM : maps
+
+note bottom of PRES
+  **Presentation Layer**
+  Razor Pages + controllers.
+  No direct dependency on Infrastructure.
+end note
+
+note bottom of APP
+  **Application Layer**
+  Service classes orchestrate business logic.
+  Depends ONLY on interfaces (INT-001..006).
+end note
+
+note bottom of DOM
+  **Domain Layer**
+  Pure domain entities and value objects.
+  No dependencies on other layers.
+end note
+
+note bottom of INFRA
+  **Infrastructure Layer**
+  Implements all interfaces.
+  EF Core DbContexts, LDAP adapter,
+  SQLite local store, TCP health monitor.
+end note
+
+@enduml
+```
+
 #### Package: Application Layer
 
 The Application package contains service classes that orchestrate business logic, delegate to repositories via interfaces, and coordinate cross-cutting concerns (audit, sync). All services depend on interfaces, never on concrete infrastructure classes.
@@ -1019,89 +1151,84 @@ package "Application" {
     + Log(entityType: string, entityId: string, action: string, user: string) : Task
   }
 
-  class "TimeTrackingService\n(CLS-009)" as CLS_009 {
+  class "TimeTrackingService\n(CLS-012)" as CLS_012 {
     - _repo: IRepository<Clocking>
     - _localStore: ILocalStore
-    - _networkHealth: INetworkHealth
-    - _syncQueue: SyncQueue
+    - _healthMonitor: INetworkHealth
     - _exportService: IExportService
-    + TimeTrackingService(repo, localStore, networkHealth, syncQueue, exportService)
+    - _syncQueue: SyncQueue
     + ClockIn(employeeId: Guid) : Task<Result<Clocking>>
     + ClockOut(employeeId: Guid) : Task<Result<Clocking>>
     + GetClockings(employeeId: Guid, month: DateTime) : Task<List<Clocking>>
     + GetAllClockings(month: DateTime) : Task<List<Clocking>>
     + ExportClockings(month: DateTime) : Task<byte[]>
-    - HandleHealthChanged(status: HealthStatus) : Task
   }
 
-  class "NewsService\n(CLS-010)" as CLS_010 {
+  class "NewsService\n(CLS-013)" as CLS_013 {
     - _repo: IRepository<NewsItem>
     - _auditLogger: IAuditLogger
-    - _currentUser: string
-    + NewsService(repo, auditLogger, currentUserAccessor)
     + PublishNews(item: NewsItem) : Task<Result<NewsItem>>
     + GetNewsList(category: string?) : Task<List<NewsItem>>
     + GetNewsDetail(id: Guid) : Task<NewsItem?>
+    + GetFeaturedNews() : Task<NewsItem?>
   }
 
-  class "DirectoryService\n(CLS-011)" as CLS_011 {
+  class "DirectoryService\n(CLS-014)" as CLS_014 {
     - _repo: IRepository<Employee>
     - _authProvider: IAuthProvider
     - _auditLogger: IAuditLogger
-    - _currentUser: string
-    + DirectoryService(repo, authProvider, auditLogger, currentUserAccessor)
     + Search(query: string, dept: string?, office: string?) : Task<List<Employee>>
     + UpdateEmployee(emp: Employee) : Task<Result<Employee>>
-    + SyncFromAD() : Task<Result<SyncResult>>
+    + SyncFromAD() : Task<SyncResult>
+    + DeactivateEmployee(id: Guid) : Task<Result<bool>>
   }
 
-  class "SyncQueue\n(CLS-013)" as CLS_013 {
+  class "AuditInterceptor\n(CLS-015)" as CLS_015 {
+    - _auditLogger: IAuditLogger
+    + Log(entityType: string, entityId: string, action: string, user: string) : Task
+    + LogCreate(entityType: string, entity: object, user: string) : Task
+    + LogUpdate(entityType: string, entityId: string, changes: Dictionary<string, object>, user: string) : Task
+  }
+
+  class "SyncQueue\n(CLS-016)" as CLS_016 {
     - _localStore: ILocalStore
     - _repo: IRepository<Clocking>
     - _writeLock: SemaphoreSlim(1, 1)
     - _flushLock: SemaphoreSlim(1, 1)
-    + SyncQueue(localStore, repo)
     + Enqueue(clocking: Clocking) : Task<Result<int>>
     + Flush() : Task<SyncResult>
     + GetPendingCount() : Task<int>
-    - DetectConflict(clocking: Clocking) : Task<bool>
-  }
-
-  class "AuditInterceptor\n(CLS-012)" as CLS_012 {
-    - _auditLogger: IAuditLogger
-    + AuditInterceptor(auditLogger)
-    + Log(entityType: string, entityId: string, action: string, user: string) : Task
   }
 }
 
-CLS_009 --> INT_002 : uses
-CLS_009 --> INT_003 : uses
-CLS_009 --> INT_005 : uses
-CLS_009 --> INT_004 : uses
-CLS_009 --> CLS_013 : delegates
-CLS_010 --> INT_002 : uses
-CLS_010 --> INT_006 : uses
-CLS_011 --> INT_002 : uses
-CLS_011 --> INT_001 : uses
-CLS_011 --> INT_006 : uses
-CLS_013 --> INT_003 : uses
+CLS_012 --> INT_002 : uses
+CLS_012 --> INT_003 : uses
+CLS_012 --> INT_004 : uses
+CLS_012 --> INT_005 : uses
+CLS_012 --> CLS_016 : delegates offline
 CLS_013 --> INT_002 : uses
-CLS_012 --> INT_006 : uses
+CLS_013 --> INT_006 : uses
+CLS_014 --> INT_001 : uses
+CLS_014 --> INT_002 : uses
+CLS_014 --> INT_006 : uses
+CLS_015 --> INT_006 : uses
+CLS_016 --> INT_002 : uses
+CLS_016 --> INT_003 : uses
 
-note right of CLS_013
-  **Concurrency Design**
-  SemaphoreSlim(1,1) for single-writer
-  access to SQLite. Separate flush lock
-  allows enqueue during flush.
-  .NET 10 async/await — no manual threads.
+note right of CLS_016
+  **Offline Sync Design**
+  SemaphoreSlim(1,1) single-writer lock
+  for SQLite writes. Separate flush lock
+  prevents concurrent flush while allowing
+  new enqueues. Resolves RISK-T01 (RPN 63).
 end note
 
-note left of INT_001
-  **IAuthProvider**
-  AD protocol isolated.
-  LDAP or OAuth2 implementation
-  is a DI registration change.
-  Spike deferred to Construction.
+note right of CLS_015
+  **Audit Interceptor**
+  Cross-cutting concern. Called by
+  NewsService and DirectoryService.
+  Append-only via IAuditLogger.
+  REQ-004, REQ-005, REQ-006.
 end note
 
 @enduml
@@ -1109,7 +1236,7 @@ end note
 
 #### Package: Domain Layer
 
-The Domain package contains entity classes, value objects, and domain enums. Entities encapsulate business rules (validation, state transitions, merge logic). No dependencies on infrastructure or application layers.
+The Domain package contains pure domain entities, value objects, and enumerations. These classes have no dependencies on any other layer — they are plain C# records/classes with domain logic only.
 
 ```plantuml
 @startuml
@@ -1124,19 +1251,19 @@ skinparam class {
 title Package: Domain Layer — Design Classes (Full Signatures)
 
 package "Domain" {
-  class "Clocking\n(CLS-014)" as CLS_014 {
+  class "Clocking\n(CLS-017)" as CLS_017 {
     + Id: Guid
     + EmployeeId: Guid
     + Type: ClockingType
     + Timestamp: DateTime
     + SyncStatus: SyncStatus
+    + LocalId: int?
     + Clocking(employeeId: Guid, type: ClockingType, timestamp: DateTime)
     + MarkSynced() : void
     + MarkSkipped() : void
-    + Validate() : ValidationResult
   }
 
-  class "NewsItem\n(CLS-015)" as CLS_015 {
+  class "NewsItem\n(CLS-018)" as CLS_018 {
     + Id: Guid
     + Title: string
     + Body: string
@@ -1145,11 +1272,9 @@ package "Domain" {
     + IsFeatured: bool
     + NewsItem(title: string, body: string, category: Category, isFeatured: bool)
     + Validate() : ValidationResult
-    + MarkAsFeatured() : void
-    + UnmarkFeatured() : void
   }
 
-  class "Employee\n(CLS-016)" as CLS_016 {
+  class "Employee\n(CLS-019)" as CLS_019 {
     + Id: Guid
     + AdId: string
     + FullName: string
@@ -1160,14 +1285,14 @@ package "Domain" {
     + Extension: string
     + IsActive: bool
     + OverrideFlag: bool
-    + Validate() : ValidationResult
-    + MergeFromAD(adRecord: ADEmployeeRecord) : void
-    + CreateFromAD(adRecord: ADEmployeeRecord) : Employee
-    + SetOverrideFlag(flag: bool) : void
+    + UpdateFromAD(record: ADEmployeeRecord) : void
+    + SetOverride(field: string) : void
+    + ClearOverride() : void
     + Deactivate() : void
+    + Reactivate() : void
   }
 
-  class "AuditEntry\n(CLS-017)" as CLS_017 {
+  class "AuditEntry\n(CLS-020)" as CLS_020 {
     + Id: Guid
     + EntityType: string
     + EntityId: string
@@ -1177,91 +1302,94 @@ package "Domain" {
     + AuditEntry(entityType: string, entityId: string, action: string, user: string)
   }
 
-  class "SyncRecord\n(CLS-018)" as CLS_018 {
+  class "SyncRecord\n(CLS-021)" as CLS_021 {
     + LocalId: int
     + ClockingId: Guid
     + Status: SyncStatus
     + QueuedAt: DateTime
     + SyncedAt: DateTime?
-    + SyncRecord(clockingId: Guid, queuedAt: DateTime)
     + MarkSynced() : void
     + MarkSkipped() : void
   }
 
-  class "ADEmployeeRecord\n(CLS-019)" as CLS_019 {
+  class "ADEmployeeRecord\n(CLS-022)" as CLS_022 {
     + AdId: string
     + FullName: string
     + JobTitle: string
     + Department: string
     + Office: string
     + Email: string
+    + Extension: string
   }
 
-  class "SyncResult\n(CLS-020)" as CLS_020 {
-    + Synced: int
-    + Skipped: int
-    + Imported: int
-    + Errors: List<string>
-    + SyncResult(synced: int, skipped: int, imported: int)
-    + HasErrors: bool
+  class "SyncResult\n(CLS-023)" as CLS_023 {
+    + TotalRecords: int
+    + SyncedCount: int
+    + SkippedCount: int
+    + FailedCount: int
+    + SyncResult(total: int, synced: int, skipped: int, failed: int)
+    + IsSuccess : bool { get; }
   }
 
-  class "Result<T>\n(CLS-021)" as CLS_021 {
+  class "Result<T>\n(CLS-024)" as CLS_024 {
     + Value: T?
     + IsSuccess: bool
-    + Errors: List<string>
-    + static Ok(value: T) : Result<T>
-    + static Fail(errors: List<string>) : Result<T>
-    + static Fail(error: string) : Result<T>
+    + Error: string?
+    + +Ok(value: T) : Result<T> { static }
+    + +Fail(error: string) : Result<T> { static }
   }
 
-  class "ValidationResult\n(CLS-022)" as CLS_022 {
+  class "ValidationResult\n(CLS-025)" as CLS_025 {
     + IsValid: bool
     + Errors: List<string>
-    + static Ok() : ValidationResult
-    + static Fail(errors: List<string>) : ValidationResult
+    + +Valid() : ValidationResult { static }
+    + +Invalid(errors: List<string>) : ValidationResult { static }
   }
 
   enum "ClockingType" as CT {
-  IN
-  OUT
+    IN
+    OUT
   }
+
   enum "SyncStatus" as SS {
-  PENDING
-  SYNCED
-  SKIPPED
+    PENDING
+    SYNCED
+    SKIPPED
   }
+
   enum "Category" as CAT {
-  General
-  HR
-  IT
-  Events
+    General
+    HR
+    IT
+    Events
   }
+
   enum "HealthStatus" as HS {
-  UP
-  DOWN
+    UP
+    DOWN
   }
 }
 
-CLS_014 --> CT
-CLS_014 --> SS
-CLS_018 --> SS
-CLS_015 --> CAT
-CLS_016 ..> CLS_019 : created from
-CLS_020 ..> CLS_021 : uses
+CLS_017 --> CT
+CLS_017 --> SS
+CLS_021 --> SS
+CLS_018 --> CAT
+CLS_019 ..> CLS_022 : UpdateFromAD
 
-note right of CLS_016
+note right of CLS_019
   **AD Sync Conflict Resolution**
-  OverrideFlag = true → local HR
+  OverrideFlag=true means local HR
   changes win over AD sync data.
-  RISK-R01 (RPN 30).
+  UpdateFromAD skips overridden fields.
+  Resolves RISK-R01 (RPN 30).
 end note
 
-note right of CLS_014
-  **Clocking Aggregate Root**
-  MarkSynced/MarkSkipped transition
-  the SyncStatus state machine.
-  See state machine diagram.
+note right of CLS_017
+  **Clocking Entity**
+  LocalId populated when stored in
+  SQLite offline. SyncStatus tracks
+  PENDING → SYNCED/SKIPPED transition.
+  REQ-014 (zero data loss).
 end note
 
 @enduml
@@ -1269,7 +1397,7 @@ end note
 
 #### Package: Infrastructure Layer
 
-The Infrastructure package contains concrete implementations of all application-layer interfaces. Each class realizes an interface, enabling substitution via DI. EF Core 10.0 with Npgsql for PostgreSQL, EF Core with SQLite for local store.
+The Infrastructure package contains concrete implementations of all six interfaces, plus EF Core DbContexts for PostgreSQL and SQLite. These classes are registered in the DI container at startup.
 
 ```plantuml
 @startuml
@@ -1288,18 +1416,24 @@ skinparam interface {
 title Package: Infrastructure Layer — Design Classes (Full Signatures)
 
 package "Infrastructure" {
-  class "PostgresRepository<T>\n(CLS-023)" as CLS_023 {
+  interface "IAuthProvider" as INT_001
+  interface "IRepository<T>" as INT_002
+  interface "ILocalStore" as INT_003
+  interface "IExportService" as INT_004
+  interface "INetworkHealth" as INT_005
+  interface "IAuditLogger" as INT_006
+
+  class "PostgresRepository<T>\n(CLS-026)" as CLS_026 {
     - _context: PortalDbContext
     - _dbSet: DbSet<T>
-    + PostgresRepository(context: PortalDbContext)
     + GetByIdAsync(id: Guid) : Task<T?>
     + QueryAsync(predicate: Expression<Func<T, bool>>) : Task<List<T>>
     + SaveAsync(entity: T) : Task<Result<T>>
     + DeleteAsync(id: Guid) : Task<bool>
   }
 
-  class "SqliteLocalStore\n(CLS-024)" as CLS_024 {
-    - _sqliteContext: LocalDbContext
+  class "SqliteLocalStore\n(CLS-027)" as CLS_027 {
+    - _context: LocalDbContext
     + SaveClockingAsync(clocking: Clocking) : Task<int>
     + SaveSyncRecordAsync(localId: int, status: SyncStatus) : Task
     + GetPendingSyncRecords() : Task<List<SyncRecord>>
@@ -1307,310 +1441,164 @@ package "Infrastructure" {
     + UpdateSyncStatus(localId: int, status: SyncStatus) : Task
   }
 
-  class "LdapAuthProvider\n(CLS-025)" as CLS_025 {
-    - _ldapConfig: LdapConfig
+  class "LdapAuthProvider\n(CLS-028)" as CLS_028 {
+    - _config: LdapConfig
     + Authenticate(username: string, password: string) : Task<AuthResult>
     + GetCurrentUser(claims: ClaimsPrincipal) : PortalUser
     + FetchAllEmployeesAsync() : Task<List<ADEmployeeRecord>>
   }
 
-  class "CsvExporter\n(CLS-026)" as CLS_026 {
+  class "CsvExporter\n(CLS-029)" as CLS_029 {
     + GenerateCSV(clockings: List<Clocking>) : byte[]
-    - FormatRow(c: Clocking) : string
   }
 
-  class "TcpHealthMonitor\n(CLS-027)" as CLS_027 {
-    - _connectionString: string
+  class "TcpHealthMonitor\n(CLS-030)" as CLS_030 {
+    - _host: string
+    - _port: int
     - _probeInterval: TimeSpan
-    - _timer: Timer
     - _currentStatus: HealthStatus
     - _subscribers: List<Action<HealthStatus>>
-    + TcpHealthMonitor(connectionString: string, probeInterval: TimeSpan)
     + CheckHealth() : HealthStatus
     + SubscribeHealthChanges(callback: Action<HealthStatus>) : IDisposable
     - ProbeAsync() : Task
     - NotifySubscribers(status: HealthStatus) : void
   }
 
-  class "EfAuditLogger\n(CLS-028)" as CLS_028 {
+  class "EfAuditLogger\n(CLS-031)" as CLS_031 {
     - _context: PortalDbContext
-    + EfAuditLogger(context: PortalDbContext)
     + Log(entityType: string, entityId: string, action: string, user: string) : Task
   }
 
-  class "PortalDbContext\n(CLS-029)" as CLS_029 {
+  class "PortalDbContext\n(CLS-032)" as CLS_032 {
     + Clockings: DbSet<Clocking>
     + NewsItems: DbSet<NewsItem>
     + Employees: DbSet<Employee>
     + AuditEntries: DbSet<AuditEntry>
+    + OnModelCreating(modelBuilder: ModelBuilder) : void
     + SaveChangesAsync() : Task<int>
   }
 
-  class "LocalDbContext\n(CLS-030)" as CLS_030 {
-    + LocalClockings: DbSet<Clocking>
+  class "LocalDbContext\n(CLS-033)" as CLS_033 {
+    + Clockings: DbSet<Clocking>
     + SyncRecords: DbSet<SyncRecord>
+    + OnModelCreating(modelBuilder: ModelBuilder) : void
     + SaveChangesAsync() : Task<int>
   }
 
-  class "LdapConfig\n(CLS-031)" as CLS_031 {
+  class "LdapConfig\n(CLS-034)" as CLS_034 {
     + Server: string
     + Port: int
     + BaseDn: string
     + BindDn: string
     + BindPassword: string
+    + HrAdminGroup: string
   }
 
-  class "AuthResult\n(CLS-032)" as CLS_032 {
+  class "AuthResult\n(CLS-035)" as CLS_035 {
     + IsSuccess: bool
     + User: PortalUser?
     + Error: string?
+    + +Success(user: PortalUser) : AuthResult { static }
+    + +Failure(error: string) : AuthResult { static }
   }
 
-  class "PortalUser\n(CLS-033)" as CLS_033 {
-    + EmployeeId: Guid?
-    + Username: string
-    + DisplayName: string
+  class "PortalUser\n(CLS-036)" as CLS_036 {
+    + AdId: string
+    + FullName: string
+    + Email: string
     + IsHrAdmin: bool
+    + EmployeeId: Guid?
   }
 }
 
-CLS_023 ..|> INT_002 : IRepository<T>
-CLS_024 ..|> INT_003 : ILocalStore
-CLS_025 ..|> INT_001 : IAuthProvider
-CLS_026 ..|> INT_004 : IExportService
-CLS_027 ..|> INT_005 : INetworkHealth
-CLS_028 ..|> INT_006 : IAuditLogger
+CLS_026 ..|> INT_002
+CLS_027 ..|> INT_003
+CLS_028 ..|> INT_001
+CLS_029 ..|> INT_004
+CLS_030 ..|> INT_005
+CLS_031 ..|> INT_006
 
-interface "IRepository<T>\n(INT-002)" as INT_002
-interface "ILocalStore\n(INT-003)" as INT_003
-interface "IAuthProvider\n(INT-001)" as INT_001
-interface "IExportService\n(INT-004)" as INT_004
-interface "INetworkHealth\n(INT-005)" as INT_005
-interface "IAuditLogger\n(INT-006)" as INT_006
+CLS_026 --> CLS_032 : uses
+CLS_031 --> CLS_032 : uses
+CLS_027 --> CLS_033 : uses
+CLS_028 --> CLS_034 : uses
+CLS_028 ..> CLS_035 : returns
+CLS_028 ..> CLS_036 : returns
 
-CLS_023 --> CLS_029 : uses
-CLS_024 --> CLS_030 : uses
-CLS_028 --> CLS_029 : uses
-CLS_025 --> CLS_031 : config
-CLS_025 ..> CLS_032 : returns
-CLS_025 ..> CLS_033 : returns
-
-note right of CLS_027
-  **TcpHealthMonitor**
-  TCP probe to PostgreSQL port 5432
-  every 5 seconds. Maximum 5s
-  detection window for network restore.
+note right of CLS_028
+  **AD Integration (RISK-T02)**
+  LDAP bind with credentials.
+  FetchAllEmployeesAsync queries
+  AD for directory sync.
+  Protocol isolated behind IAuthProvider.
+  Spike deferred to Construction.
 end note
 
-note right of CLS_025
-  **LdapAuthProvider**
-  AD protocol implementation.
-  Spike deferred to Construction
-  per Elaboration decision.
-  RISK-T02 (RPN 35).
+note right of CLS_030
+  **Network Health Monitor**
+  TCP probe to PostgreSQL host:port
+  every 5 seconds. Cached status
+  returned by CheckHealth (no blocking).
+  Subscribers notified on transitions.
 end note
 
-@enduml
-```
+note right of CLS_032
+  **PortalDbContext (PostgreSQL)**
+  EF Core 10.0 + Npgsql 10.0.2.
+  Configures entity mappings,
+  indexes, and constraints.
+end note
 
-#### Package: Design Model Organization
-
-```plantuml
-@startuml
-skinparam packageStyle rectangle
-skinparam shadowing false
-skinparam defaultFontName "Segoe UI"
-skinparam component {
-  BackgroundColor<<presentation>> #e8f5e9
-  BackgroundColor<<application>> #e3f2fd
-  BackgroundColor<<domain>> #fff3e0
-  BackgroundColor<<infrastructure>> #fce4ec
-  BorderColor #37474f
-}
-
-title Design Model — Package Organization & Dependencies
-
-package "Presentation Layer" <<presentation>> {
-  [HomePage\n(CLS-001)] as P1
-  [HistoryPage\n(CLS-003)] as P2
-  [AdminClockingsPage\n(CLS-005)] as P3
-  [AdminNewsPage\n(CLS-004)] as P4
-  [NewsListPage\n(CLS-016)] as P5
-  [NewsDetailPage\n(CLS-017)] as P6
-  [DirectoryPage\n(CLS-007)] as P7
-  [AdminDirectoryPage\n(CLS-008)] as P8
-  [ClockingController\n(CLS-002)] as PC1
-  [NewsController\n(CLS-006)] as PC2
-  [DirectoryController\n(CLS-008b)] as PC3
-}
-
-package "Application Layer" <<application>> {
-  [TimeTrackingService\n(CLS-009)] as A1
-  [NewsService\n(CLS-010)] as A2
-  [DirectoryService\n(CLS-011)] as A3
-  [SyncQueue\n(CLS-013)] as A4
-  [AuditInterceptor\n(CLS-012)] as A5
-}
-
-package "Domain Layer" <<domain>> {
-  [Clocking\n(CLS-014)] as D1
-  [NewsItem\n(CLS-015)] as D2
-  [Employee\n(CLS-016)] as D3
-  [AuditEntry\n(CLS-017)] as D4
-  [SyncRecord\n(CLS-018)] as D5
-  [ADEmployeeRecord\n(CLS-019)] as D6
-  [SyncResult\n(CLS-020)] as D7
-  [Result<T>\n(CLS-021)] as D8
-  [ValidationResult\n(CLS-022)] as D9
-}
-
-package "Infrastructure Layer" <<infrastructure>> {
-  [PostgresRepository<T>\n(CLS-023)] as I1
-  [SqliteLocalStore\n(CLS-024)] as I2
-  [LdapAuthProvider\n(CLS-025)] as I3
-  [CsvExporter\n(CLS-026)] as I4
-  [TcpHealthMonitor\n(CLS-027)] as I5
-  [EfAuditLogger\n(CLS-028)] as I6
-  [PortalDbContext\n(CLS-029)] as I7
-  [LocalDbContext\n(CLS-030)] as I8
-}
-
-P1 ..> A1
-P2 ..> A1
-P3 ..> A1
-P4 ..> A2
-P5 ..> A2
-P6 ..> A2
-P7 ..> A3
-P8 ..> A3
-PC1 ..> A1
-PC2 ..> A2
-PC3 ..> A3
-
-A1 ..> D1
-A1 ..> D5
-A1 ..> D7
-A2 ..> D2
-A3 ..> D3
-A3 ..> D6
-A3 ..> D7
-A4 ..> D1
-A4 ..> D5
-A5 ..> D4
-
-A1 ..> I1 : IRepository<Clocking>
-A1 ..> I2 : ILocalStore
-A1 ..> I5 : INetworkHealth
-A1 ..> I4 : IExportService
-A2 ..> I1 : IRepository<NewsItem>
-A2 ..> I6 : IAuditLogger
-A3 ..> I1 : IRepository<Employee>
-A3 ..> I3 : IAuthProvider
-A3 ..> I6 : IAuditLogger
-
-I1 ..> D1
-I1 ..> D2
-I1 ..> D3
-I1 ..> D4
-I2 ..> D1
-I2 ..> D5
-I7 ..> D1
-I7 ..> D2
-I7 ..> D3
-I7 ..> D4
-I8 ..> D1
-I8 ..> D5
-
-note bottom of A4
-  **Dependency direction:** Presentation → Application → Domain
-  Infrastructure implements interfaces defined in Application.
-  No upward dependencies. All cross-layer
-  communication via interfaces (INT-001 through INT-006).
+note right of CLS_033
+  **LocalDbContext (SQLite)**
+  EF Core 10.0 + SQLite provider.
+  Separate context for offline store.
+  Only Clockings + SyncRecords.
 end note
 
 @enduml
 ```
 
-#### State Machine: SyncRecord Lifecycle
-
-SyncRecord (CLS-018) has 3 distinct lifecycle states, requiring a state machine diagram per the quality criteria.
-
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam defaultFontName "Segoe UI"
-
-title State Machine: SyncRecord Lifecycle (CLS-018)
-
-[*] --> PENDING : Enqueue(clocking)
-
-PENDING --> SYNCED : Flush() succeeds\n(no timestamp conflict)
-PENDING --> SKIPPED : Flush() detects\nduplicate (employeeId, timestamp)
-
-SYNCED --> [*]
-SKIPPED --> [*]
-
-note right of PENDING
-  Clocking persisted in SQLite
-  local store. User has received
-  confirmation (sync pending).
-  Zero data loss guaranteed.
-end note
-
-note right of SYNCED
-  Clocking successfully written
-  to PostgreSQL. SyncRecord
-  updated with syncedAt timestamp.
-end note
-
-note right of SKIPPED
-  Duplicate detected by
-  (employeeId, timestamp) uniqueness
-  constraint in PostgreSQL.
-  No data loss — original entry
-  already persisted.
-end note
-
-@enduml
-```
-
-#### Design Class Summary
+#### Design Class Registry
 
 | ID | Class | Package | Layer | Realizes Interface |
 |---|---|---|---|---|
 | CLS-001 | HomePage | Presentation | Presentation | — |
-| CLS-002 | ClockingController | Presentation | Presentation | — |
-| CLS-003 | HistoryPage | Presentation | Presentation | — |
+| CLS-002 | HistoryPage | Presentation | Presentation | — |
+| CLS-003 | AdminClockingsPage | Presentation | Presentation | — |
 | CLS-004 | AdminNewsPage | Presentation | Presentation | — |
-| CLS-005 | AdminClockingsPage | Presentation | Presentation | — |
-| CLS-006 | NewsController | Presentation | Presentation | — |
+| CLS-005 | NewsListPage | Presentation | Presentation | — |
+| CLS-006 | NewsDetailPage | Presentation | Presentation | — |
 | CLS-007 | DirectoryPage | Presentation | Presentation | — |
 | CLS-008 | AdminDirectoryPage | Presentation | Presentation | — |
-| CLS-009 | TimeTrackingService | Application | Application | — |
-| CLS-010 | NewsService | Application | Application | — |
-| CLS-011 | DirectoryService | Application | Application | — |
-| CLS-012 | AuditInterceptor | Application | Application | — |
-| CLS-013 | SyncQueue | Application | Application | — |
-| CLS-014 | Clocking | Domain | Domain | — |
-| CLS-015 | NewsItem | Domain | Domain | — |
-| CLS-016 | Employee | Domain | Domain | — |
-| CLS-017 | AuditEntry | Domain | Domain | — |
-| CLS-018 | SyncRecord | Domain | Domain | — |
-| CLS-019 | ADEmployeeRecord | Domain | Domain | — |
-| CLS-020 | SyncResult | Domain | Domain | — |
-| CLS-021 | Result<T> | Domain | Domain | — |
-| CLS-022 | ValidationResult | Domain | Domain | — |
-| CLS-023 | PostgresRepository<T> | Infrastructure | Infrastructure | INT-002 |
-| CLS-024 | SqliteLocalStore | Infrastructure | Infrastructure | INT-003 |
-| CLS-025 | LdapAuthProvider | Infrastructure | Infrastructure | INT-001 |
-| CLS-026 | CsvExporter | Infrastructure | Infrastructure | INT-004 |
-| CLS-027 | TcpHealthMonitor | Infrastructure | Infrastructure | INT-005 |
-| CLS-028 | EfAuditLogger | Infrastructure | Infrastructure | INT-006 |
-| CLS-029 | PortalDbContext | Infrastructure | Infrastructure | — |
-| CLS-030 | LocalDbContext | Infrastructure | Infrastructure | — |
-| CLS-031 | LdapConfig | Infrastructure | Infrastructure | — |
-| CLS-032 | AuthResult | Infrastructure | Infrastructure | — |
-| CLS-033 | PortalUser | Infrastructure | Infrastructure | — |
+| CLS-009 | ClockingController | Presentation | Presentation | — |
+| CLS-010 | NewsController | Presentation | Presentation | — |
+| CLS-011 | DirectoryController | Presentation | Presentation | — |
+| CLS-012 | TimeTrackingService | Application | Application | — |
+| CLS-013 | NewsService | Application | Application | — |
+| CLS-014 | DirectoryService | Application | Application | — |
+| CLS-015 | AuditInterceptor | Application | Application | — |
+| CLS-016 | SyncQueue | Application | Application | — |
+| CLS-017 | Clocking | Domain | Domain | — |
+| CLS-018 | NewsItem | Domain | Domain | — |
+| CLS-019 | Employee | Domain | Domain | — |
+| CLS-020 | AuditEntry | Domain | Domain | — |
+| CLS-021 | SyncRecord | Domain | Domain | — |
+| CLS-022 | ADEmployeeRecord | Domain | Domain | — |
+| CLS-023 | SyncResult | Domain | Domain | — |
+| CLS-024 | Result<T> | Domain | Domain | — |
+| CLS-025 | ValidationResult | Domain | Domain | — |
+| CLS-026 | PostgresRepository<T> | Infrastructure | Infrastructure | INT-002 |
+| CLS-027 | SqliteLocalStore | Infrastructure | Infrastructure | INT-003 |
+| CLS-028 | LdapAuthProvider | Infrastructure | Infrastructure | INT-001 |
+| CLS-029 | CsvExporter | Infrastructure | Infrastructure | INT-004 |
+| CLS-030 | TcpHealthMonitor | Infrastructure | Infrastructure | INT-005 |
+| CLS-031 | EfAuditLogger | Infrastructure | Infrastructure | INT-006 |
+| CLS-032 | PortalDbContext | Infrastructure | Infrastructure | — |
+| CLS-033 | LocalDbContext | Infrastructure | Infrastructure | — |
+| CLS-034 | LdapConfig | Infrastructure | Infrastructure | — |
+| CLS-035 | AuthResult | Infrastructure | Infrastructure | — |
+| CLS-036 | PortalUser | Infrastructure | Infrastructure | — |
 ## Interface Contracts
 ### Interface Contracts
 
