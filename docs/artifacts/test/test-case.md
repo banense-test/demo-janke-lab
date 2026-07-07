@@ -2,7 +2,7 @@
 | Field | Value |
 |---|---|
 | Phase | Elaboration |
-| Status | Draft |
+| Status | Draft — Findings updated |
 | Iteration | 1 (Cycle 1) |
 | Milestone Target | End of Elaboration (LCA) |
 | Author | Test Designer (catalog) — Tester (execution findings) |
@@ -11,6 +11,8 @@
 | Build ID (PoC) | CI run 28860807083 — success (2026-07-07 10:54:52Z) |
 | PoC Branch | `poc/E1-risk-t01-offline-sync` |
 | Prior Iteration | Inception 2 (LCO approved — GO verdict, 2026-07-07) |
+| Test Verdict Summary | 7 PASS, 1 PASS (partial), 1 NOT EXECUTABLE, 11 BLOCKED |
+| CRs Logged | #5 (Major — PoC tests excluded from CI), #6 (Minor — placeholder smoke test), #7 (Major — sync-over-async), #8 (Minor — reflection) |
 ## Test Scope
 
 ### Purpose
