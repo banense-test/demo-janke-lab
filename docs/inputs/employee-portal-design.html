@@ -1,1 +1,327 @@
+<!DOCTYPE html>
+<!--
+  DESIGN REFERENCE — Employee Portal (Cuba Corp)
+  ==============================================
+  This file is the DESIGN INTENT that the technical roles (Designer,
+  User Interface Designer, Implementer) must use as the visual reference when
+  implementing the UI. It is NOT production code: it is a static, self-contained
+  mockup (inline CSS, no external dependencies), meant to communicate layout,
+  components, states, palette, and typography.
+
+  Target stack: .NET 10 · Razor Pages (intranet, no SPA) · Chrome/Edge.
+  UI language: English. Actors: Employee, HR Administrator.
+  Use cases covered: UC01 Clock In/Out · UC02 Read News · UC03 Employee Directory.
+
+  ── DESIGN SYSTEM (design tokens) ──────────────────────────────────────────
+  Color / brand:
+    --brand-900 #0B3D5C  (corporate blue, header and strong accents)
+    --brand-700 #145A82
+    --brand-500 #1E7FB5  (primary action / links)
+    --brand-100 #E3F0F8  (soft backgrounds, active chips)
+    --accent    #17A398  (teal-green: confirmations, "present" status)
+    --danger    #C0392B  (clock out / errors)
+    --warn      #E6A817  (featured news / warnings)
+  Neutrals:
+    --ink       #1B2733  (primary text)
+    --muted     #5B6B7A  (secondary text)
+    --line      #E2E8EE  (borders / dividers)
+    --bg        #F4F7FA  (app background)
+    --surface   #FFFFFF  (cards)
+  Typography:
+    UI family: "Segoe UI", system-ui, sans-serif  (native on Windows/Edge)
+    Scale: 12 / 14 / 16 / 20 / 28 px · line-height 1.5
+    Weights: 400 regular, 600 semibold (titles and buttons)
+  Shape / spacing:
+    Radius: 8px cards, 6px controls, 999px chips
+    Card shadow: 0 1px 2px rgba(16,42,67,.06), 0 4px 12px rgba(16,42,67,.05)
+    Grid: max container 1120px, gutter 24px
+  Accessibility: AA contrast, visible focus, targets >= 40px, keyboard-only OK.
+  ───────────────────────────────────────────────────────────────────────────
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Employee Portal — Cuba Corp (design reference)</title>
+<style>
+  :root{
+    --brand-900:#0B3D5C; --brand-700:#145A82; --brand-500:#1E7FB5; --brand-100:#E3F0F8;
+    --accent:#17A398; --danger:#C0392B; --warn:#E6A817;
+    --ink:#1B2733; --muted:#5B6B7A; --line:#E2E8EE; --bg:#F4F7FA; --surface:#FFFFFF;
+    --shadow:0 1px 2px rgba(16,42,67,.06), 0 4px 12px rgba(16,42,67,.05);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink);
+       background:var(--bg);font-size:14px;line-height:1.5}
+  a{color:var(--brand-500);text-decoration:none}
+  .muted{color:var(--muted)}
+  .container{max-width:1120px;margin:0 auto;padding:0 24px}
+
+  /* Topbar */
+  .topbar{background:var(--brand-900);color:#fff;height:56px;display:flex;align-items:center}
+  .topbar .container{display:flex;align-items:center;justify-content:space-between;width:100%}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:16px}
+  .brand .logo{width:28px;height:28px;border-radius:6px;background:var(--accent);
+       display:grid;place-items:center;font-weight:700;color:#04231a}
+  .userchip{display:flex;align-items:center;gap:10px;font-size:14px}
+  .avatar{width:32px;height:32px;border-radius:999px;background:var(--brand-500);
+       display:grid;place-items:center;font-weight:600;color:#fff;font-size:13px}
+  .logout{color:#cfe3f1;font-size:13px}
+
+  /* Shell: sidebar + content */
+  .shell{display:grid;grid-template-columns:220px 1fr;gap:24px;padding:24px 0}
+  .nav{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px;height:fit-content;box-shadow:var(--shadow)}
+  .nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:6px;color:var(--ink);font-weight:500}
+  .nav a .ico{width:18px;text-align:center;opacity:.75}
+  .nav a.active{background:var(--brand-100);color:var(--brand-700);font-weight:600}
+  .nav a:hover:not(.active){background:#F0F4F8}
+  .nav .sep{height:1px;background:var(--line);margin:8px 4px}
+  .nav .role-tag{font-size:11px;color:var(--muted);padding:6px 12px;text-transform:uppercase;letter-spacing:.04em}
+
+  /* Cards & layout */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow)}
+  .card .hd{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+  .card .hd h2{margin:0;font-size:16px}
+  .card .bd{padding:18px}
+  .grid-2{display:grid;grid-template-columns:1.2fr .8fr;gap:24px}
+  h1.page{font-size:28px;margin:0 0 4px}
+  .sub{color:var(--muted);margin:0 0 20px}
+  .section{margin-bottom:28px}
+  .section > h3{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:28px 0 12px;border-bottom:1px solid var(--line);padding-bottom:6px}
+
+  /* Buttons & chips */
+  .btn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 18px;border-radius:6px;border:1px solid transparent;
+       font-weight:600;font-size:14px;cursor:pointer;font-family:inherit}
+  .btn-primary{background:var(--brand-500);color:#fff}
+  .btn-in{background:var(--accent);color:#fff;height:52px;font-size:16px;padding:0 28px}
+  .btn-out{background:var(--danger);color:#fff;height:52px;font-size:16px;padding:0 28px}
+  .btn-ghost{background:#fff;border-color:var(--line);color:var(--ink)}
+  .chip{display:inline-flex;align-items:center;height:30px;padding:0 14px;border-radius:999px;border:1px solid var(--line);
+        background:#fff;color:var(--muted);font-size:13px;cursor:pointer}
+  .chip.active{background:var(--brand-100);border-color:var(--brand-100);color:var(--brand-700);font-weight:600}
+
+  /* Clocking status */
+  .clock{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .clock .now{font-size:40px;font-weight:600;font-variant-numeric:tabular-nums}
+  .status{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;font-weight:600;font-size:13px}
+  .status.present{background:#E4F6F3;color:#0E6B60}
+  .status.present .dot{width:8px;height:8px;border-radius:999px;background:var(--accent)}
+
+  /* Tables */
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  tbody tr:hover{background:#F7FAFC}
+  .tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600}
+  .tag.ok{background:#E4F6F3;color:#0E6B60}
+
+  /* News */
+  .banner{background:linear-gradient(90deg,#FFF6E2,#FFFBF2);border:1px solid #F3E2B8;border-left:4px solid var(--warn);
+          border-radius:8px;padding:16px 18px;display:flex;gap:14px;align-items:flex-start;margin-bottom:18px}
+  .banner .star{color:var(--warn);font-size:20px;line-height:1}
+  .news-item{padding:16px 0;border-bottom:1px solid var(--line)}
+  .news-item:last-child{border-bottom:0}
+  .news-item h4{margin:0 0 4px;font-size:16px}
+  .news-meta{font-size:12px;color:var(--muted);display:flex;gap:12px;margin-bottom:6px}
+  .cat{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--brand-700)}
+
+  /* Directory */
+  .search{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+  .search input{flex:1;min-width:220px;height:40px;border:1px solid var(--line);border-radius:6px;padding:0 14px;font-family:inherit;font-size:14px}
+  .select{height:40px;border:1px solid var(--line);border-radius:6px;padding:0 12px;background:#fff;font-family:inherit;font-size:14px;color:var(--ink)}
+  .people{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .person{border:1px solid var(--line);border-radius:8px;padding:16px;background:var(--surface)}
+  .person .who{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+  .person .who .avatar{width:44px;height:44px;font-size:16px}
+  .person .name{font-weight:600}
+  .person .role{font-size:13px;color:var(--muted)}
+  .person .field{display:flex;justify-content:space-between;font-size:13px;padding:4px 0}
+  .person .field .k{color:var(--muted)}
+
+  .note{margin-top:32px;padding:14px 18px;background:#EEF4F9;border:1px dashed var(--brand-100);border-radius:8px;font-size:13px;color:var(--brand-700)}
+  @media(max-width:900px){.shell{grid-template-columns:1fr}.grid-2{grid-template-columns:1fr}.people{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ===================== TOPBAR (global) ===================== -->
+<header class="topbar">
+  <div class="container">
+    <div class="brand"><span class="logo">CC</span> Employee Portal · Cuba Corp</div>
+    <div class="userchip">
+      <span class="avatar">MT</span>
+      <span>Miguel Torres <span class="muted">· Engineering · Havana office</span></span>
+      <a class="logout" href="#">Sign out</a>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="shell">
+
+    <!-- ===================== SIDEBAR NAV ===================== -->
+    <nav class="nav" aria-label="Main navigation">
+      <a href="#home" class="active"><span class="ico">🏠</span> Home</a>
+      <a href="#clocking"><span class="ico">⏱</span> Clock In/Out</a>
+      <a href="#news"><span class="ico">📰</span> News</a>
+      <a href="#directory"><span class="ico">👥</span> Directory</a>
+      <div class="sep"></div>
+      <div class="role-tag">HR Administrator</div>
+      <a href="#admin-news"><span class="ico">✍️</span> Publish news</a>
+      <a href="#admin-clockings"><span class="ico">📊</span> Clocking report</a>
+      <a href="#admin-directory"><span class="ico">🗂</span> Manage directory</a>
+    </nav>
+
+    <!-- ===================== CONTENT ===================== -->
+    <main>
+      <h1 class="page">Good morning, Miguel</h1>
+      <p class="sub">Monday, June 22 · 08:14 · Corporate network</p>
+
+      <!-- ---- HOME: quick clocking + featured news ---- -->
+      <div class="grid-2 section" id="home">
+
+        <!-- UC01 — Clock In/Out (primary widget) -->
+        <section class="card" id="clocking">
+          <div class="hd">
+            <h2>Today's clocking</h2>
+            <span class="status present"><span class="dot"></span> Present since 08:02</span>
+          </div>
+          <div class="bd">
+            <div class="clock">
+              <div class="now">08:14</div>
+              <button class="btn btn-out">■ Clock Out</button>
+            </div>
+            <p class="muted" style="margin:14px 0 0">
+              Clock-in recorded today at <strong>08:02</strong>. Press
+              "Clock Out" when your shift ends. The record is immediate
+              (&lt; 1 s) and is audited with your username and the exact time.
+            </p>
+            <!-- Alternate state (absent) → green "Clock In" button:
+                 <button class="btn btn-in">▶ Clock In</button> -->
+          </div>
+        </section>
+
+        <!-- UC02 — Featured news (banner) -->
+        <section class="card">
+          <div class="hd"><h2>Featured</h2></div>
+          <div class="bd">
+            <div class="banner">
+              <span class="star">★</span>
+              <div>
+                <div class="cat">HR</div>
+                <strong>New summer schedule starting July 1</strong>
+                <p class="muted" style="margin:6px 0 0">Compressed hours 7:00–15:00
+                  Monday to Friday. Check the per-office exceptions.</p>
+              </div>
+            </div>
+            <a href="#news">View all news →</a>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================= UC01 · Clocking history ================= -->
+      <section class="card section" id="clocking-history">
+        <div class="hd">
+          <h2>My clocking history — June 2026</h2>
+          <!-- Action visible to HR Administrator only -->
+          <button class="btn btn-ghost">⬇ Export CSV (HR)</button>
+        </div>
+        <div class="bd" style="padding:0">
+          <table>
+            <thead>
+              <tr><th>Date</th><th>Clock In</th><th>Clock Out</th><th>Hours</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Mon Jun 22</td><td>08:02</td><td>—</td><td>—</td><td><span class="tag ok">In progress</span></td></tr>
+              <tr><td>Fri Jun 19</td><td>07:58</td><td>17:03</td><td>9h 05m</td><td><span class="tag ok">Complete</span></td></tr>
+              <tr><td>Thu Jun 18</td><td>08:10</td><td>17:00</td><td>8h 50m</td><td><span class="tag ok">Complete</span></td></tr>
+              <tr><td>Wed Jun 17</td><td>08:05</td><td>16:58</td><td>8h 53m</td><td><span class="tag ok">Complete</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ================= UC02 · News ================= -->
+      <section id="news">
+        <h3>News and announcements</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+          <span class="chip active">All</span>
+          <span class="chip">General</span>
+          <span class="chip">HR</span>
+          <span class="chip">IT</span>
+          <span class="chip">Events</span>
+        </div>
+        <div class="card"><div class="bd">
+          <article class="news-item">
+            <div class="news-meta"><span class="cat">HR</span><span>Jun 20, 2026</span><span>by Laura Gómez</span></div>
+            <h4>New summer schedule starting July 1</h4>
+            <p class="muted">Compressed hours 7:00–15:00 Monday to Friday during July and August. Per-office exceptions are detailed in the attached document.</p>
+          </article>
+          <article class="news-item">
+            <div class="news-meta"><span class="cat">IT</span><span>Jun 18, 2026</span><span>by IT Support</span></div>
+            <h4>Corporate email migration on Saturday</h4>
+            <p class="muted">Email service will be unavailable on Saturday from 8:00 to 12:00 for maintenance. No action is required on your part.</p>
+          </article>
+          <article class="news-item">
+            <div class="news-meta"><span class="cat">Events</span><span>Jun 15, 2026</span><span>by Laura Gómez</span></div>
+            <h4>Open house — Havana office</h4>
+            <p class="muted">We hold our annual open house on Friday the 27th. Sign up at reception before Wednesday.</p>
+          </article>
+        </div></div>
+        <p class="muted" style="margin-top:8px">Read-only for employees · no comments or reactions · sorted by date descending.</p>
+      </section>
+
+      <!-- ================= UC03 · Directory ================= -->
+      <section id="directory">
+        <h3>Employee directory</h3>
+        <div class="search">
+          <input type="search" placeholder="Search by name…" aria-label="Search employee">
+          <select class="select" aria-label="Department"><option>All departments</option><option>Engineering</option><option>HR</option><option>IT</option></select>
+          <select class="select" aria-label="Office"><option>All offices</option><option>Havana</option><option>Santiago</option><option>Villa Clara</option></select>
+          <button class="btn btn-primary">Search</button>
+        </div>
+        <div class="people">
+          <div class="person">
+            <div class="who"><span class="avatar">LG</span><div><div class="name">Laura Gómez</div><div class="role">HR Director</div></div></div>
+            <div class="field"><span class="k">Department</span><span>HR</span></div>
+            <div class="field"><span class="k">Office</span><span>Havana</span></div>
+            <div class="field"><span class="k">Email</span><span>l.gomez@cubacorp.cu</span></div>
+            <div class="field"><span class="k">Extension</span><span>1201</span></div>
+          </div>
+          <div class="person">
+            <div class="who"><span class="avatar">MT</span><div><div class="name">Miguel Torres</div><div class="role">Software Engineer</div></div></div>
+            <div class="field"><span class="k">Department</span><span>Engineering</span></div>
+            <div class="field"><span class="k">Office</span><span>Havana</span></div>
+            <div class="field"><span class="k">Email</span><span>m.torres@cubacorp.cu</span></div>
+            <div class="field"><span class="k">Extension</span><span>1450</span></div>
+          </div>
+          <div class="person">
+            <div class="who"><span class="avatar">AR</span><div><div class="name">Ana Ramírez</div><div class="role">IT Analyst</div></div></div>
+            <div class="field"><span class="k">Department</span><span>IT</span></div>
+            <div class="field"><span class="k">Office</span><span>Santiago</span></div>
+            <div class="field"><span class="k">Email</span><span>a.ramirez@cubacorp.cu</span></div>
+            <div class="field"><span class="k">Extension</span><span>2310</span></div>
+          </div>
+        </div>
+        <p class="muted" style="margin-top:12px">Corporate data only (no private personal information). HR keeps the data synchronized with Active Directory.</p>
+      </section>
+
+      <div class="note">
+        <strong>Implementation notes for the technical role:</strong>
+        follow this design intent (layout, components, states, palette and the
+        design tokens in the header of this file). Three main views matching
+        UC01 (Clock In/Out), UC02 (Read News) and UC03 (Employee Directory),
+        plus the HR Administrator actions (publish news, export clocking report,
+        manage directory). Razor Pages, no SPA. The clocking button toggles
+        between the "Clock In" state (green, <code>--accent</code>) and
+        "Clock Out" (red, <code>--danger</code>) depending on the employee's
+        current status.
+      </div>
+
+    </main>
+  </div>
+</div>
+
+</body>
+</html>
 
