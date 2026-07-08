@@ -1,15 +1,14 @@
 ## Document Control
-
 | Field | Value |
 |---|---|
 | Phase | Elaboration |
 | Status | Draft |
-| Iteration | 1 (Cycle 1) |
-| Milestone Target | End of Elaboration (LAM) |
+| Iteration | 3 (Cycle 1) |
+| Milestone Target | LCA (Lifecycle Architecture) |
 | Author | Implementer (contributor) — Software Architect is primary owner |
 | Branch | `poc/E1-risk-t01-offline-sync` |
-| CI Status | Green (3/3 pushes passed) |
-
+| CI Status | Green (5/5 pushes passed — includes CR #5–#8 fixes) |
+| Findings Addressed | PoC-F1 (Minor — LAM→LCA + iteration metadata corrected) |
 ## Objective and Risks Addressed
 
 ### PoC-1: Offline Sync Mechanism (RISK-T01, RPN 63 — High)
