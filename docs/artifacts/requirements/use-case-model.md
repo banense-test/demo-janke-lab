@@ -27,68 +27,97 @@
 - UC-004 and UC-007 activity diagrams added showing audit trail integration and AD sync conflict handling.
 - All UC specifications preserved from Inception baseline; activity diagrams and scenario walkthroughs added for Elaboration depth (~80% detail).
 ## Use-Case Diagram
-
 ```plantuml
 @startuml
+title Employee Portal — Use-Case Model (Elaboration Iteration 3)
+
 left to right direction
 skinparam packageStyle rectangle
 skinparam actorStyle awesome
 skinparam usecaseBorderColor #2c3e50
 skinparam usecaseBackgroundColor #ecf0f1
+skinparam usecaseBorderColor<<arch>> #e74c3c
+skinparam usecaseBackgroundColor<<arch>> #fadbd8
 
-actor "Employee" as EMP
-actor "HR Administrator" as HR
-actor "Active Directory" as AD <<external system>>
+actor "Employee\n(ACT-001)" as EMP
+actor "HR Administrator\n(ACT-002)" as HR
+actor "Active Directory\n(ACT-003)" as AD <<external system>>
 
 rectangle "Employee Portal — System Boundary" {
-  usecase "UC-001\nClock In/Out" as UC01
-  usecase "UC-002\nView Clocking History" as UC02
+  usecase "UC-001 ⭐\nClock In/Out" as UC01 <<arch>>
+  usecase "UC-002\nView Clocking\nHistory" as UC02
   usecase "UC-003\nReview and Export\nClockings" as UC03
   usecase "UC-004\nPublish News" as UC04
   usecase "UC-005\nRead News" as UC05
   usecase "UC-006\nSearch Directory" as UC06
   usecase "UC-007\nManage Directory" as UC07
+  usecase "AD Authentication\n(cross-cutting\nmechanism)" as AUTH <<mechanism>>
+  usecase "Audit Trail\n(cross-cutting\nmechanism)" as AUDIT <<mechanism>>
+  usecase "Offline Sync\n(cross-cutting\nmechanism)" as SYNC <<mechanism>>
 }
 
 EMP --> UC01
 EMP --> UC02
 EMP --> UC05
 EMP --> UC06
-
 HR --> UC03
 HR --> UC04
 HR --> UC07
 
-UC01 ..> AD : <<include>>
-UC02 ..> AD : <<include>>
-UC03 ..> AD : <<include>>
-UC04 ..> AD : <<include>>
-UC05 ..> AD : <<include>>
-UC06 ..> AD : <<include>>
-UC07 ..> AD : <<include>>
+UC01 ..> AUTH : <<include>>
+UC02 ..> AUTH : <<include>>
+UC03 ..> AUTH : <<include>>
+UC04 ..> AUTH : <<include>>
+UC05 ..> AUTH : <<include>>
+UC06 ..> AUTH : <<include>>
+UC07 ..> AUTH : <<include>>
+
+UC01 ..> SYNC : <<include>>
+UC04 ..> AUDIT : <<include>>
+UC07 ..> AUDIT : <<include>>
+
+AD <..> AUTH : validates
 
 note bottom of UC01
-  **Architecturally significant**
-  Offline fault tolerance:
-  5-min network drop, no data loss,
-  auto-sync on restore.
-  Priority: Must | Stability: Low
+  ⭐ Architecturally Significant:
+  Offline fault tolerance drives
+  ILocalStore, SyncQueue, INetworkHealth
+  Stability: Low
+  RISK-T01 (RPN 63)
 end note
 
-note bottom of UC04
-  Audit trail required
-  (REQ-004, REQ-006)
+note right of AUTH
+  Cross-cutting mechanism
+  (NOT a standalone UC)
+  IAuthProvider isolation pattern
+  AD method (LDAP vs OAuth2)
+  undecided — Stability: Low
 end note
 
-note bottom of UC07
-  Audit trail required
-  (REQ-005, REQ-006)
-  AD sync conflict handling
+note right of SYNC
+  Cross-cutting mechanism
+  SQLite local store + auto-sync
+  on network restore
+  Zero data loss required
+end note
+
+note right of AUDIT
+  Cross-cutting mechanism
+  REQ-004, REQ-005, REQ-006
+  Immutable audit entries
 end note
 
 @enduml
 ```
 
+**Diagram Notes:**
+
+- **UC-001 (⭐)** is the sole architecturally significant use case — its offline fault tolerance requirement drives the `ILocalStore`, `SyncQueue`, and `INetworkHealth` architectural decisions (SAD Logical View).
+- **Cross-cutting mechanisms** (AD Authentication, Audit Trail, Offline Sync) are shown inside the system boundary as `<<mechanism>>` stereotypes with `<<include>>` relationships — they are NOT standalone use cases (per Rule 7). They deliver no independent actor value.
+- **AD Authentication** is included by ALL 7 UCs — every portal interaction requires authentication.
+- **Audit Trail** is included only by UC-004 (Publish News) and UC-007 (Manage Directory) per declared NFR scope.
+- **Offline Sync** is included only by UC-001 (Clock In/Out) — the sole UC with offline fault tolerance requirements.
+- **Active Directory (ACT-003)** is an external system actor that validates authentication — it does not initiate any UC.
 ## Actors
 
 | ID | Actor | Type | Description | Associated UCs |
