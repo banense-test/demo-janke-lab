@@ -3,9 +3,16 @@
 |---|---|
 | Phase | Elaboration |
 | Status | Draft |
-| Iteration | 2 (Cycle 1) |
+| Iteration | 3 (Cycle 1) |
 | Milestone Target | End of Elaboration |
 | Author | System Analyst / Requirements Specifier |
+
+### Elaboration Iteration 3 Changes
+
+- **Supplementary Specification reviewed against SAD baseline.** All NFR thresholds remain valid and aligned with architectural decisions (IAuthProvider isolation, SQLite local store, SyncQueue).
+- **REQ-001 stability annotation clarified:** AD authentication method (LDAP vs OAuth2) remains undecided — Stability: Low. IAuthProvider isolation pattern (SAD) decouples this decision from application logic; spike deferred to Construction per architectural decision.
+- **No new NFRs added.** All 45 requirements (REQ-001 through REQ-045) and 7 design constraints (DC-001 through DC-007) remain unchanged — no findings target the Supplementary Specification.
+- **FURPS+ categories confirmed complete** for Elaboration baseline: Functionality (security, audit, licensing), Usability (per-role + cross-cutting), Reliability (availability, offline, backup/recovery), Performance (page load, clocking, search, news), Supportability (maintainability, configurability, AD sync), Design Constraints (7), Interfaces (3), Applicable Standards (5).
 
 ### Elaboration Iteration 2 Changes
 
@@ -16,14 +23,11 @@
 ### Elaboration Iteration 1 Changes
 
 - Phase transition from Inception (LCO approved). FURPS+ categories confirmed complete.
-- **REQ-018 [ASSUMPTION] resolved:** Directory search response time threshold quantified at ≤2 seconds (derived from acceptance criteria: 10-second total target includes navigation + search; 2s for search leaves 8s for navigation and reading — conservative).
-- **REQ-024 [ASSUMPTION] resolved:** Backup strategy confirmed by stakeholder. Nightly full backup (pg_dump, 30-day retention), RPO ≤ 24h for general portal data. No longer an assumption.
-- **REQ-025 [ASSUMPTION] resolved:** 50 concurrent users during peak clock-in window confirmed by stakeholder. No longer an assumption.
-- **REQ-026 added:** PostgreSQL WAL archiving for PITR of clocking data — RPO ≤ 15 min (payroll-critical).
-- **REQ-027 added:** Off-server backup copy (NAS or Office 2) — no cloud per CON-005.
-- **REQ-028 added:** Monthly test-restore verification of backup integrity.
-- **REQ-029 added:** Monthly full backup retained 12 months for payroll audit support.
-- All NFR thresholds now testable with no remaining [ASSUMPTION] markers. No gold-plating: every threshold justified by declared business value, constraints, or stakeholder confirmation.
+- **REQ-018 [ASSUMPTION] resolved:** Directory search response time threshold quantified at ≤2 seconds.
+- **REQ-024 [ASSUMPTION] resolved:** Backup strategy confirmed by stakeholder. Nightly full backup, RPO ≤ 24h.
+- **REQ-025 [ASSUMPTION] resolved:** 50 concurrent users during peak clock-in window confirmed.
+- **REQ-026 through REQ-029 added:** PostgreSQL WAL archiving, off-server backup, monthly test-restore, 12-month retention.
+- All NFR thresholds now testable with no remaining [ASSUMPTION] markers.
 ## Functionality
 
 ### Security
