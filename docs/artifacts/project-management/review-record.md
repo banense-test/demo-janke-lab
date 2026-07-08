@@ -194,13 +194,16 @@ The Management Reviewer assessed all four LCA exit criteria as PASS and issued a
 
 **Coordinator verdict: The LCA milestone gate remains CLOSED. Auto-iteration is required.**
 ## Resolutions and Actions
+### Actions from This Review — Review Coordinator
 
-### Actions from This Review
-
-| # | Action | Owner | Priority | Due |
-|---|---|---|---|---|
-| 1 | Capture stakeholder custom design request in Design Model UI flows | UI Designer | Medium | Construction Iteration 1 |
-| 2 | Proceed to Construction phase — LCA milestone achieved | Project Manager | High | Immediate |
+| # | Action | Owner | Priority | Due | Status |
+|---|---|---|---|---|---|
+| 1 | Close PR #4 without merging — PoC code must stay on feature branch, not main | Software Architect | **CRITICAL** | This iteration | OPEN — blocking LCA gate |
+| 2 | Update Iteration Assessment for Elaboration Iteration 2 (objectives, completion, LCA criteria) | Project Manager | **HIGH** | This iteration | OPEN — blocking LCA gate |
+| 3 | Fix cycle metadata typo in Iteration Plan Document Control | Project Manager | Medium | This iteration | OPEN |
+| 4 | Fix LAM→LCA reference and iteration number in PoC Document Control | Software Architect | Medium | This iteration | OPEN |
+| 5 | Capture stakeholder custom design request in Design Model UI flows | UI Designer | Medium | Construction Iter 1 | OPEN — deferred |
+| 6 | Escalate SAD-F4 (Critical) to stakeholder for awareness and input | Review Coordinator | **CRITICAL** | Immediate | IN PROGRESS |
 
 ### Prior Iteration Actions Status
 
@@ -212,8 +215,14 @@ The Management Reviewer assessed all four LCA exit criteria as PASS and issued a
 | 4 | Resolve RL-F1 (RPN governance) | **DONE** | RPN governance protocol established in Risk List |
 | 5 | Resolve DM-F1 (Design Model metadata) | **DONE** | Design Model Document Control corrected |
 | 6 | Resolve TC-F1 (Test Case execution summary) | **DONE** | Test Case updated with execution summary |
-| 7 | Re-consult stakeholder for LCA sanction | **DONE** | Stakeholder consulted, sanction granted |
+| 7 | Re-consult stakeholder for LCA sanction | **DONE** | Stakeholder consulted, sanction granted (but SAD-F4 not known at time of consultation) |
 
+### Escalation Notices
+
+| # | Finding | Escalation Target | Reason | Date | Status |
+|---|---|---|---|---|---|
+| 1 | SAD-F4 (Critical) | Stakeholder + Project Manager | Open PR #4 at LCA — Critical process discipline violation. PoC code merging to main during LCA review. Stakeholder was not informed of this finding during LCA consultation. | 2026-07-08 | **ACTIVE — requires stakeholder input** |
+| 2 | IA-F2 (Major) | Project Manager | Iteration Assessment not updated for Iteration 2 — LCA criteria cannot be verified from current PM data. | 2026-07-08 | ACTIVE |
 ## Disposition
 ### LCA Milestone Verdict — Review Coordinator
 
