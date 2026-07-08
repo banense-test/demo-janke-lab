@@ -125,41 +125,47 @@ Per IARI baseline — 24 active roles, no reassignments, no merges. All CORE art
 | ProcessEngineer | This Development Case + environment verification |
 
 ## Guidelines and Procedures
-### Process Workflow — Elaboration Iteration 2 (DC-F2 Resolution)
+### Process Workflow — Elaboration Iteration 3 (Process Improvement)
 
 ```plantuml
 @startuml
-title Elaboration Iteration 2 — Process Engineer Workflow (DC-F2 Resolution)
+title Elaboration Iteration 3 — Process Engineer Workflow (Process Improvement)
 
 start
-:Read Review Record (Elaboration Iter 1 findings);
-:Identify DC-F2: RPN values incorrect in DC;
-:Read authoritative Risk List for correct RPN values;
+:Read Review Record (Elaboration Iter 2 findings);
+:Identify: No findings target DC directly;
+:Identify process improvement opportunities from cross-discipline findings;
 
-partition "Resolve DC-F2" {
-  :Correct RISK-T01: RPN 35→63, Significant→High;
-  :Correct RISK-T02: RPN 30→35 (Significant confirmed);
-  :Correct RISK-T03: RPN 24→48, Significant→High;
-  :Update Tailoring Overview (Organization Assessment);
-  :Update Artifacts and Templates (Optional triggers);
-  :Update Traceability (RPN references);
-  :Update Document Control (iteration 2, DC-F2 resolved);
+partition "SAD-F4 Process Gap (Critical)" {
+  :SAD-F4: Open PR #4 at LCA milestone gate;
+  :New process rule: No open PRs at milestone gates;
+  :Flag ConfigurationManager: enforce PR merge/deferral before gate;
 }
 
-partition "Process Improvement" {
-  :Add RPN governance rule to lessons learned;
-  :Add PoC cross-reference rule;
-  :Add metadata verification rule;
-  :Re-record optional artifact triggers;
-  :Re-record version policy;
+partition "IA-F2 Process Gap (Major)" {
+  :IA-F2: Stale Iteration Assessment blocks LCA;
+  :New process rule: IA must be refreshed before LCA review;
+  :Flag ProjectManager: verify IA metadata + objective statuses;
+}
+
+partition "CR #5/#6 Tool Gaps" {
+  :CR #5: PoC tests excluded from CI pipeline;
+  :CR #6: Placeholder smoke test (Assert.True(true));
+  :Update Tool Configuration Gaps table;
+  :Flag Implementer: resolve CR #5 and CR #6;
+}
+
+partition "Governance Re-confirmation" {
+  :Re-record DC classification (business-process-led = false);
+  :Re-record optional artifact triggers (PoC fired);
+  :Re-record version policy (4 pins);
 }
 
 partition "Verify" {
-  :Cross-check all RPN values against Risk List;
-  if (All RPNs match authoritative source?) then (yes)
-    :DC-F2 RESOLVED;
+  if (All process rules captured?) then (yes)
+    :Update DC sections;
   else (no)
-    :Re-read Risk List and correct;
+    :Add missing rules;
   endif
 }
 
@@ -257,15 +263,20 @@ note right of ProcessEngineer
 end note
 ```
 
-### Process Rules (Iteration 2 Additions)
+### Process Rules (Cumulative)
 
-| Rule | Source Finding | Description |
-|---|---|---|
-| RPN Governance | DC-F2, RL-F1 | DC must reference Risk List RPNs by ID. Any RPN value cited in DC must be verified against the authoritative Risk List before upsert. Never independently assess RPN in DC. |
-| PoC Cross-Reference | SAD-F2 | When an optional artifact (e.g., PoC) is produced, all artifacts referencing it must be updated in the same iteration to reflect its existence. |
-| Metadata Verification | SAD-F3 | Document Control milestone target must match the current phase exit criterion (LCA for Elaboration, not LAM). Verify on every section update. |
+| Rule | Source Finding | Iteration Added | Description |
+|---|---|---|---|
+| RPN Governance | DC-F2, RL-F1 | Iter 2 | DC must reference Risk List RPNs by ID. Any RPN value cited in DC must be verified against the authoritative Risk List before upsert. Never independently assess RPN in DC. |
+| PoC Cross-Reference | SAD-F2 | Iter 2 | When an optional artifact (e.g., PoC) is produced, all artifacts referencing it must be updated in the same iteration to reflect its existence. |
+| Metadata Verification | SAD-F3 | Iter 2 | Document Control milestone target must match the current phase exit criterion (LCA for Elaboration, not LAM). Verify on every section update. |
+| Milestone Gate PR Closure | SAD-F4 (Critical) | Iter 3 | No open PRs may exist at a milestone gate. ConfigurationManager must ensure all PRs are merged or explicitly deferred with CCB approval before milestone review. |
+| IA Freshness Verification | IA-F2 (Major) | Iter 3 | Iteration Assessment must be refreshed to reflect current iteration status BEFORE LCA review. ProjectManager must verify IA Document Control iteration field and objective statuses match the current iteration before submitting for review. |
+| Critical Finding Override | Review Coordinator Override | Iter 3 | Critical findings ALWAYS block milestone gates regardless of criteria assessment. Management Reviewer GO verdict is overridden by any open Critical finding from the Reviewer lens. |
+| CI Test Inclusion | CR #5 | Iter 3 | PoC architecture validation tests must be included in the CI pipeline — not excluded. False green status from excluded tests is a process violation. Implementer must resolve CR #5. |
+| Smoke Test Substance | CR #6 | Iter 3 | Smoke tests must perform actual validation, not placeholder assertions (Assert.True(true)). Implementer must resolve CR #6. |
 
-### Version Policy (Re-confirmed for Iteration 2)
+### Version Policy (Re-confirmed for Iteration 3)
 
 | Ecosystem | Package | Pinned Version | LTS Only | Rationale |
 |---|---|---|---|---|
@@ -276,14 +287,17 @@ end note
 
 The SoftwareArchitect resolves specific NuGet package versions against the .NET 10 framework pin. SAD confirms: EF Core 10.0.9, Npgsql 10.0.2, EF Core Sqlite 10.0.9.
 
-### Tool Configuration Gaps (Flagged for Discipline Experts)
+### Tool Configuration Gaps (Updated for Iteration 3)
 
-| Gap | Owner | Action Required | Due |
-|---|---|---|---|
-| Build pipeline not yet configured | ConfigurationManager | Configure `.github/workflows` for .NET 10 build + test | Elaboration iteration 2 |
-| Test framework not yet configured | TestDesigner / ConfigurationManager | Configure xUnit for .NET 10 | Construction iteration 1 (per canonical intensity) |
-| `CONTRIBUTING.md` not yet authored | Each discipline expert | Author discipline-specific guideline sections | Elaboration iteration 2 |
-| Baseline tagging not enforced | ConfigurationManager | Implement CI gate enforcement | Elaboration iteration 2 |
+| Gap | Owner | Action Required | Status | Due |
+|---|---|---|---|---|
+| CI pipeline partially configured | ConfigurationManager | Configure `.github/workflows` for .NET 10 build + test. CI triggers on all branch families. PoC-1 CI Green 3/3. | Partially done | Elaboration iteration 3 |
+| PoC tests excluded from CI | Implementer (CR #5) | Include PoC architecture validation tests in CI pipeline — currently excluded, producing false green status. Approved CR #5. | Open | Elaboration iteration 3 |
+| Placeholder smoke test | Implementer (CR #6) | Replace `Assert.True(true)` placeholder in SmokeTest.cs with actual validation. Approved CR #6. | Open | Elaboration iteration 3 |
+| Test framework not yet configured | TestDesigner / ConfigurationManager | Configure xUnit for .NET 10 | Not started | Construction iteration 1 (per canonical intensity) |
+| `CONTRIBUTING.md` not yet authored | Each discipline expert | Author discipline-specific guideline sections | Not started | Elaboration iteration 3 |
+| Baseline tagging not enforced | ConfigurationManager | Implement CI gate enforcement — no open PRs at milestone gates (per SAD-F4 process rule) | Open | Elaboration iteration 3 |
+| PR-at-LCA gate enforcement | ConfigurationManager | Enforce rule: all PRs merged or CCB-deferred before milestone review (per SAD-F4 Critical finding) | Open | Elaboration iteration 3 |
 ## Traceability
 | Element | Traces From | Link Type | Traces To |
 |---|---|---|---|
