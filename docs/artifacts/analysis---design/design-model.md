@@ -7,6 +7,12 @@
 | Milestone Target | LCA (Lifecycle Architecture) |
 | Author | User-Interface Designer, Designer (Analysis & Design), Database Designer |
 
+### Elaboration Iteration 3 — UI Designer Changes
+
+- **DM-MR-F1 (Minor) RESOLVED:** Stakeholder custom design request for Employee Portal now captured in Design Overview section. The stakeholder's LCA review design request specified: (1) clock widget as primary element on Home page, (2) single-action button that changes label based on clocking status, (3) news feed below clock widget, (4) directory search accessible from top navigation bar on all pages, (5) minimalist corporate design with Cuba Corp blue/white color scheme. Activity diagram and Salt wireframe added to document the request and its mapping to existing UC-001 and UC-005 flows.
+- **PRESERVED** — All other UI Designer contributions (Navigation Topology, interaction flows, storyboards, wireframes, validation sessions) from prior iterations remain valid — no other findings target UI content.
+- **User-Interface Prototype trigger NOT fired** (re-confirmed via `get_optional_artifact_triggers` in iteration 3). Interaction design lives inside the Design Model and Use-Case Model as UI flow references.
+
 ### Elaboration Iteration 3 — Database Designer Changes
 
 - **PRESERVED** — No open findings or Change Requests target Database Designer content in the Design Model. All 6 open Review Record findings target other roles (Software Architect: SAD-F4/PoC-F1; Project Manager: IA-F2/IA-F1/IP-F1; UI Designer: DM-MR-F1). No open CRs target persistence/ORM mapping sections.
