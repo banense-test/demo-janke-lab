@@ -3,16 +3,15 @@
 |---|---|
 | Phase | Elaboration |
 | Status | Draft |
-| Iteration | 2 (Cycle 1) |
+| Iteration | 3 (Cycle 1) |
 | Milestone Target | End of Elaboration |
 | Author | System Analyst / Requirements Specifier |
 
-### Elaboration Iteration 1 Changes
+### Elaboration Iteration 3 Changes
 
-- Phase transition from Inception (LCO approved). All 7 UCs now fully specified with activity diagrams.
-- UC-001 (architecturally significant) enhanced with offline sync sequence diagram and 3 concrete scenarios.
-- UC-004 and UC-007 activity diagrams added showing audit trail integration and AD sync conflict handling.
-- All UC specifications preserved from Inception baseline; activity diagrams and scenario walkthroughs added for Elaboration depth (~80% detail).
+- **UC-001 (architecturally significant) fully specified with offline sync sequence diagram.** Per work order: "Refine use-case model and fully specify all architecturally significant use cases." Added sequence diagram showing online flow, offline flow (AF-1), auto-sync on network restore, and session-expired exception (EF-1) — aligned with SAD's ILocalStore, SyncQueue, INetworkHealth, IAuthProvider interfaces.
+- **Use-Case Diagram refined** to show cross-cutting mechanisms (AD Authentication, Audit Trail, Offline Sync) as `<<mechanism>>` stereotypes with `<<include>>` relationships, clarifying the system boundary.
+- No Review Record findings target the Use-Case Model — UC specifications preserved from Iteration 2 baseline. Only UC-001 enhanced with sequence diagram per work order directive.
 
 ### Elaboration Iteration 2 Changes
 
@@ -20,6 +19,13 @@
 - SRS consolidates all 7 use cases (UC-001 through UC-007) and all 45 requirements (REQ-001 through REQ-045) into a single traceable specification with FURPS+ categorization.
 - No findings from Review Record (Elaboration Iter 1) target the Use-Case Model — UC specifications preserved from Iteration 1 baseline.
 - Traceability expanded: SRS section adds full STK → FEAT → UC → REQ traceability matrix covering all declared scope elements.
+
+### Elaboration Iteration 1 Changes
+
+- Phase transition from Inception (LCO approved). All 7 UCs now fully specified with activity diagrams.
+- UC-001 (architecturally significant) enhanced with offline sync sequence diagram and 3 concrete scenarios.
+- UC-004 and UC-007 activity diagrams added showing audit trail integration and AD sync conflict handling.
+- All UC specifications preserved from Inception baseline; activity diagrams and scenario walkthroughs added for Elaboration depth (~80% detail).
 ## Use-Case Diagram
 
 ```plantuml
