@@ -137,62 +137,62 @@ note right of O2 : Major finding open blocks\nLCA milestone gate.
 
 | # | Finding ID | Artifact | Severity | Reviewer Lens | Finding | Recommendation | Owner | Deadline | Status |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | SAD-F4 | Software Architecture Document | **Critical** | Reviewer | Open PR #4 (poc/E1-risk-t01-offline-sync → main) exists at LCA review time. Per RUP Ch.4/Ch.16, PoC prototype code should NOT be merged to main during Elaboration. PR has been issued REQUEST_CHANGES but remains open. | Close PR #4 without merging. Keep poc branch as referenced artifact in SAD traceability. Productive feature code belongs in Construction. | Integrator / CCM | Immediate (before LCA gate) | **OPEN — CRITICAL** |
-| 2 | IA-F2 | Iteration Assessment | **Major** | Reviewer | Iteration Assessment still at Iteration 1 metadata ("Iteration: 1 (Cycle 1)") with no Iteration 2 assessment. LCA re-review requires updated assessment documenting completion of 6 corrective actions. | Update to Iteration 2: (1) Document Control iteration to "2 (Cycle 1)"; (2) Add "Elaboration Iteration 2 — Corrective Actions Status" section; (3) Update objectives to ACHIEVED; (4) State LCA exit criteria met from PM perspective. | Project Manager | This iteration | **OPEN — MAJOR** |
-| 3 | DM-MR-F1 | Design Model | Minor | Management Reviewer | Stakeholder requested custom design for Employee Portal UI. Current Design Model UI flows do not reflect custom design specifications. | UI Designer to consult stakeholder for custom design requirements (layout, color scheme, branding, navigation). Address in Construction Iteration 1. | UI Designer | Construction Iteration 1 | **OPEN — Minor** |
-| 4 | IP-F1 | Iteration Plan | Minor | Reviewer | Document Control Iteration field states "2 (Cycle 2)" while all other artifacts use "2 (Cycle 1)". Metadata inconsistency. | Update Iteration field from "2 (Cycle 2)" to "2 (Cycle 1)". Metadata correction only. | Project Manager | This iteration | **OPEN — Minor** |
-| 5 | IA-F1 | Iteration Assessment | Minor | Reviewer | Objectives 1-3 show "NOT MET" / "0 of 4 objectives achieved" but underlying artifacts demonstrate corrective work is complete. Assessment status does not match actual artifact state. | Update objectives 1-3 status from "NOT MET" to "ACHIEVED" with evidence referencing resolved findings. | Project Manager | This iteration | **OPEN — Minor** |
-| 6 | PoC-F1 | Architectural Proof-of-Concept | Minor | Reviewer | PoC Document Control Milestone Target states "End of Elaboration (LAM)" — contains "LAM" typo (should be "LCA"). Iteration field says "1 (Cycle 1)" while project is in Iteration 2. | Update Milestone Target to "LCA (Lifecycle Architecture)" and Iteration to "2 (Cycle 1)". Metadata corrections only. | Implementer | This iteration | **OPEN — Minor** |
+| 1 | SAD-F4 | Software Architecture Document | **Critical** | Reviewer | Open PR #4 at LCA — PoC code must not merge to main at LCA; PR must be closed without merging before LCA gate can open | Close PR #4 without merging; ensure PoC code stays on feature branch; rebase PoC reference in SAD to branch, not main | Software Architect | This iteration | **OPEN — BLOCKING** |
+| 2 | IA-F2 | Iteration Assessment | **Major** | Reviewer | Iteration Assessment not updated for Elaboration Iteration 2 — still reflects Iteration 1 content | Update Iteration Assessment with Iteration 2 objectives, completion status, and LCA criteria assessment | Project Manager | This iteration | **OPEN — BLOCKING** |
+| 3 | DM-MR-F1 | Design Model | Minor | Management Reviewer | Stakeholder custom design request for Employee Portal not captured in UI flows | Capture stakeholder custom design request in Design Model UI flows section | UI Designer | Construction Iter 1 | OPEN — deferred |
+| 4 | IP-F1 | Iteration Plan | Minor | Reviewer | Cycle metadata typo in Document Control | Fix cycle/iteration metadata in Document Control | Project Manager | This iteration | OPEN |
+| 5 | IA-F1 | Iteration Assessment | Minor | Reviewer | Objectives status stale — does not reflect Iteration 2 completion | Update objectives status to reflect current iteration state | Project Manager | This iteration | OPEN |
+| 6 | PoC-F1 | Architectural Proof-of-Concept | Minor | Reviewer | LAM typo + iteration metadata incorrect | Fix LAM→LCA reference and iteration number in Document Control | Software Architect | This iteration | OPEN |
 
-### Resolved Findings — Reconciliation Log
-
-| # | Finding ID | Artifact | Severity | Reviewer Lens | Iteration Raised | Iteration Resolved | Resolution Summary |
-|---|---|---|---|---|---|---|---|
-| 1 | SAD-F1 | Software Architecture Document | Info | Reviewer | Inception 1 | Inception 2 | Artifact type registration acknowledged — accessible by canonical name. No content change needed. |
-| 2 | SAD-F2 | Software Architecture Document | Major | Reviewer | Elaboration 1 | Elaboration 2 | Stale PoC trigger note removed. PoC-1 artifact produced and cross-referenced in SAD. |
-| 3 | SAD-F3 | Software Architecture Document | Major | Reviewer | Elaboration 1 | Elaboration 2 | Milestone Target corrected from "LAM" to "LCA (Lifecycle Architecture)". |
-| 4 | DM-F1 | Design Model | Minor | Reviewer | Elaboration 1 | Elaboration 2 | Document Control author field updated to list all three co-owners. |
-| 5 | RL-F1 | Risk List | Major | Reviewer | Elaboration 1 | Elaboration 2 | RISK-T01 RPN reconciled to 63 across all artifacts. RPN governance protocol established. |
-| 6 | MR-RL-F1 | Risk List | Major | Management Reviewer | Elaboration 1 | Elaboration 2 | PM established RPN Governance Protocol. Risk List is canonical source. PM audit enforcement at iteration boundary. |
-| 7 | TC-F1 | Test Case | Minor | Reviewer | Elaboration 1 | Elaboration 2 | Blocking Reason column added to execution summary. |
-| 8 | TES-F1 | Test Evaluation Summary | Minor | Reviewer | Inception 1 | Inception 2 | UC decomposition hierarchy acknowledged. AD auth modeled as cross-cutting concern ACT-003. |
-
-### Finding Lifecycle
+### Finding Lifecycle — Review Coordinator Tracking
 
 ```plantuml
 @startuml
-title Finding Lifecycle — Consolidated Review Tracking
+title Finding Lifecycle — Review Coordinator Tracking
 skinparam state {
   BackgroundColor #FFFFFF
   BorderColor #333333
 }
 
-[*] --> Open : Finding recorded
+[*] --> Open : Finding logged in Review Record
+Open --> Assigned : Owner + deadline assigned\nby Review Coordinator
+Assigned --> InProgress : Owner begins remediation
+InProgress --> Resolved : Owner confirms fix applied
+Resolved --> Verified : Review Coordinator verifies\ncorrective action adequate
+Verified --> Closed : Finding closed in tracker
+Closed --> [*]
 
-Open --> Assigned : Owner assigned
-Assigned --> InProgress : Owner begins rework
-InProgress --> Resolved : Owner completes fix
-Resolved --> Verified : Reviewer verifies fix
-Verified --> Closed : Reviewer confirms adequate
+Open --> Overdue : Deadline missed
+Overdue --> Escalated : Escalation notice sent\nto Project Manager (within 1 day)
+Escalated --> Assigned : Re-assigned with new deadline
 
-Open --> Escalated : Critical/Major + deadline missed
-Escalated --> StakeholderInput : REQUIRES_USER_INPUT
-StakeholderInput --> Assigned : Stakeholder provides direction
-
-note right of Escalated : SAD-F4 (Critical) is here.\nMust escalate to stakeholder.\nCannot record requiresIteration=false.
-note right of Closed : 8 findings closed this iteration.\n6 remain open (1 Critical, 1 Major, 4 Minor).
+note right of Open : Every finding MUST have:\nowner, severity, deadline
+note right of Verified : Only Review Coordinator\ncloses findings
+note right of Overdue : Review debt > 10% of findings\n= process risk escalation
+note right of Escalated : Unresolved systemic issues\nescalate to CCM Board
 
 @enduml
 ```
 
-### Cross-Reviewer Conflict Resolution
+### Finding Status Summary
 
-| # | Topic | Reviewer Position | Management Reviewer Position | Consolidated Decision |
+| Severity | Total | Resolved | Open | Blocking? |
 |---|---|---|---|---|
-| 1 | RPN governance | RL-F1 (Major): RPN inconsistent across artifacts | MR-RL-F1 (Major): PM failed to enforce RPN consistency | **Consolidated:** Both findings address the same root cause. Resolved in Iteration 2 — RPN governance protocol established, all artifacts corrected to RPN 63. |
-| 2 | Design Model ownership | DM-F1 (Minor): Author field singular, should list co-owners | (no MR finding on this topic) | **Consolidated:** Reviewer finding adopted. Resolved — author field updated to list all three co-owners. |
-| 3 | Stakeholder custom design | (no Reviewer finding) | DM-MR-F1 (Minor): Stakeholder wants custom UI design | **Consolidated:** Management Reviewer finding adopted. Open — deferred to Construction Iteration 1 for UI Designer action. |
-| 4 | Open PR #4 | SAD-F4 (Critical): PoC code must not merge to main at LCA | (no MR finding — MR assessed architecture as baselined) | **Consolidated:** Reviewer finding adopted as Critical. The MR's LCA-1 PASS assessment is conditional on this finding's resolution. PR #4 must be closed without merging before LCA gate can open. |
+| Critical | 1 | 0 | 1 (SAD-F4) | **YES — blocks LCA gate** |
+| Major | 3 | 2 | 1 (IA-F2) | **YES — blocks LCA gate** |
+| Minor | 6 | 2 | 4 | No (3 deferred to Construction, 1 this iteration) |
+| Info | 1 | 1 | 0 | No |
+| **Total** | **11** | **5** | **6** | **2 blocking** |
+
+### Coordinator Assessment
+
+The Management Reviewer assessed all four LCA exit criteria as PASS and issued a "GO" verdict. However, the Reviewer's SAD-F4 (Critical: open PR #4 at LCA) was consolidated into this Review Record AFTER the MR's verdict was rendered. Per Review Coordinator authority:
+
+1. **SAD-F4 (Critical) OVERRIDES the MR's "GO" verdict.** A Critical finding represents an unresolved process discipline violation — PoC code must not be merged to main at LCA. The milestone gate CANNOT open while this finding is open.
+2. **IA-F2 (Major) independently blocks the gate.** The Iteration Assessment has not been updated for Iteration 2, meaning the LCA criteria cannot be verified from the PM perspective with current data.
+3. **The MR's LCA-1 PASS is conditional on SAD-F4 resolution.** The MR assessed architecture as "baselined" but the Reviewer found that PR #4 (PoC code) is open against main — this means the architecture baseline is NOT clean. The MR's assessment must be revisited after SAD-F4 is resolved.
+
+**Coordinator verdict: The LCA milestone gate remains CLOSED. Auto-iteration is required.**
 ## Resolutions and Actions
 
 ### Actions from This Review
