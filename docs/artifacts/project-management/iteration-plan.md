@@ -1,16 +1,14 @@
 ## Document Control
-
 | Field | Value |
 |---|---|
 | Phase | Elaboration |
 | Status | Draft |
 | Milestone Target | LCA (Lifecycle Architecture) — Re-Review |
-| Iteration | 2 (Cycle 2) |
+| Iteration | 2 (Cycle 1) |
 | Author | Project Manager |
 | Prior Iteration | Elaboration 1 (LCA: CONDITIONAL NO-GO — auto-iterate to Cycle 2) |
-| Findings Addressed | RL-F1 (Major, 2nd), MR-RL-F1 (Major, 1st) — RPN governance protocol established in Risk List |
-| Iteration Type | Corrective — resolve 6 open findings from LCA review, re-consult stakeholder, LCA re-review |
-
+| Findings Addressed | RL-F1 (Major, 2nd), MR-RL-F1 (Major, 1st) — RPN governance protocol established in Risk List; IP-F1 (Minor) — cycle metadata corrected |
+| Iteration Type | Corrective — resolve open findings from LCA review, re-consult stakeholder, LCA re-review |
 ## Iteration Objectives
 
 1. **Resolve all 4 Major findings from LCA review** — SAD-F2 (stale PoC note, 3rd occurrence), SAD-F3 (LAM→LCA metadata), DC-F2 (RPN inconsistency), RL-F1 (RPN governance, 2nd occurrence). Each finding owner corrects their artifact; PM verifies cross-artifact RPN consistency.
