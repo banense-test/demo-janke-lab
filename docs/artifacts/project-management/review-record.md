@@ -215,18 +215,65 @@ The Management Reviewer assessed all four LCA exit criteria as PASS and issued a
 | 7 | Re-consult stakeholder for LCA sanction | **DONE** | Stakeholder consulted, sanction granted |
 
 ## Disposition
+### LCA Milestone Verdict — Review Coordinator
 
-### LCA Milestone Verdict
+**CONDITIONAL NO-GO — Auto-iterate required**
 
-**GO — Architecture Accepted, proceed to Construction**
+The Management Reviewer assessed all four LCA exit criteria as PASS and issued a "GO" verdict. However, as Review Coordinator, I am responsible for the milestone gate decision based on the CONSOLIDATED findings from all review lenses. The Reviewer's SAD-F4 (Critical: open PR #4 at LCA) was consolidated after the MR rendered their verdict, and it OVERRIDES the MR's "GO":
 
-All four LCA exit criteria are met:
-1. Architecture is stable and baselined (SAD 4+1 views complete, ADRs preserved, PoC-1 validated)
-2. Critical risks are mitigated (3 retired, 1 deferred with mitigation, RPN governance established)
-3. Construction plan is credible (2-iteration schedule, UC prioritization, grounded estimates)
-4. Stakeholder sanction granted (consulted in this review, accepted plan and advancement)
+1. **SAD-F4 (Critical) is OPEN and BLOCKING.** Open PR #4 at LCA means PoC code is being merged to main during the LCA review — this is a Critical process discipline violation. The architecture baseline is NOT clean. The MR's LCA-1 PASS is conditional on this finding's resolution.
+2. **IA-F2 (Major) is OPEN and BLOCKING.** The Iteration Assessment has not been updated for Elaboration Iteration 2. LCA criteria cannot be verified from current PM data.
+3. **Per the Critical escalation invariant:** Critical findings ALWAYS escalate to the stakeholder. The Review Coordinator has NO authority to auto-iterate while any Critical finding is unresolved — stakeholder input is required to unblock.
 
-The prior iteration's CONDITIONAL NO-GO is resolved. All 6 corrective actions from Iteration 1 are complete. The project is authorized to proceed to the Construction phase.
+**The LCA milestone gate remains CLOSED. The project must auto-iterate Elaboration to resolve SAD-F4 and IA-F2 before the gate can be re-evaluated.**
+
+### Review Calendar — Elaboration Iteration 2
+
+```plantuml
+@startuml
+title Elaboration Review Calendar — Iteration 2 (LCA Milestone)
+skinparam activity {
+  BackgroundColor #E2EFDA
+  BorderColor #333333
+}
+
+|Review Coordinator|
+start
+:Schedule Iteration Plan Review;
+note right: Triggered by "Plan for Next Iteration"\nEntry: Iteration Plan in target state
+|Review Coordinator|
+:Conduct PRA Review (mid-iteration);
+note right: Monitors project health\nagainst iteration plan
+|Reviewer|
+:Technical Review — SAD, Design Model, PoC;
+note right: Architecture review is primary\nElaboration review target
+|Management Reviewer|
+:Management Review — Iteration Plan, Risk List,\nIteration Assessment;
+note right: LCA exit criteria assessment
+|Business Reviewer|
+:Business Review — Vision, UC Model;
+note right: Scope traceability, acceptance criteria
+|Review Coordinator|
+:Consolidate findings from all lenses;
+:Update Finding Tracker with owners/deadlines;
+:Verify LCA entry criteria met;
+if (Open Critical findings?) then (yes)
+  :Escalate to stakeholder (MANDATORY);
+  :Record milestone: requiresIteration = true;
+  note right #FFD6D6: CANNOT advance to Construction\nwhile Critical finding open
+else (no)
+  if (Open Major findings OR planned scope incomplete?) then (yes)
+    :Record milestone: requiresIteration = true;
+    note right: Auto-iterate to resolve\nremaining findings
+  else (no)
+    :Consult stakeholder for LCA sanction;
+    :Record milestone: requiresIteration = false;
+    note right #D6FFD6: LCA gate opens —\nConstruction authorized
+  endif
+endif
+stop
+@enduml
+```
 
 ### Project Health Scorecard
 
@@ -260,15 +307,15 @@ object "Cost" as COST {
 }
 
 object "Quality" as QUAL {
-  RAG = **GREEN**
-  Assessment = "All 6 prior findings resolved. PoC-1 CI Green 3/3. RPN governance established. Architecture baselined with ADRs."
+  RAG = **RED**
+  Assessment = "1 open Critical (SAD-F4: open PR #4 at LCA), 1 open Major (IA-F2: Iter Assessment stale). Architecture baseline NOT clean. LCA gate BLOCKED."
 }
 
 SCOPE --> SCHED
 SCHED --> COST
 COST --> QUAL
 
-note bottom of QUAL : Overall: GREEN-AMBER-GREEN-GREEN. Schedule amber due to corrective iteration. All other dimensions green. LCA criteria met.
+note bottom of QUAL : Overall: GREEN-AMBER-GREEN-RED. Quality RED due to open Critical finding.\nLCA gate CANNOT open until SAD-F4 and IA-F2 resolved.
 @enduml
 ```
 
@@ -279,9 +326,9 @@ note bottom of QUAL : Overall: GREEN-AMBER-GREEN-GREEN. Schedule amber due to co
 | **Scope** | 🟢 GREEN | 4 UCs delivered, all trace to declared scope. No scope creep. Acceptance criteria mapped to UCs. |
 | **Schedule** | 🟡 AMBER | LCA delayed 1 iteration (Iter 1 CONDITIONAL NO-GO → Iter 2 re-review). Corrective iteration consumed budget. Construction start shifted by 1 iteration. |
 | **Cost** | 🟢 GREEN | Corrective iteration within budget. No new resources required. Construction estimates grounded in Elaboration architectural findings. |
-| **Quality** | 🟢 GREEN | All 6 prior findings resolved. PoC-1 CI Green 3/3. RPN governance protocol established. Architecture baselined with ADRs. |
+| **Quality** | 🔴 RED | 1 open Critical (SAD-F4: open PR #4 at LCA — process discipline violation), 1 open Major (IA-F2: Iteration Assessment not updated). Architecture baseline NOT clean. LCA gate BLOCKED. |
 
-**Overall Health:** GREEN-AMBER-GREEN-GREEN. Schedule amber is the only concern — attributable to the corrective iteration required by the Iter 1 CONDITIONAL NO-GO. This is a one-time delay, not a systemic schedule problem. All other dimensions are green.
+**Overall Health:** GREEN-AMBER-GREEN-RED. Quality is RED due to the open Critical finding SAD-F4. The Management Reviewer's "GO" verdict is OVERRIDDEN — the LCA milestone gate remains CLOSED until SAD-F4 (Critical) and IA-F2 (Major) are resolved.
 
 ### Stakeholder Acceptance
 
@@ -291,8 +338,29 @@ note bottom of QUAL : Overall: GREEN-AMBER-GREEN-GREEN. Schedule amber due to co
 
 **Interpretation:** Stakeholder accepts the Iteration Plan (scope, schedule, resource commitments) and sanctions advancing past the Lifecycle Architecture milestone. Stakeholder has a custom design request for the Employee Portal that must be captured for the UI Designer — recorded as DM-MR-F1 (Minor).
 
-**Sanction status:** GRANTED — LCA milestone may proceed to Construction.
+**Coordinator note:** Stakeholder sanction was granted based on the MR's assessment that all LCA criteria were met. The stakeholder was NOT informed of SAD-F4 (Critical: open PR #4 at LCA) at the time of consultation. The Critical finding must be escalated to the stakeholder for awareness and input before the next iteration.
 
+### Review Effectiveness Metrics — Elaboration Iteration 2
+
+| Metric | Value | Interpretation |
+|---|---|---|
+| Reviews completed | 5 (Iteration Plan, Risk List, Iteration Assessment, SAD, Design Model) | All planned artifacts received formal review — coverage 100% |
+| Total findings raised | 11 (1 Critical, 3 Major, 6 Minor, 1 Info) | Defect density concentrated in SAD (4 findings) and PM artifacts (4 findings) |
+| Findings resolved | 5 (2 Major, 2 Minor, 1 Info) | 45% resolution rate — expected for mid-review consolidation |
+| Findings open | 6 (1 Critical, 1 Major, 4 Minor) | 2 blocking findings prevent LCA gate opening |
+| Review coverage | 5/5 planned artifacts = 100% | All Elaboration artifacts received formal multi-lens review |
+| Defect removal efficiency | TBD — requires Construction test data | Cannot calculate until Construction phase testing begins |
+| Rework effort | [ASSUMPTION — requires validation] ~16 hours (8 findings × ~2h avg) | Estimate based on finding complexity; actual hours to be tracked |
+
+### Review Process Framework
+
+| Review Type | Triggering Activity | Required Participants | Entry Criteria | Exit Criteria | Primary Output |
+|---|---|---|---|---|---|
+| Iteration Plan Review | Plan for Next Iteration | Review Coordinator, Project Manager, Reviewer | Iteration Plan in target state; agenda distributed 48h prior | All findings have owners + deadlines; Review Record signed | Signed Iteration Plan Review Record |
+| PRA Review | Mid-iteration checkpoint | Review Coordinator, Project Manager | Iteration in progress; PRA agenda distributed | Health assessment recorded; deviations flagged | PRA Review Record entry |
+| Technical Review (SAD) | Architecture baselining | Reviewer, Software Architect, Review Coordinator | SAD 4+1 views complete; ADRs documented | All Critical/Major findings have owners + deadlines | SAD Review findings log |
+| Management Review (LCA) | Close-Out Phase | Management Reviewer, Review Coordinator, Project Manager | All artifacts in target state; LCA criteria checklist ready | LCA exit criteria assessed; verdict recorded | LCA Milestone Review Record |
+| Iteration Acceptance Review | Manage Iteration (close) | Review Coordinator, Reviewer, Project Manager | All iteration deliverables produced; findings consolidated | All findings have owners + deadlines; milestone verdict recorded | Iteration Acceptance Review Record |
 ## Traceability
 
 | Element | Traces From | Link Type | Traces To |
