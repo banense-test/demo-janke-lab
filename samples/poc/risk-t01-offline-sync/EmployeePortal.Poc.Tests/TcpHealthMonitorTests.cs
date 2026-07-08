@@ -9,13 +9,14 @@ namespace EmployeePortal.Poc.Tests;
 /// Black-box: validates UP/DOWN detection against a real TCP listener.
 /// White-box: exercises timeout path, exception path, constructor validation.
 /// Traces to: TC-003, COMP-I5 (Network Health Monitor).
+/// CR #7 fix: All tests updated to use async CheckHealthAsync().
 /// </summary>
 public class TcpHealthMonitorTests
 {
     // === BLACK-BOX TESTS: What it does (specification behavior) ===
 
     [Fact]
-    public void CheckHealth_ActiveListener_ReturnsUP()
+    public async Task CheckHealthAsync_ActiveListener_ReturnsUP()
     {
         using var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
         listener.Start();
@@ -24,7 +25,7 @@ public class TcpHealthMonitorTests
         try
         {
             var monitor = new TcpHealthMonitor("localhost", port, 3000);
-            var status = monitor.CheckHealth();
+            var status = await monitor.CheckHealthAsync();
 
             Assert.Equal(HealthStatus.UP, status);
         }
@@ -35,11 +36,11 @@ public class TcpHealthMonitorTests
     }
 
     [Fact]
-    public void CheckHealth_NoListener_ReturnsDOWN()
+    public async Task CheckHealthAsync_NoListener_ReturnsDOWN()
     {
         // Use a port that's almost certainly not listening
         var monitor = new TcpHealthMonitor("localhost", 54399, 1000);
-        var status = monitor.CheckHealth();
+        var status = await monitor.CheckHealthAsync();
 
         Assert.Equal(HealthStatus.DOWN, status);
     }
@@ -67,11 +68,24 @@ public class TcpHealthMonitorTests
     }
 
     [Fact]
-    public void CheckHealth_UnreachableHost_ReturnsDOWN()
+    public async Task CheckHealthAsync_UnreachableHost_ReturnsDOWN()
     {
         // Non-routable address — should timeout/exception → DOWN
         var monitor = new TcpHealthMonitor("192.0.2.1", 5432, 500);
-        var status = monitor.CheckHealth();
+        var status = await monitor.CheckHealthAsync();
+
+        Assert.Equal(HealthStatus.DOWN, status);
+    }
+
+    [Fact]
+    public async Task CheckHealthAsync_CancellationTokenExpired_ReturnsDOWN()
+    {
+        // Verify that cancellation token is respected
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        var monitor = new TcpHealthMonitor("localhost", 54399, 5000);
+        var status = await monitor.CheckHealthAsync(cts.Token);
 
         Assert.Equal(HealthStatus.DOWN, status);
     }

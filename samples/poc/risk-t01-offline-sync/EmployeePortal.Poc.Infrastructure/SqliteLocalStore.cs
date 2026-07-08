@@ -1,7 +1,6 @@
 using EmployeePortal.Poc.Application;
 using EmployeePortal.Poc.Domain;
 using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
 
 namespace EmployeePortal.Poc.Infrastructure;
 
@@ -9,6 +8,8 @@ namespace EmployeePortal.Poc.Infrastructure;
 /// SQLite-based implementation of ILocalStore for offline clocking persistence.
 /// Creates tables via EnsureCreated() — no migration history needed for buffer store.
 /// Traces to: COMP-I3 (Local Store), INT-003 (ILocalStore), RISK-T01.
+/// CR #8 fix: Replaced reflection-based init-only property setting with
+/// Clocking.Rehydrate() and SyncRecord.Rehydrate() factory methods.
 /// </summary>
 public sealed class SqliteLocalStore : ILocalStore, IDisposable
 {
@@ -112,18 +113,16 @@ public sealed class SqliteLocalStore : ILocalStore, IDisposable
                 var timestamp = DateTime.Parse(reader.GetString(4), null, System.Globalization.DateTimeStyles.RoundtripKind);
                 var source = reader.GetString(5);
 
-                var clocking = new Clocking(employeeId, type, timestamp, source);
-                // Use reflection to set Id since it's init-only
-                typeof(Clocking).GetProperty("Id")!.SetValue(clocking, clockingId);
+                // CR #8 fix: Use Rehydrate factory method instead of reflection
+                var clocking = Clocking.Rehydrate(clockingId, employeeId, type, timestamp, source);
 
                 var recordId = Guid.Parse(reader.GetString(6));
                 var status = Enum.Parse<SyncStatus>(reader.GetString(7));
                 var queuedAt = DateTime.Parse(reader.GetString(8), null, System.Globalization.DateTimeStyles.RoundtripKind);
+                DateTime? syncedAt = reader.IsDBNull(9) ? null : DateTime.Parse(reader.GetString(9), null, System.Globalization.DateTimeStyles.RoundtripKind);
 
-                var record = new SyncRecord(localId, clockingId);
-                typeof(SyncRecord).GetProperty("Id")!.SetValue(record, recordId);
-                typeof(SyncRecord).GetProperty("QueuedAt")!.SetValue(record, queuedAt);
-                record.Status = status;
+                // CR #8 fix: Use Rehydrate factory method instead of reflection
+                var record = SyncRecord.Rehydrate(recordId, localId, clockingId, status, queuedAt, syncedAt);
 
                 results.Add((clocking, record));
             }

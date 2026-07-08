@@ -15,5 +15,10 @@ public enum HealthStatus
 
 public interface INetworkHealth
 {
-    HealthStatus CheckHealth();
+    /// <summary>
+    /// Asynchronously checks network health by probing the target endpoint.
+    /// CR #7 fix: Changed from sync CheckHealth() to async to eliminate
+    /// sync-over-async thread pool starvation risk.
+    /// </summary>
+    Task<HealthStatus> CheckHealthAsync(CancellationToken cancellationToken = default);
 }

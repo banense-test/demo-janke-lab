@@ -4,12 +4,13 @@ namespace EmployeePortal.Poc.Application;
 
 /// <summary>
 /// Application service for clock-in/clock-out operations.
-/// 
+///
 /// Key decision: when network is UP, writes directly to PostgreSQL.
 /// When network is DOWN (or transient failure), falls back to SyncQueue (offline path).
 /// User receives immediate confirmation in both modes (<1s, REQ-017).
-/// 
+///
 /// Traces to: ACL-009 (TimeTrackingService), COMP-A1, SEQ-001.
+/// CR #7 fix: Updated to use async CheckHealthAsync() instead of sync CheckHealth().
 /// </summary>
 public sealed class TimeTrackingService
 {
@@ -51,7 +52,7 @@ public sealed class TimeTrackingService
 
         var clocking = new Clocking(employeeId, type, DateTime.UtcNow);
 
-        var health = _networkHealth.CheckHealth();
+        var health = await _networkHealth.CheckHealthAsync();
 
         if (health == HealthStatus.UP)
         {

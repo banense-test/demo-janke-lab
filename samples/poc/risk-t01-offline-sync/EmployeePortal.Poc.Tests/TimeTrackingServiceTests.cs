@@ -11,6 +11,7 @@ namespace EmployeePortal.Poc.Tests;
 /// White-box: exercises every branch — empty employeeId, network UP, network DOWN,
 ///   transient failure fallback, sync after restore.
 /// Traces to: TC-002, ACL-009 (TimeTrackingService), SEQ-001.
+/// CR #7 fix: StaticHealthMonitor updated to implement async CheckHealthAsync().
 /// </summary>
 public class TimeTrackingServiceTests : IDisposable
 {
@@ -161,6 +162,7 @@ public class TimeTrackingServiceTests : IDisposable
 
     /// <summary>
     /// Test double for INetworkHealth — returns a fixed status.
+    /// CR #7 fix: Updated to implement async CheckHealthAsync().
     /// </summary>
     private sealed class StaticHealthMonitor : INetworkHealth
     {
@@ -171,6 +173,7 @@ public class TimeTrackingServiceTests : IDisposable
             _status = status;
         }
 
-        public HealthStatus CheckHealth() => _status;
+        public Task<HealthStatus> CheckHealthAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(_status);
     }
 }

@@ -7,6 +7,9 @@ namespace EmployeePortal.Poc.Infrastructure;
 /// TCP-based health monitor that probes PostgreSQL availability.
 /// Probes port 5432 every 5 seconds (configurable).
 /// Traces to: COMP-I5 (Network Health Monitor), INT-005 (INetworkHealth).
+/// CR #7 fix: Replaced sync-over-async ConnectAsync().Wait() with fully async
+/// ConnectAsync() + CancellationTokenSource for timeout, eliminating thread pool
+/// starvation risk under concurrent load.
 /// </summary>
 public sealed class TcpHealthMonitor : INetworkHealth
 {
@@ -26,13 +29,16 @@ public sealed class TcpHealthMonitor : INetworkHealth
         _timeoutMs = timeoutMs;
     }
 
-    public HealthStatus CheckHealth()
+    public async Task<HealthStatus> CheckHealthAsync(CancellationToken cancellationToken = default)
     {
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        cts.CancelAfter(_timeoutMs);
+
         try
         {
             using var client = new TcpClient();
-            var connected = client.ConnectAsync(_host, _port).Wait(_timeoutMs);
-            return connected && client.Connected ? HealthStatus.UP : HealthStatus.DOWN;
+            await client.ConnectAsync(_host, _port, cts.Token);
+            return HealthStatus.UP;
         }
         catch
         {
