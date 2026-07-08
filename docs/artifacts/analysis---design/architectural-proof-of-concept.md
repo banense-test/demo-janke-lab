@@ -222,7 +222,6 @@ end note
 | **Total** | **33** | **17 black-box + 16 white-box** | |
 
 ## Results and Findings
-
 ### Build Evidence
 
 | Push | SHA | CI Result | Layer |
@@ -230,17 +229,21 @@ end note
 | 1 | `0ee1cb5857ead145c443fe8eb7aab91b4484593c` | ✅ Green | Domain + Application |
 | 2 | `21725b2eade8e181e68b3d228086af956cb1d010` | ✅ Green | Infrastructure |
 | 3 | `b4b6d03a404ee8173e23b439701877d26eaf1de4` | ✅ Green | Tests (all 33 tests pass) |
+| 4 | `9f7b0643412e3ad0a9a71993d72e411b79468744` | ❌ Red | CR #5–#8 fixes — SmokeTest CS0234 (Program type not accessible) |
+| 5 | `98a385885975d42e93b0b0f2fc8984bd6958c0fa` | ✅ Green | CR #5–#8 fixes — all tests pass (PoC + main project) |
 
 CI runs:
 - https://github.com/banense-test/demo-janke-lab/actions/runs/28860607749
 - https://github.com/banense-test/demo-janke-lab/actions/runs/28860651520
 - https://github.com/banense-test/demo-janke-lab/actions/runs/28860717112
+- https://github.com/banense-test/demo-janke-lab/actions/runs/28940718709
+- https://github.com/banense-test/demo-janke-lab/actions/runs/28940759017
 
 ### Outcome: VALIDATED ✅
 
 The PoC empirically validates the offline sync mechanism for RISK-T01:
 
-1. **Offline enqueue works:** When `INetworkHealth.CheckHealth()` returns `DOWN`, `TimeTrackingService` enqueues clockings to `SyncQueue` → `SqliteLocalStore`. User receives immediate confirmation. ✅
+1. **Offline enqueue works:** When `INetworkHealth.CheckHealthAsync()` returns `DOWN`, `TimeTrackingService` enqueues clockings to `SyncQueue` → `SqliteLocalStore`. User receives immediate confirmation. ✅
 
 2. **Zero data loss:** 5 concurrent offline clockings were all persisted to SQLite and successfully flushed to the remote repository on network restore. All 5 records synced, 0 lost. ✅
 
@@ -264,6 +267,54 @@ The PoC empirically validates the offline sync mechanism for RISK-T01:
 | `InMemoryClockingRepository` for PoC | Simulates PostgreSQL without requiring a live instance; `SetFailureMode` enables white-box transient failure testing | — |
 | SQLite in-memory for PoC | No file system dependency; `EnsureCreated()` creates schema | Data View |
 
+### Iteration 3 — Change Request Resolutions
+
+The following approved Change Requests were resolved on the `poc/E1-risk-t01-offline-sync` branch in Elaboration Iteration 3:
+
+#### CR #5 (Major) — PoC architecture validation tests excluded from CI pipeline
+
+**Problem:** The CI pipeline (`ci.yml`) regenerated the solution from `src/` and `tests/` directories only, excluding `samples/poc/` projects. PoC tests were never executed in CI, producing a false green status.
+
+**Fix:** Updated both `build` and `test` jobs in `ci.yml` to include `find samples -name "*.csproj" -exec dotnet sln add {} \;` alongside the existing `src/` and `tests/` discovery. All PoC projects (Domain, Application, Infrastructure, Tests) are now included in the solution regeneration and run in CI.
+
+**Validation:** CI run #28940759017 (SHA `98a38588`) — all PoC tests (34 tests across 4 test classes) now execute and pass in CI.
+
+#### CR #6 (Minor) — Main branch SmokeTest.cs placeholder
+
+**Problem:** `tests/EmployeePortal.Tests/SmokeTest.cs` contained `Assert.True(true)` — a placeholder providing zero validation.
+
+**Fix:** Replaced with three meaningful smoke tests:
+1. `ProjectSkeleton_MainProjectCompiles` — verifies the EmployeePortal assembly loaded and has the correct name
+2. `ProjectSkeleton_IndexModelIsRazorPageModel` — verifies `IndexModel` inherits from `PageModel`, confirming Razor Pages wiring
+3. `ProjectSkeleton_SolutionFileExists` — verifies the solution file exists at the repo root
+
+**Note:** Initial fix referenced `EmployeePortal.Program` (top-level statements implicit class), which failed with CS0234. Corrected to use `EmployeePortal.Pages.IndexModel` instead — a publicly accessible type that validates the same compilation invariant.
+
+#### CR #7 (Major) — TcpHealthMonitor sync-over-async pattern
+
+**Problem:** `TcpHealthMonitor.CheckHealth()` used `client.ConnectAsync(_host, _port).Wait(_timeoutMs)` — a sync-over-async pattern that blocks a thread pool thread, risking starvation under concurrent load.
+
+**Fix:**
+- Changed `INetworkHealth.CheckHealth()` → `Task<HealthStatus> CheckHealthAsync(CancellationToken cancellationToken = default)`
+- `TcpHealthMonitor.CheckHealthAsync()` now uses `await client.ConnectAsync(_host, _port, cts.Token)` with a `CancellationTokenSource.CreateLinkedTokenSource(cancellationToken)` + `CancelAfter(_timeoutMs)` for timeout
+- `TimeTrackingService.ProcessClockingAsync()` updated to `await _networkHealth.CheckHealthAsync()`
+- All test doubles (`StaticHealthMonitor` in `TimeTrackingServiceTests`) updated to implement the async interface
+- Added white-box test `CheckHealthAsync_CancellationTokenExpired_ReturnsDOWN` to verify cancellation token handling
+
+**Architectural impact:** The `INetworkHealth` interface signature change is a breaking change for any future implementers. The SAD should be updated to reflect the async interface contract. This is a design-level improvement that eliminates a thread pool starvation risk identified in the PoC.
+
+#### CR #8 (Minor) — SqliteLocalStore reflection-based property setting
+
+**Problem:** `SqliteLocalStore.GetPendingAsync()` used `typeof(Clocking).GetProperty("Id")!.SetValue(clocking, clockingId)` and similar reflection calls to set init-only properties on `Clocking` and `SyncRecord` — a fragile pattern that breaks on .NET version upgrades or AOT compilation.
+
+**Fix:**
+- Added `internal static Clocking Rehydrate(Guid id, Guid employeeId, ClockingType type, DateTime timestamp, string source)` factory method to `Clocking`
+- Added `internal static SyncRecord Rehydrate(Guid id, int localId, Guid clockingId, SyncStatus status, DateTime queuedAt, DateTime? syncedAt)` factory method to `SyncRecord`
+- Both methods use the `init` accessor to set the `Id` property (and `QueuedAt` for `SyncRecord`) from within the factory, which is valid because `init` accessors are accessible during object initialization (including via object initializer syntax)
+- `SqliteLocalStore.GetPendingAsync()` now calls `Clocking.Rehydrate(...)` and `SyncRecord.Rehydrate(...)` instead of reflection
+- Also fixed a latent bug: `synced_at` column was not being read (reader index 9 was never checked for `DBNull`); now properly handled with `reader.IsDBNull(9)`
+
+**Architectural impact:** The `Rehydrate` pattern is a standard DDD approach for reconstituting entities from persistence. It is AOT-compatible and eliminates the reflection dependency. The `internal` visibility restricts usage to the assembly (Domain), preventing external code from bypassing the constructor validation.
 ## Architectural Implications
 
 ### Validated Architecture Decisions
