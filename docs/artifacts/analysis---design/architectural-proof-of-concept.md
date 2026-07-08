@@ -316,7 +316,6 @@ The following approved Change Requests were resolved on the `poc/E1-risk-t01-off
 
 **Architectural impact:** The `Rehydrate` pattern is a standard DDD approach for reconstituting entities from persistence. It is AOT-compatible and eliminates the reflection dependency. The `internal` visibility restricts usage to the assembly (Domain), preventing external code from bypassing the constructor validation.
 ## Architectural Implications
-
 ### Validated Architecture Decisions
 
 1. **ADR-002 (Offline Sync Strategy):** The layered architecture with interface isolation (`INetworkHealth`, `ILocalStore`, `IRepository<T>`) is validated. The offline mechanism can be tested in isolation by substituting test doubles for infrastructure components.
@@ -327,13 +326,22 @@ The following approved Change Requests were resolved on the `poc/E1-risk-t01-off
 
 4. **Data View conflict detection:** The `(employeeId, timestamp)` uniqueness key is validated at the application level by `SyncQueue.FlushAsync()`, matching the PostgreSQL `UNIQUE` constraint.
 
+### Iteration 3 — Architectural Implications from CR Resolutions
+
+5. **Async health check interface (CR #7):** `INetworkHealth.CheckHealth()` → `CheckHealthAsync()` is a breaking interface change. The SAD should update INT-005 to reflect the async contract. All future implementers must use `Task<HealthStatus>` with `CancellationToken` support. This eliminates the thread pool starvation risk identified in the PoC and aligns with the .NET async/await best practices.
+
+6. **Entity rehydration pattern (CR #8):** The `Rehydrate()` factory method pattern on domain entities (`Clocking`, `SyncRecord`) establishes a DDD-compliant approach for reconstituting entities from persistence. This pattern should be adopted for all domain entities in Construction. It is AOT-compatible and eliminates reflection dependencies.
+
+7. **CI pipeline scope (CR #5):** The CI pipeline now includes `samples/poc/` projects. This ensures PoC architecture validation tests run on every push, preventing false green status. The SAD's Implementation View should note that PoC projects are part of the CI scope.
+
 ### Recommendations for Construction
 
 1. **EF Core migrations:** The PoC uses `EnsureCreated()` for SQLite. Production should use EF Core migrations for PostgreSQL schema management.
 2. **Health probe cadence:** The PoC validates the TCP probe mechanism. Production should implement a background timer (5s interval) per the SAD Process View.
 3. **AD Integration (RISK-T02):** Deferred to Construction per key decisions. The `IAuthProvider` interface isolation is validated by the same pattern used for `INetworkHealth` and `ILocalStore`.
 4. **PostgreSQL-specific testing:** The PoC uses `InMemoryClockingRepository`. Construction should add integration tests against a real PostgreSQL instance.
-
+5. **Async interface adoption:** All infrastructure interfaces should follow the async pattern established by CR #7. The `IAuthProvider` interface (deferred to Construction) should be async from the start.
+6. **Rehydrate pattern adoption:** All domain entities reconstituted from persistence should use the `internal static Rehydrate()` factory method pattern established by CR #8.
 ## Traceability
 
 | Element | Traces From | Link Type | Traces To |
