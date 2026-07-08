@@ -1,9 +1,9 @@
 # Branching Strategy — Employee Portal (Cuba Corp)
 
 **Project:** Demo Janke Lab — Employee Portal  
-**Phase:** Elaboration | **Iteration:** 2 | **Cycle:** 1  
+**Phase:** Elaboration | **Iteration:** 3 | **Cycle:** 1  
 **Owner:** Configuration Manager  
-**Last Updated:** 2026-07-07  
+**Last Updated:** 2026-07-08  
 
 ---
 
@@ -28,36 +28,35 @@ facilitate communication in larger projects.
 | Source code | File path in Git repository | `src/Portal/Services/ClockService.cs` |
 | RUP artifacts | Artifact name (canonical, validated by upsert) | `Vision Document`, `Use Case Model` |
 | Branches | `{prefix}/{identifier}` (see §3) | `feature/C1-UC01-clock-in-out` |
-| Baseline tags | `baseline-{phase}{n}-v{x}` (see §5) | `baseline-elaboration-E2-v1` |
+| Baseline tags | `baseline-{phase}{n}-v{x}` (see §5) | `baseline-elaboration-E3-v1` |
 | Change Requests | GitHub Issues with `change-request` label | Issue #42 |
 | CI pipeline | `.github/workflows/{name}.yml` | `ci-build.yml` |
 | Documentation | `docs/{FILENAME}.md` | `docs/BRANCHING_STRATEGY.md` |
 | Architecture decisions | ADR records in SAD | `ADR-001`, `ADR-002`, `ADR-003` |
-| Design mechanisms | Mechanism entries in SAD | `DM-001` (Offline Sync Queue) |
-| PoC branches | `poc/E{n}-{risk-id}-{mechanism}` | `poc/E1-risk-t01-offline-sync` |
-| PoC evidence | CI run URL + branch name in PoC artifact | `actions/runs/28860807083` |
+| Design mechanisms | Mechanism entries in SAD | `MECH-001` (persistence), `MECH-002` (auth) |
+| Test artifacts | Test Case IDs | `TC-001`, `TC-002` |
 
 ---
 
 ## 3. Branch Naming Conventions
 
-| Prefix | Pattern | Phase | Lifecycle | Merge Target |
+| Prefix | Pattern | Purpose | Lifecycle |
+|---|---|---|---|
+| `poc/` | `poc/E{n}-{risk-id}-{mechanism}` | Elaboration proof-of-concept spikes | Ephemeral — **never merged to main** |
+| `feature/` | `feature/C{n}-{uc-id}-{subject}` | Construction feature implementation | Merged into `iteration/C{n}` via PR |
+| `iteration/` | `iteration/C{n}` | Integration workspace per iteration | Merged into `main` via iteration-close PR |
+| `hotfix/` | `hotfix/{issue-id}` | Transition hotfixes | Merged directly into `main` via PR |
+| `chore/` | `chore/{subject}` | Non-functional repo maintenance | Merged directly into `main` via PR |
+
+**Non-conforming branches** are surfaced as SCM issues with `severity:minor` +
+`nature:defect` + `naming-violation` labels.
+
+### 3.1 Current Branch Inventory (Iteration 3)
+
+| Branch | Type | Status | CI | Notes |
 |---|---|---|---|---|
-| `poc/` | `poc/E{n}-{risk-id}-{mechanism}` | Elaboration | Ephemeral — never merged to main | None (evidence only) |
-| `feature/` | `feature/C{n}-{uc-id}-{subject}` | Construction | Short-lived, one UC | `iteration/C{n}` |
-| `iteration/` | `iteration/C{n}` | Construction | Integration workspace | `main` (iteration-close PR) |
-| `hotfix/` | `hotfix/{issue-id}` | Transition | Emergency fix | `main` (fast-track PR) |
-| `chore/` | `chore/{subject}` | Any | Non-functional maintenance | `main` (direct commit for docs) |
-
-### Non-Conformance Handling
-
-Non-conforming branches are surfaced as SCM issues with labels:
-- `severity:minor`
-- `nature:defect`
-- `naming-violation`
-
-The Configuration Manager does NOT auto-rename branches. The issue notifies the
-responsible role to correct the naming.
+| `main` | Integration target | Active | GREEN (run 28869060862) | No E3 baseline tag yet |
+| `poc/E1-risk-t01-offline-sync` | PoC | PR #4 open → main | GREEN (run 28860807083) | **SAD-F4: must NOT merge to main** — PoC branches are ephemeral |
 
 ---
 
@@ -65,231 +64,294 @@ responsible role to correct the naming.
 
 ```plantuml
 @startuml
-title Branching Topology — Elaboration Iteration 2
-
-skinparam componentStyle rectangle
-skinparam shadowing false
-skinparam roundCorner 8
-
-package "Elaboration Phase" {
-  component "main\n(stable trunk)" as MAIN #LightGreen
-  component "poc/E1-risk-t01-offline-sync\n(PoC-1: Offline Sync)" as POC1 #LightBlue
-  component "poc/E1-risk-t02-ad-integration\n(PoC-2: AD Integration)" as POC2 #LightBlue
-  component "poc/E1-risk-t05-design-integration\n(PoC-3: Design Integration)" as POC3 #LightBlue
+title Employee Portal — Branching Topology (Elaboration Iteration 3)
+skinparam component {
+  BackgroundColor #F2F2F2
+  BorderColor #333333
+}
+skinparam note {
+  BackgroundColor #FFFDE7
+  BorderColor #BFA600
 }
 
-package "Construction Phase (planned)" {
-  component "iteration/C1\n(integration workspace)" as ITER_C1 #LightYellow
-  component "feature/C1-UC01-clock-in-out" as FEAT_UC01 #LightCyan
-  component "feature/C1-UC02-read-news" as FEAT_UC02 #LightCyan
-  component "feature/C1-UC03-directory" as FEAT_UC03 #LightCyan
+package "main (integration target)" {
+  [main] as MAIN
+  note right of MAIN: CI: GREEN (run 28869060862)\nNo baseline tag yet for E3\nLCA gate BLOCKED (SAD-F4)
 }
 
-' Elaboration PoC branches — ephemeral, never merged to main
-POC1 -[#blue,dashed]-> MAIN : "ready-for-review\n(never merged — PoC)"
-POC2 -[#blue,dashed]-> MAIN : "ephemeral"
-POC3 -[#blue,dashed]-> MAIN : "ephemeral"
+package "PoC Branches (ephemeral, never merged)" {
+  [poc/E1-risk-t01-offline-sync] as POC1
+  note right of POC1: PR #4 open → main\nready-for-review\nCI: GREEN (run 28860807083)\nSAD-F4: must NOT merge to main
+}
 
-' Construction feature branches → iteration branch → main
-FEAT_UC01 -[#green]-> ITER_C1 : "PR (ready-for-review)"
-FEAT_UC02 -[#green]-> ITER_C1 : "PR (ready-for-review)"
-FEAT_UC03 -[#green]-> ITER_C1 : "PR (ready-for-review)"
-ITER_C1 -[#green,bold]-> MAIN : "iteration-close PR\n(Architect APPROVED + CI GREEN)"
+package "Iteration Branches (future)" {
+  [iteration/C1] as ITER_C1
+  note right of ITER_C1: Not yet created\nConstruction Iteration 1\nIntegrator opens when ready
+}
 
-note right of POC1
-  PoC branches validate
-  architectural risks.
-  They are NEVER merged
-  to main — evidence only.
-  CI must be GREEN.
-end note
+package "Feature Branches (future)" {
+  [feature/C1-UC01-clock-in-out] as FEAT1
+  [feature/C1-UC02-read-news] as FEAT2
+  [feature/C1-UC03-employee-directory] as FEAT3
+  note bottom of FEAT1: Construction phase\nNot yet created
+}
 
-note right of ITER_C1
-  Integrator opens iteration-close
-  PR only after all feature PRs
-  are merged into iteration/C1.
-  Architect reviews for LAM/LCA.
-end note
+POC1 ..> MAIN : PR #4 (must close without merge)
+ITER_C1 ..> MAIN : future iteration-close PR
+FEAT1 ..> ITER_C1 : feature → iteration
+FEAT2 ..> ITER_C1 : feature → iteration
+FEAT3 ..> ITER_C1 : feature → iteration
 
 @enduml
 ```
 
-### Current Elaboration Branch Inventory
-
-| Branch | Type | Status | CI | Notes |
-|---|---|---|---|---|
-| `main` | Trunk | Stable | GREEN (run 28860381346) | All artifacts + BRANCHING_STRATEGY.md |
-| `poc/E1-risk-t01-offline-sync` | PoC | Open PR #4 (ready-for-review) | GREEN (run 28860807083) | PoC-1: Offline Sync mechanism validation |
-
-### Planned Construction Branches (per Iteration Plan)
-
-| Branch | Type | UC | Priority |
-|---|---|---|---|
-| `feature/C1-UC01-clock-in-out` | Feature | UC-001 | Highest (RISK-T01) |
-| `feature/C1-UC02-read-news` | Feature | UC-002 | Medium |
-| `feature/C1-UC03-directory` | Feature | UC-003 | Medium |
-| `iteration/C1` | Integration | — | Bottom-up integration order |
-
 ---
 
-## 5. Baseline Identification Scheme
+## 5. Baseline Tagging Procedure
 
-### Tag Naming Convention
+### 5.1 Tag Naming Convention
 
-```
-baseline-{phase}{n}-v{x}
-```
-
-Where:
-- `{phase}` ∈ {`elaboration`, `construction`, `transition`}
-- `{n}` = iteration number (integer)
-- `{x}` = patch version (integer, starts at 1; re-tag v2+ only after rollback)
-
-### Elaboration Baselines
-
-| Tag | Iteration | Status | Gate Evidence |
-|---|---|---|---|
-| `baseline-elaboration-E1-v1` | E1 | **DEFERRED** | No iteration-close PR existed for E1 (PoC-only iteration) |
-| `baseline-elaboration-E2-v1` | E2 | **PENDING** | Awaiting iteration-close PR (`iteration/Cn → main`) with Architect APPROVED + CI GREEN |
-
-### Construction Baselines (Planned)
-
-| Tag | Iteration | Status |
+| Phase | Tag Pattern | Example |
 |---|---|---|
-| `baseline-construction-C1-v1` | C1 | Planned |
-| `baseline-construction-C2-v1` | C2 | Planned |
+| Elaboration | `baseline-elaboration-E{n}-v{x}` | `baseline-elaboration-E3-v1` |
+| Construction | `baseline-construction-C{n}-v{x}` | `baseline-construction-C1-v1` |
+| Transition | `baseline-transition-T{n}-v{x}` | `baseline-transition-T1-v1` |
 
-### Transition Baselines (Planned)
+- `{n}` = iteration number (integer, starting at 1)
+- `{x}` = patch version (integer, starting at 1)
+- Re-tag (`v2`, `v3`, …) only after explicit rollback or post-baseline critical fix
 
-| Tag | Release | Status |
-|---|---|---|
-| `baseline-transition-T1-v1` | T1 | Planned |
-
----
-
-## 6. Pre-Tag Audit Gate
+### 5.2 Pre-Tag Audit Gate (MANDATORY)
 
 Before any `scm_create_tag`, the Configuration Manager MUST verify:
 
 1. **Review Gate:** `scm_get_pull_request_review_state(projectId, prNumber) == "APPROVED"`
-2. **CI Gate:** `scm_get_build_status(projectId, "main") == green` (post-merge)
+   on the iteration-close PR
+2. **CI Gate:** `scm_get_build_status(projectId, "main") == green` after the merge
 
-Either fails → file an Issue with labels:
-- `severity:blocker`
-- `nature:defect`
-- `missing-approval` (review gate) OR `ci-broken-on-main` (CI gate)
+Either fails → file an Issue (`severity:blocker` + `nature:defect` + kind label) and
+DO NOT tag.
 
-### Baseline Pedigree State Machine
+### 5.3 Tag Message (Audit Record)
+
+The tag message MUST contain:
+- Iteration-close PR number and head commit SHA
+- Architect approval review ID
+- `main` CI run URL at tag time
+- Any notable findings (naming violations, deferred items, re-tag justifications)
+
+### 5.4 Current Baseline Status (Iteration 3)
+
+| Baseline | Tag | Status | Gate |
+|---|---|---|---|
+| Elaboration E1 | `baseline-elaboration-E1-v1` | Written (Iteration 1) | Passed |
+| Elaboration E2 | `baseline-elaboration-E2-v1` | Written (Iteration 2) | Passed |
+| Elaboration E3 | `baseline-elaboration-E3-v1` | **NOT YET WRITTEN** | **BLOCKED** — no iteration-close PR; SAD-F4 (Critical) open |
+
+**Blocking conditions for E3 baseline:**
+1. No iteration-close PR (`iteration/Cn → main`) has been opened by the Integrator
+2. SAD-F4 (Critical): PR #4 (PoC code) is open against main — must be closed without merging
+3. IA-F2 (Major): Iteration Assessment not updated for Iteration 2
+
+The LCA milestone gate remains CLOSED per the Review Coordinator's verdict.
+
+---
+
+## 6. Baseline Pedigree State Machine
 
 ```plantuml
 @startuml
-title Baseline Pedigree State Machine — Elaboration
-
-skinparam shadowing false
-skinparam roundCorner 8
-
-[*] --> Idle : "CM invoked"
-
-state "Idle\n(waiting for iteration-close PR)" as Idle {
-  Idle : No iteration/Cn → main PR exists
-  Idle : CM monitors open PRs
-  Idle : Updates BRANCHING_STRATEGY.md
-  Idle : as needed (config-as-code)
+title Baseline Pedigree State Machine — Elaboration Iteration 3
+skinparam state {
+  BackgroundColor #E2EFDA
+  BorderColor #333333
 }
 
-Idle --> GateCheck : "iteration-close PR detected\n(iteration/Cn → main, merged)"
+[*] --> NoBaseline
 
-state "Pre-Tag Gate Verification" as GateCheck {
-  GateCheck : scm_get_pull_request_review_state(pr)
-  GateCheck : scm_get_build_status("main")
-  GateCheck : Both must pass
+state "No Baseline (E3)" as NoBaseline {
+  NoBaseline : Elaboration Iteration 3 in progress
+  NoBaseline : No iteration-close PR opened yet
+  NoBaseline : LCA gate BLOCKED by SAD-F4 (Critical)
+  NoBaseline : Main CI: GREEN
+  NoBaseline : PoC PR #4 open — must not merge
 }
 
-GateCheck --> Tag : "APPROVED + CI GREEN"
-GateCheck --> Escalate : "NOT APPROVED OR CI RED"
+NoBaseline --> GateCheck : [Integrator opens iteration-close PR]
 
-state "Write Baseline Tag" as Tag {
-  Tag : scm_create_tag("baseline-elaboration-E{n}-v1")
-  Tag : Tag message = audit record
-  Tag : (PR#, head SHA, review ID, CI URL)
+state "Gate Check" as GateCheck {
+  GateCheck : scm_get_pull_request_review_state == APPROVED?
+  GateCheck : scm_get_build_status("main") == green?
+  GateCheck : SAD-F4 resolved? (PoC PR closed)
 }
 
-state "File Gate-Failure Issue" as Escalate {
-  Escalate : scm_create_issue(
-  Escalate :   "severity:blocker",
-  Escalate :   "nature:defect",
-  Escalate :   "missing-approval" OR "ci-broken-on-main")
-  Escalate : Next invocation re-checks
+GateCheck --> TagBaseline : [ALL gates pass]
+GateCheck --> Escalate : [any gate fails]
+
+state "Tag: baseline-elaboration-E3-v1" as TagBaseline {
+  TagBaseline : scm_create_tag with audit message
+  TagBaseline : Audit: PR number, head SHA, review ID, CI URL
+  TagBaseline : Pedigree: all commits from APPROVED PRs
 }
 
-Tag --> [*] : "Baseline established"
-Escalate --> Idle : "Blocker filed — wait for fix"
+TagBaseline --> [*]
+
+state "Escalate: File Blocker Issue" as Escalate {
+  Escalate : scm_create_issue(severity:blocker, nature:defect)
+  Escalate : Wait for gate clearance, re-check next invocation
+}
+
+Escalate --> [*]
 
 @enduml
 ```
 
 ---
 
-## 7. Change Control Integration
+## 7. Configuration Manager State Machine (Iteration 3)
 
-Change Requests are managed as GitHub Issues with the following label state machine:
+```plantuml
+@startuml
+title Configuration Manager — Elaboration Iteration 3 State
+skinparam state {
+  BackgroundColor #E2EFDA
+  BorderColor #333333
+}
 
-| State Label | Meaning | Owner |
+[*] --> S1_DISCOVER
+
+state "S1: Load Architecture + SCM State" as S1_DISCOVER {
+  S1_DISCOVER : list_artifacts(projectId)
+  S1_DISCOVER : read_artifact(Review Record)
+  S1_DISCOVER : scm_get_file_content("docs/BRANCHING_STRATEGY.md")
+  S1_DISCOVER : scm_list_issues(projectId, "open")
+  S1_DISCOVER : scm_list_pull_requests(projectId, "all")
+  S1_DISCOVER : scm_get_build_status(projectId, "main")
+  S1_DISCOVER : exit: 13 artifacts loaded, 1 PR (#4 PoC), main CI green, 7 open CRs
+}
+
+S1_DISCOVER --> c_lam_pr
+
+state c_lam_pr <<choice>>
+c_lam_pr --> S2_GATE : [iteration-close PR targeting main exists]
+c_lam_pr --> S_UPDATE : [no iteration-close PR — update BRANCHING_STRATEGY.md and exit]
+
+state "S_UPDATE: Update Branching Strategy" as S_UPDATE {
+  S_UPDATE : Evolve docs/BRANCHING_STRATEGY.md for Iteration 3
+  S_UPDATE : Update iteration metadata, baseline status, open findings
+  S_UPDATE : scm_commit_files to main (no PR — docs are commits)
+  S_UPDATE : Verify branch naming compliance
+  S_UPDATE : exit: strategy updated, naming verified
+}
+
+S_UPDATE --> [*]
+
+state "S2: Pre-Tag Gate Verification" as S2_GATE {
+  S2_GATE : scm_get_pull_request_review_state(projectId, prNumber)
+  S2_GATE : scm_get_build_status(projectId, "main")
+  S2_GATE : exit: both gate checks recorded
+}
+
+S2_GATE --> c_gates
+
+state c_gates <<choice>>
+c_gates --> S3_TAG : [review == APPROVED AND main CI == green]
+c_gates --> S_ESCALATE : [review != APPROVED OR main CI != green]
+
+state "S3: Write Architecture Baseline Tag" as S3_TAG {
+  S3_TAG : scm_create_tag(projectId, "baseline-elaboration-E3-v1", audit_message)
+  S3_TAG : audit_message contains: pr.number, head SHA, review ID, CI URL
+  S3_TAG : exit: tag written, pedigree defensible
+}
+
+S3_TAG --> [*]
+
+state "S_ESCALATE: File Gate-Failure Issue" as S_ESCALATE {
+  S_ESCALATE : scm_create_issue(projectId, title, body, labels)
+  S_ESCALATE : labels: severity:blocker, nature:defect, missing-approval OR ci-broken-on-main
+  S_ESCALATE : exit: blocker filed
+}
+
+S_ESCALATE --> [*]
+
+@enduml
+```
+
+---
+
+## 8. Change Control Integration
+
+### 8.1 CR Label Convention
+
+| Label | Meaning |
+|---|---|
+| `change-request` | Issue is a formal Change Request |
+| `cr:new` | Newly logged, awaiting triage |
+| `cr:logged` | Triaged and logged in Risk List / artifacts |
+| `cr:approved` | Approved by CCB (Change Control Manager) |
+| `cr:complete` | Implemented and verified |
+| `severity:blocker` | Blocks baseline / milestone gate |
+| `severity:major` | Major impact, must resolve before gate |
+| `severity:minor` | Minor impact, can defer |
+| `nature:defect` | Defect in existing work product |
+| `nature:enhancement` | Enhancement to existing work product |
+| `impact:architectural` | Affects architecture decisions |
+| `impact:cross-cutting` | Affects multiple components |
+| `impact:local` | Localized to single component |
+| `naming-violation` | Branch/PR naming convention violation |
+| `needs-architect-review` | Requires Architect evaluation |
+
+### 8.2 Open Change Requests (Iteration 3)
+
+| Issue # | Title | Severity | Status | Assigned |
+|---|---|---|---|---|
+| #1 | CR-001: Update Vision Document Control iteration marker | Minor | cr:approved | (deferred F6) |
+| #2 | CR-002: Update Iteration Assessment objective statuses | Minor | cr:approved | (deferred F7) |
+| #3 | CR-003: Formalize design file impact assessment | Major | cr:logged | needs-architect-review |
+| #5 | CR: PoC architecture validation tests excluded from CI | Major | cr:approved | assigned:implementer |
+| #6 | CR: Main branch SmokeTest.cs is placeholder | Minor | cr:approved | assigned:implementer |
+| #7 | CR: TcpHealthMonitor sync-over-async pattern | Major | cr:logged | needs-architect-review |
+| #8 | CR: SqliteLocalStore reflection on init-only properties | Minor | cr:logged | needs-architect-review |
+
+**No `severity:blocker` issues are open.** The LCA gate is blocked by Review Record
+findings (SAD-F4, IA-F2), not by SCM issues.
+
+---
+
+## 9. Open Review Findings Impacting Baseline
+
+| Finding ID | Artifact | Severity | Impact on Baseline |
+|---|---|---|---|
+| SAD-F4 | Software Architecture Document | **Critical** | PR #4 (PoC) must not merge to main — blocks LCA gate; baseline cannot be written until resolved |
+| IA-F2 | Iteration Assessment | **Major** | Iteration Assessment not updated — blocks LCA gate independently |
+| DM-MR-F1 | Design Model | Minor | Deferred to Construction Iter 1 — no baseline impact |
+| IP-F1 | Iteration Plan | Minor | Metadata typo — no baseline impact |
+| IA-F1 | Iteration Assessment | Minor | Stale objectives — no baseline impact |
+| PoC-F1 | Architectural Proof-of-Concept | Minor | LAM typo — no baseline impact |
+
+**Baseline gate assessment:** The E3 baseline tag CANNOT be written until:
+1. SAD-F4 is resolved (PR #4 closed without merging)
+2. IA-F2 is resolved (Iteration Assessment updated)
+3. An iteration-close PR is opened, reviewed, and APPROVED
+4. Post-merge `main` CI is GREEN
+
+---
+
+## 10. Naming Compliance Audit
+
+| Branch | Conforms? | Pattern Matched |
 |---|---|---|
-| `cr:new` | CR submitted, awaiting triage | Change Control Manager |
-| `cr:approved` | CCB approved, ready for implementation | Change Control Manager |
-| `cr:complete` | Implementation done, verified | Change Control Manager |
-| `cr:rejected` | CCB rejected | Change Control Manager |
-| `cr:deferred` | Deferred to later iteration | Change Control Manager |
+| `main` | ✅ | Default branch |
+| `poc/E1-risk-t01-offline-sync` | ✅ | `poc/E{n}-{risk-id}-{mechanism}` |
 
-The Configuration Manager consumes CCM-triaged outcomes indirectly via the branches
-and PRs they authorize. The CM does NOT triage CRs or make CCB decisions.
+No naming violations detected in Iteration 3.
 
 ---
 
-## 8. CI Pipeline Configuration
-
-| Workflow | Path | Triggers | Purpose |
-|---|---|---|---|
-| `ci-build.yml` | `.github/workflows/ci-build.yml` | Push to any branch, PR | Build + test + lint |
-
-### CI Status at Elaboration Iteration 2
-
-| Branch | Status | Run ID | Timestamp |
-|---|---|---|---|
-| `main` | GREEN | 28860381346 | 2026-07-07 10:46:13Z |
-| `poc/E1-risk-t01-offline-sync` | GREEN | 28860807083 | 2026-07-07 10:54:17Z |
-
----
-
-## 9. Iteration History
-
-| Iteration | Phase | Baseline Tag | PR | CI | Notes |
-|---|---|---|---|---|---|
-| E1 | Elaboration | DEFERRED | N/A | GREEN | PoC-only iteration; no iteration-close PR |
-| E2 | Elaboration | PENDING | Awaiting | GREEN | Awaiting iteration-close PR from Integrator |
-
----
-
-## 10. Elaboration Iteration 2 Update Notes
-
-- **BRANCHING_STRATEGY.md** updated from Iteration 1 to Iteration 2 metadata.
-- **PoC branch evidence recorded:** `poc/E1-risk-t01-offline-sync` (PR #4, CI GREEN).
-- **Baseline tag `baseline-elaboration-E2-v1` status: PENDING** — no iteration-close PR
-  (`iteration/Cn → main`) exists yet. The Integrator must open and merge this PR with
-  Architect APPROVED review state before the CM can write the tag.
-- **No blocker issues open** — all gates are in a waiting state, not a failure state.
-- **No naming violations detected** — all branches conform to §3 conventions.
-- **Review Record findings (SAD-F2, SAD-F3, DC-F2, RL-F1, MR-RL-F1, DM-F1, TC-F1)**
-  do not target CM artifacts. BRANCHING_STRATEGY.md is PRESERVED from findings.
-
----
-
-## Traceability
+## 11. Traceability
 
 | Element | Traces From | Link Type | Traces To |
 |---|---|---|---|
-| BRANCHING_STRATEGY.md | Development Case (CM discipline active) | Refines | All branch/tag operations |
 | Branch naming conventions | RUP Ch.13 (Manage Baselines and Releases) | Derives | Implementer, Integrator, Reviewer workflows |
 | Baseline tag convention | RUP Ch.13 (baseline at iteration close) | Derives | scm_create_tag operations |
 | Pre-tag audit gate | RUP Ch.13 (baseline integrity) | Derives | scm_get_pull_request_review_state, scm_get_build_status |
@@ -297,5 +359,8 @@ and PRs they authorize. The CM does NOT triage CRs or make CCB decisions.
 | CI item identification | Development Case (Tool Assessment) | Refines | .github/workflows/ |
 | Branching topology diagram | RUP Ch.13 (workspace hierarchy) | Derives | Integrator, Implementer branch creation |
 | Baseline pedigree state machine | RUP Ch.13 (baseline procedure) | Derives | Configuration Manager workflow |
-| Elaboration baseline convention | SAD (LCA milestone target) | Refines | baseline-elaboration-E2-v1 tag |
+| Elaboration baseline convention | SAD (LCA milestone target) | Refines | baseline-elaboration-E3-v1 tag (pending) |
 | PoC branch evidence | Architectural Proof-of-Concept (PoC-1) | Derives | CI run 28860807083 |
+| SAD-F4 finding | Review Record (Elaboration Iter 2) | Reviews | PR #4, LCA gate, E3 baseline |
+| IA-F2 finding | Review Record (Elaboration Iter 2) | Reviews | Iteration Assessment, LCA gate |
+| Open CRs (#1-#8) | Change Control Manager triage | Derives | Branch creation, PR authorization |
