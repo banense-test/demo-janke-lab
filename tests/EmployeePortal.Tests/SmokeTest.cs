@@ -5,20 +5,10 @@ namespace EmployeePortal.Tests;
 /// <summary>
 /// Smoke tests validating the Employee Portal project skeleton.
 /// CR #6 fix: Replaced placeholder Assert.True(true) with meaningful tests
-/// that validate project structure and basic domain invariants.
+/// that validate project structure and basic Razor Pages invariants.
 /// </summary>
 public class SmokeTest
 {
-    [Fact]
-    public void ProjectSkeleton_SolutionFileExists()
-    {
-        var solutionPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "EmployeePortal.sln");
-        // Navigate from bin/Debug/net10.0 up to repo root
-        var repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
-        var slnFile = Path.Combine(repoRoot, "EmployeePortal.sln");
-        Assert.True(File.Exists(slnFile), $"Solution file should exist at {slnFile}");
-    }
-
     [Fact]
     public void ProjectSkeleton_MainProjectCompiles()
     {
@@ -30,11 +20,21 @@ public class SmokeTest
     }
 
     [Fact]
-    public void ProjectSkeleton_ProgramCsDefinesApplication()
+    public void ProjectSkeleton_IndexModelIsRazorPageModel()
     {
-        // Verify the Program type exists and is accessible
-        var programType = typeof(EmployeePortal.Program);
-        Assert.NotNull(programType);
-        Assert.Equal("Program", programType.Name);
+        // Verify the IndexModel inherits from PageModel — confirms Razor Pages wiring
+        var indexModelType = typeof(EmployeePortal.Pages.IndexModel);
+        Assert.NotNull(indexModelType);
+        Assert.True(typeof(Microsoft.AspNetCore.Mvc.RazorPages.PageModel).IsAssignableFrom(indexModelType),
+            "IndexModel should inherit from PageModel");
+    }
+
+    [Fact]
+    public void ProjectSkeleton_SolutionFileExists()
+    {
+        // Navigate from bin/Debug/net10.0 up to repo root
+        var repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+        var slnFile = Path.Combine(repoRoot, "EmployeePortal.sln");
+        Assert.True(File.Exists(slnFile), $"Solution file should exist at {slnFile}");
     }
 }
