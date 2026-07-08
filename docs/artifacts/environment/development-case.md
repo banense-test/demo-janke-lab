@@ -301,8 +301,8 @@ The SoftwareArchitect resolves specific NuGet package versions against the .NET 
 ## Traceability
 | Element | Traces From | Link Type | Traces To |
 |---|---|---|---|
-| Development Case (Elaboration Iter 2) | IARI DC Baseline, Inception Development Case, Elaboration Iter 1 Development Case | Refines | All project artifacts (governs production) |
-| Business Modeling INACTIVE | DC §4 classification (re-confirmed) | Derives | record_dc_classification |
+| Development Case (Elaboration Iter 3) | IARI DC Baseline, Inception Development Case, Elaboration Iter 1-2 Development Case | Refines | All project artifacts (governs production) |
+| Business Modeling INACTIVE | DC §4 classification (re-confirmed Iter 3) | Derives | record_dc_classification |
 | Optional: Architectural PoC FIRED | DC §5.2 trigger (Elaboration + RISK-T01 RPN 63/High, RISK-T02 RPN 35/Significant) | Derives | record_optional_artifact_triggers, SAD (PoC plans), PoC-1 artifact |
 | Optional: Data Model NOT FIRED | DC §5.2 trigger (~8 entities, not data-centric) | Derives | record_optional_artifact_triggers |
 | Optional: Deployment Model NOT FIRED | DC §5.2 trigger (single-node topology) | Derives | record_optional_artifact_triggers |
@@ -312,7 +312,10 @@ The SoftwareArchitect resolves specific NuGet package versions against the .NET 
 | Version Policy (.NET 10, PostgreSQL 16, Npgsql 10.0.2, EF Core Sqlite 10.0.9) | Stakeholder Constraints, SAD | Derives | record_version_policy, SAD (technology stack) |
 | Inception Lessons Learned | Review Record F1-F7, Iteration Assessment | Derives | Tailoring sections (Requirements, A&D) |
 | Elaboration Iter 1 Lessons Learned | Review Record DC-F2, RL-F1, SAD-F2, SAD-F3 | Derives | Tailoring sections (RPN governance, metadata verification) |
-| Tool Assessment | Stakeholder Constraints, SAD, PoC-1 results | Derives | ConfigurationManager, TestDesigner (gap actions) |
+| Elaboration Iter 2 Lessons Learned | Review Record SAD-F4, IA-F2, DM-MR-F1 | Derives | Process Rules (Milestone Gate PR Closure, IA Freshness, Critical Override) |
+| CR #5 (PoC tests excluded from CI) | Review Record SAD-F4, scm_list_issues | Derives | Tool Configuration Gaps, Implementer (action required) |
+| CR #6 (Placeholder smoke test) | scm_list_issues | Derives | Tool Configuration Gaps, Implementer (action required) |
+| Tool Assessment | Stakeholder Constraints, SAD, PoC-1 results, CR #5, CR #6 | Derives | ConfigurationManager, TestDesigner, Implementer (gap actions) |
 | SAD Integration | Software Architecture Document (Elaboration Iter 2) | Derives | A&D tailoring section, PoC trigger |
 | UC Model Integration | Use-Case Model (Elaboration, 7 UCs) | Derives | Requirements tailoring section |
 | Risk List Integration | Risk List (Elaboration, RISK-T01 RPN 63/High, RISK-T02 RPN 35/Significant, RISK-T03 RPN 48/High) | Derives | PoC trigger justification, A&D tailoring |
