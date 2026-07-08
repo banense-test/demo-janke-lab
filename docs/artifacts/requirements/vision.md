@@ -1,18 +1,22 @@
 ## Document Control
-
 | Field | Value |
 |---|---|
 | Phase | Elaboration |
 | Status | Draft |
-| Iteration | 1 (Cycle 1) |
+| Iteration | 3 (Cycle 1) |
 | Milestone Target | End of Elaboration |
 | Author | System Analyst |
+
+### Elaboration Iteration 3 Changes
+
+- **Vision reviewed against SAD baseline and Risk List.** All features, stakeholders, and constraints remain valid — no findings or CRs target the Vision.
+- **AD authentication method (LDAP vs OAuth2) remains undecided** — Stability: Low. IAuthProvider isolation pattern (SAD) decouples this decision; spike deferred to Construction. Vision constraints unchanged.
+- **No scope changes.** All 11 features (FEAT-001 through FEAT-011), 4 stakeholders (STK-001 through STK-004), and 7 constraints (CON-001 through CON-007) preserved from prior baseline.
 
 ### Elaboration Iteration 1 Changes
 
 - **F6 (Minor) — Resolved:** Document Control updated from Inception to Elaboration phase. Iteration marker corrected.
 - Phase transition: Inception LCO approved (GO verdict, 2026-07-07). Vision content preserved from Inception baseline — no findings or CRs target Vision features, stakeholders, or constraints in this iteration.
-
 ## Problem Statement
 
 Cuba Corp (200 employees, 3 offices) manages time tracking through shared Excel sheets, distributes internal communications via mass emails, and maintains an outdated PDF phone directory. This fragmentation causes:
