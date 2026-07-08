@@ -4,12 +4,14 @@
 | Phase | Elaboration |
 | Status | Draft |
 | Milestone Target | LCA (Lifecycle Architecture) |
-| Iteration | 2 (Cycle 1) |
+| Iteration | 3 (Cycle 1) |
 | Author | ProcessEngineer |
 | Prior Phase | Inception (LCO approved — GO verdict, 2026-07-07) |
-| Prior Iteration | Elaboration Iteration 1 (LCA: CONDITIONAL NO-GO — auto-iterate to Cycle 2) |
-| Governance Re-recorded | 2026-07-07 — DC classification, optional triggers, version policy all re-confirmed for Elaboration iteration 2 |
-| Finding DC-F2 Status | RESOLVED — RPN values corrected to authoritative Risk List values (RISK-T01: 63/High, RISK-T02: 35/Significant, RISK-T03: 48/High) |
+| Prior Iteration | Elaboration Iteration 2 (LCA: CONDITIONAL NO-GO — SAD-F4 Critical, IA-F2 Major) |
+| Governance Re-recorded | 2026-07-08 — DC classification, optional triggers, version policy all re-confirmed for Elaboration iteration 3 |
+| Finding DC-F2 Status | RESOLVED (Iter 2) — RPN values corrected to authoritative Risk List values |
+| Open Findings Targeting DC | NONE — SAD-F4 (Critical) targets SAD; IA-F2 (Major) targets Iteration Assessment; DM-MR-F1 (Minor) targets Design Model |
+| Process Improvement Focus (Iter 3) | PR-at-LCA process gap, IA freshness verification, tool configuration gap updates |
 ## Tailoring Overview
 This Development Case specifies project-specific **deltas** over the IARI DC baseline. The baseline defines 24 active roles, 16 CORE artifacts, 6 OPTIONAL artifacts, and a canonical discipline-intensity matrix. This document declares only deviations from that baseline — it does not restate it.
 
