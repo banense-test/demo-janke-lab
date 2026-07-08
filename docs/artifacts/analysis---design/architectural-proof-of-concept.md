@@ -343,18 +343,21 @@ The following approved Change Requests were resolved on the `poc/E1-risk-t01-off
 5. **Async interface adoption:** All infrastructure interfaces should follow the async pattern established by CR #7. The `IAuthProvider` interface (deferred to Construction) should be async from the start.
 6. **Rehydrate pattern adoption:** All domain entities reconstituted from persistence should use the `internal static Rehydrate()` factory method pattern established by CR #8.
 ## Traceability
-
 | Element | Traces From | Link Type | Traces To |
 |---|---|---|---|
-| PoC Clocking.cs | ACL-014 (Clocking) | Implements | — |
-| PoC SyncRecord.cs | ACL-018 (SyncRecord) | Implements | — |
+| PoC Clocking.cs | ACL-014 (Clocking) | Implements | CR #8 (Rehydrate pattern) |
+| PoC SyncRecord.cs | ACL-018 (SyncRecord) | Implements | CR #8 (Rehydrate pattern) |
 | PoC SyncQueue.cs | ACL-013 (SyncQueue), COMP-D4 | Implements | RISK-T01 |
-| PoC TimeTrackingService.cs | ACL-009 (TimeTrackingService), COMP-A1, SEQ-001 | Implements | RISK-T01, RISK-T03 |
-| PoC TcpHealthMonitor.cs | COMP-I5, INT-005 (INetworkHealth) | Implements | RISK-T01 |
-| PoC SqliteLocalStore.cs | COMP-I3, INT-003 (ILocalStore) | Implements | RISK-T01 |
+| PoC TimeTrackingService.cs | ACL-009 (TimeTrackingService), COMP-A1, SEQ-001 | Implements | RISK-T01, RISK-T03, CR #7 (async health) |
+| PoC TcpHealthMonitor.cs | COMP-I5, INT-005 (INetworkHealth) | Implements | RISK-T01, CR #7 (async health) |
+| PoC SqliteLocalStore.cs | COMP-I3, INT-003 (ILocalStore) | Implements | RISK-T01, CR #8 (reflection removal) |
 | PoC InMemoryClockingRepository.cs | COMP-I2, INT-002 (IRepository) | Implements | — |
+| PoC INetworkHealth.cs | INT-005 (INetworkHealth) | Implements | CR #7 (async interface) |
 | SyncQueueTests.cs | SyncQueue.cs | Tests | — |
-| TimeTrackingServiceTests.cs | TimeTrackingService.cs | Tests | — |
-| TcpHealthMonitorTests.cs | TcpHealthMonitor.cs | Tests | — |
+| TimeTrackingServiceTests.cs | TimeTrackingService.cs | Tests | CR #7 (async test double) |
+| TcpHealthMonitorTests.cs | TcpHealthMonitor.cs | Tests | CR #7 (async tests + cancellation) |
 | SqliteLocalStoreTests.cs | SqliteLocalStore.cs | Tests | — |
+| ci.yml | — | DependsOn | CR #5 (PoC CI inclusion) |
+| SmokeTest.cs | — | Tests | CR #6 (meaningful smoke tests) |
 | PoC-1 (Offline Sync) | RISK-T01 (RPN 63), REQ-014 | Derives | ADR-002, COMP-D4, COMP-I3, COMP-I5 |
+| PoC-F1 (finding) | Review Record (PoC-F1) | Refines | Document Control (corrected) |
