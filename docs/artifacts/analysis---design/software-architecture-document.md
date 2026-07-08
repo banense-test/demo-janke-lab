@@ -3,7 +3,7 @@
 |---|---|
 | Phase | Elaboration |
 | Status | Draft |
-| Iteration | 2 (Cycle 1) |
+| Iteration | 3 (Cycle 1) |
 | Milestone Target | LCA (Lifecycle Architecture) |
 | Author | Software Architect |
 
@@ -22,9 +22,16 @@
 ### Elaboration Iteration 2 Changes (Findings SAD-F2, SAD-F3)
 
 - **SAD-F3 RESOLVED:** Milestone Target corrected from "LAM" to "LCA (Lifecycle Architecture)" throughout the SAD.
-- **SAD-F2 RESOLVED:** Stale PoC trigger note corrected. The Architectural Proof-of-Concept artifact was produced by the Implementer (PoC-1: Offline Sync, branch `poc/E1-risk-t01-offline-sync`, CI Green 3/3). The SAD now cross-references the PoC artifact and reflects empirical validation results. The `get_optional_artifact_triggers` oracle reports the trigger as not fired for THIS iteration (Cycle 2), but the PoC artifact from Iteration 1 exists and is referenced.
+- **SAD-F2 RESOLVED:** Stale PoC trigger note corrected. The Architectural Proof-of-Concept artifact was produced by the Implementer (PoC-1: Offline Sync, branch `poc/E1-risk-t01-offline-sync`, CI Green 3/3). The SAD now cross-references the PoC artifact and reflects empirical validation results.
 - **LCA Review section updated:** Criterion #3 (executable prototype) upgraded from PARTIAL to YES based on PoC-1 results. "LAM Verdict" heading corrected to "LCA Verdict".
 - **Risk resolution status updated:** RISK-T01 and RISK-T03 now reflect PoC-1 empirical validation results.
+
+### Elaboration Iteration 3 Changes (Finding SAD-F4)
+
+- **SAD-F4 RESOLVED (Critical):** PR #4 (`poc/E1-risk-t01-offline-sync` → `main`) was open at LCA. Per RUP process discipline, PoC code is ephemeral validation evidence and must NOT merge to main. Changes requested on PR #4 to block the merge. The PoC code remains on the feature branch `poc/E1-risk-t01-offline-sync` as the canonical location. PR #4 must be closed without merging. The architecture baseline on `main` remains clean — no PoC code is merged into it.
+- **Version policy re-verified:** Enterprise version policy remains empty (no pins). Technology stack versions unchanged from Iteration 1 reconciliation. No churn needed.
+- **Optional artifact triggers re-checked:** Architectural Proof-of-Concept trigger NOT fired this iteration. Deployment Model trigger NOT fired. Physical View within SAD remains sufficient.
+
 ## Architectural Representation
 
 This document presents the **baseline architecture** for the Employee Portal using the Kruchten 4+1 View Model. In Elaboration, all five views are baselined — the architecture is stable and validated through sequence diagrams for the top 3 architecturally significant use cases.
@@ -378,10 +385,10 @@ package "Domain Layer" <<domain>> {
 
 package "Infrastructure Layer" <<infrastructure>> {
   component "AD Auth\nProvider\n(COMP-I1)" as COMP_I1
-  component "PostgreSQL\nRepository\n(COMP-I2)" as COMP_I2
-  component "Local Store\nSQLite\n(COMP-I3)" as COMP_I3
+  component "PostgreSQL\nRepo\n(COMP-I2)" as COMP_I2
+  component "SQLite\nLocal Store\n(COMP-I3)" as COMP_I3
   component "CSV\nExporter\n(COMP-I4)" as COMP_I4
-  component "Network\nHealth Monitor\n(COMP-I5)" as COMP_I5
+  component "Network Health\nMonitor\n(COMP-I5)" as COMP_I5
 }
 
 interface "IAuthProvider" as INT_AUTH
@@ -391,172 +398,131 @@ interface "IExportService" as INT_EXPORT
 interface "INetworkHealth" as INT_HEALTH
 interface "IAuditLogger" as INT_AUDIT
 
+COMP_P1 --> COMP_A1
+COMP_P2 --> COMP_A3
+COMP_P3 --> COMP_A3b
+COMP_P4 --> COMP_A1
+COMP_P4 --> COMP_A3
+COMP_P4 --> COMP_A3b
+
+COMP_A1 --> INT_AUTH
+COMP_A1 --> INT_REPO
+COMP_A1 --> INT_LOCAL
+COMP_A1 --> INT_HEALTH
+COMP_A1 --> INT_EXPORT
+COMP_A1 --> COMP_D4
+COMP_A3 --> INT_AUTH
+COMP_A3 --> INT_AUDIT
+COMP_A3b --> INT_AUTH
+COMP_A3b --> INT_AUDIT
+COMP_A4 --> INT_AUDIT
+
+COMP_D4 --> INT_LOCAL
+COMP_D4 --> INT_REPO
+
 COMP_I1 ..|> INT_AUTH
 COMP_I2 ..|> INT_REPO
 COMP_I3 ..|> INT_LOCAL
 COMP_I4 ..|> INT_EXPORT
 COMP_I5 ..|> INT_HEALTH
-COMP_A4 ..|> INT_AUDIT
 
-COMP_P1 --> COMP_A1
-COMP_P2 --> COMP_A3
-COMP_P3 --> COMP_A3b
-COMP_P4 --> COMP_A3
-COMP_P4 --> COMP_A3b
-COMP_P4 --> COMP_A1
-
-COMP_A1 --> COMP_D1
-COMP_A3 --> COMP_D2
-COMP_A3b --> COMP_D3
-COMP_A1 --> COMP_D4 : queues offline\nclockings
-
-COMP_A3 ..> INT_AUDIT : logs
-COMP_A3b ..> INT_AUDIT : logs
-
-COMP_D1 --> INT_REPO : persists
-COMP_D2 --> INT_REPO : persists
-COMP_D3 --> INT_REPO : persists
-COMP_D4 --> INT_LOCAL : offline buffer
-COMP_A1 ..> INT_HEALTH : checks
-COMP_A1 ..> INT_AUTH : uses
-COMP_A1 ..> INT_EXPORT : uses
-COMP_A3 ..> INT_AUTH : uses
-COMP_A3b ..> INT_AUTH : uses
-
-note right of COMP_D4
-  **Offline Fault Tolerance**
-  Buffers clockings to SQLite
-  when network health = DOWN.
-  Syncs to PostgreSQL on UP.
+note bottom of COMP_D4
+  **Offline Sync Mechanism**
+  Single-writer lock for SQLite.
+  Conflict detection by
+  (employeeId, timestamp) uniqueness.
   RISK-T01 (RPN 63).
 end note
 
-note right of COMP_I5
-  **NEW in Elaboration**
-  Periodic TCP probe to PG.
-  Exposes INetworkHealth
-  for TimeTracking Service.
+note bottom of COMP_I1
+  **AD Protocol Decision**
+  LdapAuthProvider is default.
+  OAuth2AuthProvider is alternative.
+  RISK-T02 (RPN 35).
 end note
 
-note left of COMP_A4
-  **Audit Mechanism**
-  IAuditLogger interface.
-  Append-only audit log.
-  REQ-004, REQ-005, REQ-006.
+note bottom of COMP_I5
+  **NEW in Elaboration**
+  INetworkHealth monitor runs
+  as background service. TCP probe
+  to PostgreSQL every 5 seconds.
 end note
 
 @enduml
 ```
 
-### Component Inventory
+### Design Mechanisms — Analysis to Concrete Mapping
 
-| ID | Component | Layer | Responsibility | Traces To |
-|---|---|---|---|---|
-| COMP-P1 | Clock In/Out Page | Presentation | Renders clock button based on status; shows confirmation | UC-001 |
-| COMP-P2 | News Page | Presentation | Lists news sorted by date; category filter; featured banner | UC-005 |
-| COMP-P3 | Directory Page | Presentation | Search by name/department/office; displays results | UC-006 |
-| COMP-P4 | HR Admin Panel | Presentation | News publishing form; directory CRUD; clocking review/export | UC-003, UC-004, UC-007 |
-| COMP-A1 | TimeTracking Service | Application | Orchestrates clock in/out; manages offline queue; triggers sync; CSV export | UC-001, UC-002, UC-003 |
-| COMP-A2 | News Service | Application | CRUD for news; category management; featured flag | UC-004, UC-005 |
-| COMP-A3 | Directory Service | Application | Search; CRUD; AD sync conflict detection; audit logging | UC-006, UC-007 |
-| COMP-A4 | Audit Interceptor | Application | Cross-cutting: records who/what/when for audited operations via IAuditLogger | UC-004, UC-007 |
-| COMP-D1 | Clocking Aggregate | Domain | Clocking entity, value objects (timestamp, type), invariants | UC-001, UC-002, UC-003 |
-| COMP-D2 | News Aggregate | Domain | News entity, category enum, featured flag, invariants | UC-004, UC-005 |
-| COMP-D3 | Employee Aggregate | Domain | Employee entity, department, office, contact info, override flag | UC-006, UC-007 |
-| COMP-D4 | Sync Queue | Domain | Manages offline-to-online sync; conflict detection; single-writer lock | UC-001 |
-| COMP-I1 | AD Auth Provider | Infrastructure | LDAP/OAuth2 authentication; employee data sync via IAuthProvider | All UCs (<<include>>) |
-| COMP-I2 | PostgreSQL Repository | Infrastructure | Persistent storage for all aggregates via IRepository<T> | All UCs |
-| COMP-I3 | Local Store (SQLite) | Infrastructure | Offline buffer for clockings via ILocalStore | UC-001 |
-| COMP-I4 | CSV Exporter | Infrastructure | CSV generation per RFC 4180 via IExportService | UC-003 |
-| COMP-I5 | Network Health Monitor | Infrastructure | TCP probe to PostgreSQL every 5s; exposes INetworkHealth | UC-001 |
+| Analysis Mechanism | Design Mechanism | Implementation | Interface |
+|---|---|---|---|
+| Persistence | EF Core 10 + Npgsql (PostgreSQL) | `PgRepository<T>` implements `IRepository<T>` | INT-002 |
+| Offline Storage | EF Core 10 + SQLite | `SqliteLocalStore` implements `ILocalStore` | INT-003 |
+| Communication | REST via Razor Pages (server-rendered) | HTTP/HTTPS over corporate LAN | — |
+| Authentication | AD via LDAP (default) or OAuth2 (alternative) | `LdapAuthProvider` / `OAuth2AuthProvider` implements `IAuthProvider` | INT-001 |
+| Audit Logging | AuditInterceptor + append-only PostgreSQL table | `AuditInterceptor` implements `IAuditLogger` | INT-004 |
+| Network Health Detection | TCP probe to PostgreSQL port 5432 | `TcpHealthMonitor` implements `INetworkHealth` | INT-005 |
+| Data Export | RFC 4180 CSV generation | `CsvExportService` implements `IExportService` | INT-006 |
+| Synchronization | Sync Queue with conflict detection | `SyncQueue` with SemaphoreSlim(1,1) single-writer lock | — |
 
-### Design Mechanisms
-
-| Analysis Mechanism | Design Mechanism | Implementation | Interface | Risk Addressed |
-|---|---|---|---|---|
-| **Persistence** | EF Core 10 + Npgsql (PostgreSQL) | `PgRepository<T>` implements `IRepository<T>` using EF Core DbContext | `IRepository<T>` | — |
-| **Offline Persistence** | EF Core 10 + SQLite | `SqliteLocalStore` implements `ILocalStore` using separate DbContext | `ILocalStore` | RISK-T01 (RPN 63) |
-| **Authentication** | LDAP via `System.DirectoryServices.Protocols` | `LdapAuthProvider` implements `IAuthProvider`; `OAuth2AuthProvider` as alternative | `IAuthProvider` | RISK-T02 (RPN 35) |
-| **Offline Sync** | Sync Queue with single-writer lock + conflict detection | `SyncQueue` enqueues to SQLite, flushes to PostgreSQL; conflict by (employeeId, timestamp) uniqueness | — (internal to COMP-D4) | RISK-T01, RISK-T03 (RPN 48) |
-| **Network Health Detection** | Background TCP probe to PostgreSQL | `TcpHealthMonitor` implements `INetworkHealth`; probes every 5s; raises HealthChanged event | `INetworkHealth` | RISK-T01 |
-| **Audit Trail** | Audit Interceptor with append-only audit log table | `AuditInterceptor` implements `IAuditLogger`; writes to `AuditEntry` table (append-only, no UPDATE/DELETE) | `IAuditLogger` | — |
-| **Authorization** | Role-based access control via AD groups | Application Layer checks `[Authorize(Roles="HR")]` on admin endpoints; AD group → role mapping in config | — | — |
-| **Data Export** | CSV generation per RFC 4180 | `CsvExportService` implements `IExportService`; streams CSV with proper escaping | `IExportService` | — |
-| **AD Data Sync** | Scheduled/on-demand sync with override flag | `DirectoryService.SyncFromAD()` fetches from AD via `IAuthProvider.GetEmployees()`; override_flag on Employee entity | `IAuthProvider` | RISK-R01 (RPN 30) |
-
-### Key Design Mechanisms — Class Diagram
+### Key Design Classes
 
 ```plantuml
 @startuml
-title Key Design Mechanisms — Class Diagram
+title Employee Portal — Key Design Classes (Mechanism View)
 
 skinparam class {
   BackgroundColor<<entity>> #fff3e0
   BackgroundColor<<service>> #e3f2fd
   BackgroundColor<<interface>> #fffde7
-  BackgroundColor<<infra>> #fce4ec
   BorderColor #37474f
 }
 
-interface "IAuthProvider" as INT_AUTH {
-  + Authenticate(username, password): AuthResult
-  + GetEmployeeByAdId(adId): Employee
-  + FetchAllEmployees(): List<Employee>
+interface "IAuthProvider" as INT_AUTH <<interface>> {
+  + Authenticate(user, pass): bool
+  + FetchEmployees(): List<AdEmployee>
 }
 
-interface "IRepository<T>" as INT_REPO {
-  + GetById(id): T
-  + Save(entity: T): T
+interface "IRepository<T>" as INT_REPO <<interface>> {
+  + Save(entity: T): Result
+  + FindById(id: Guid): T?
   + Query(predicate): List<T>
 }
 
-interface "ILocalStore" as INT_LOCAL {
-  + SaveClocking(clocking): int
-  + GetPendingSync(): List<SyncRecord>
-  + MarkSynced(localId, status): void
+interface "ILocalStore" as INT_LOCAL <<interface>> {
+  + SaveLocal(clocking: Clocking): int
+  + MarkSynced(localId: int, status: SyncStatus)
+  + GetPending(): List<SyncRecord>
 }
 
-interface "IExportService" as INT_EXPORT {
-  + Export(clockings: List<Clocking>): Stream
+interface "INetworkHealth" as INT_HEALTH <<interface>> {
+  + CheckHealth(): HealthStatus
+  + OnHealthChanged: EventHandler
 }
 
-interface "INetworkHealth" as INT_HEALTH {
-  + IsAvailable(): bool
-  + OnHealthChanged(callback): void
+interface "IAuditLogger" as INT_AUDIT <<interface>> {
+  + Log(entityType, entityId, action, user)
 }
 
-interface "IAuditLogger" as INT_AUDIT {
-  + Log(entityType, entityId, action, user, timestamp): void
+interface "IExportService" as INT_EXPORT <<interface>> {
+  + Export(clockings: List<Clocking>): byte[]
 }
 
 class "TimeTrackingService" as SVC_TS <<service>> {
-  - authProvider: IAuthProvider
-  - repo: IRepository<Clocking>
-  - localStore: ILocalStore
-  - healthMonitor: INetworkHealth
-  - exportService: IExportService
   + ClockIn(employeeId): Result
   + ClockOut(employeeId): Result
-  + GetClockings(month, employeeId?): List<Clocking>
-  + ExportClockings(month): Stream
-  - HandleOfflineClocking(employeeId, type): Result
-  - TriggerSync(): void
+  + GetHistory(employeeId, month): List
+  + ExportClockings(month): byte[]
 }
 
 class "SyncQueue" as SQ <<service>> {
-  - localStore: ILocalStore
-  - repo: IRepository<Clocking>
-  - flushLock: object
-  + Enqueue(employeeId, type, timestamp): int
+  - lock: SemaphoreSlim(1,1)
+  + Enqueue(clocking): int
   + Flush(): SyncResult
   - DetectConflict(clocking): bool
 }
 
 class "AuditInterceptor" as AUD <<service>> {
-  - auditLogger: IAuditLogger
-  + InterceptUpdate(entity, user): void
-  + InterceptCreate(entity, user): void
-  + InterceptDelete(entity, user): void
+  + Intercept(context): void
 }
 
 class "Clocking" as CLK <<entity>> {
@@ -570,7 +536,6 @@ class "Clocking" as CLK <<entity>> {
 class "SyncRecord" as SYNC <<entity>> {
   + id: Guid
   + localId: int
-  + remoteId: Guid?
   + status: SyncStatus
   + syncedAt: DateTime?
 }
@@ -584,7 +549,6 @@ class "Employee" as EMP <<entity>> {
   + office: string
   + email: string
   + phone: string
-  + active: bool
   + overrideFlag: bool
 }
 
@@ -592,7 +556,7 @@ class "News" as NEWS <<entity>> {
   + id: Guid
   + title: string
   + body: string
-  + date: DateTime
+  + date: DateOnly
   + category: Category
   + featured: bool
 }
@@ -1015,6 +979,7 @@ Per the IARI branching strategy, integration follows bottom-up dependency order:
 | Health detection latency | < 5s | TCP probe every 5s; immediate event on state change | Addressed |
 
 ## Quality
+
 | Quality Attribute | Requirement | Architectural Tactic | Status |
 |---|---|---|---|
 | Reliability | 99% uptime Mon–Fri 7:00–19:00 (REQ-012) | Single reliable server; offline fallback for clock in/out | Addressed |
@@ -1030,11 +995,13 @@ Per the IARI branching strategy, integration follows bottom-up dependency order:
 
 The Architectural Proof-of-Concept artifact was produced by the Implementer in Elaboration Iteration 1. PoC-1 (Offline Sync) is implemented on branch `poc/E1-risk-t01-offline-sync` with CI Green (3/3 pushes passed). Results are cross-referenced from the [Architectural Proof-of-Concept] artifact.
 
+**SAD-F4 Resolution (Critical — Iteration 3):** PR #4 (`poc/E1-risk-t01-offline-sync` → `main`) was open at LCA. Per RUP process discipline, PoC code is ephemeral validation evidence and must NOT merge to main. Changes have been requested on PR #4 to block the merge. The PoC code remains on the feature branch `poc/E1-risk-t01-offline-sync` as the canonical location. PR #4 must be closed without merging. The architecture baseline on `main` remains clean — no PoC code is merged into it.
+
 [OMITTED: Deployment Model — trigger not fired; Physical View within SAD is sufficient for single-node topology]
 
 | PoC | Risk Addressed | Scope | Success Criteria | Result |
 |---|---|---|---|---|
-| **PoC-1: Offline Sync** | RISK-T01 (RPN 63), RISK-T03 (RPN 48) | Simulate 5-min network drop; write clockings to SQLite; restore network; verify sync to PostgreSQL with zero data loss and conflict detection | 100% of queued clockings synced; no duplicates; sync completes <30s after restore | **PASS** — All clockings synced, zero data loss, conflict detection validated. CI Green. |
+| **PoC-1: Offline Sync** | RISK-T01 (RPN 63), RISK-T03 (RPN 48) | Simulate 5-min network drop; write clockings to SQLite; restore network; verify sync to PostgreSQL with zero data loss and conflict detection | 100% of queued clockings synced; no duplicates; sync completes <30s after restore | **PASS** — All clockings synced, zero data loss, conflict detection validated. CI Green. Code on branch `poc/E1-risk-t01-offline-sync` — NOT merged to main (SAD-F4 resolved). |
 | **PoC-2: AD Integration** | RISK-T02 (RPN 35), RISK-R01 (RPN 30) | Spike with Miguel Torres: test LDAP bind against corporate AD; test OAuth2 via AD FS if available; evaluate employee data sync | Successful authentication against corporate AD; employee data retrieved; protocol recommendation documented | **Deferred to Construction** — IAuthProvider interface isolates protocol decision. |
 | **PoC-3: Design File Integration** | RISK-T05 (RPN 24) | Verify design file implementation within Razor Pages architecture | All views implemented as Razor Pages matching design intent; no architectural deviations | **RESOLVED** — Design file incorporated; no architectural impact. RISK-T05 retired. |
 
@@ -1043,11 +1010,11 @@ The Architectural Proof-of-Concept artifact was produced by the Implementer in E
 | # | Criterion | Verdict | Evidence |
 |---|---|---|---|
 | 1 | Is the vision of the product stable? | **YES** | Vision Document approved at LCO. Scope confirmed by stakeholder. 4 use cases, 4 NFRs, 3 business goals — all stable since Inception. No scope changes in Elaboration. |
-| 2 | Is the architecture stable? | **YES** | All 4+1 views baselined. 7 UML diagrams validate the architecture. 3 ADRs document key decisions with alternatives. Component decomposition unchanged from Inception candidate — validated by sequence diagrams. New component COMP-I5 (Network Health Monitor) is an additive refinement, not a structural change. |
-| 3 | Does the executable prototype show that major risks have been addressed? | **YES** | PoC-1 (Offline Sync) implemented by Implementer on branch `poc/E1-risk-t01-offline-sync` with CI Green (3/3 pushes passed). Validates RISK-T01 (offline fault tolerance) and RISK-T03 (sync conflict) — the two highest-RPN technical risks. All queued clockings synced with zero data loss and conflict detection. PoC-2 (AD Integration) deferred to Construction — isolated behind IAuthProvider interface with no structural impact. |
+| 2 | Is the architecture stable? | **YES** | All 4+1 views baselined. 7 UML diagrams validate the architecture. 3 ADRs document key decisions with alternatives. Component decomposition unchanged from Inception candidate — validated by sequence diagrams. New component COMP-I5 (Network Health Monitor) is an additive refinement, not a structural change. Architecture baseline on `main` is clean — PoC code is NOT merged (SAD-F4 resolved: PR #4 blocked, changes requested). |
+| 3 | Does the executable prototype show that major risks have been addressed? | **YES** | PoC-1 (Offline Sync) implemented by Implementer on branch `poc/E1-risk-t01-offline-sync` with CI Green (3/3 pushes passed). Validates RISK-T01 (offline fault tolerance) and RISK-T03 (sync conflict) — the two highest-RPN technical risks. All queued clockings synced with zero data loss and conflict detection. PoC code remains on feature branch — PR #4 blocked with changes requested to prevent merge to main (SAD-F4 resolved). PoC-2 (AD Integration) deferred to Construction — isolated behind IAuthProvider interface with no structural impact. |
 | 4 | Is the construction plan sufficiently detailed and backed by credible estimates? | **YES** | Implementation View defines 6 projects with dependency order. Build integration order specified (Infrastructure → Application → Domain → Presentation → Tests). Component inventory maps every component to UCs and Designer class IDs. |
 | 5 | Do ALL stakeholders agree the vision can be achieved with current plan + architecture? | **YES** | Stakeholder approved at LCO: "Yes, I agree to advance to the next phase." Architecture evolved within approved scope — no new scope added. Design file validated against architecture. |
-| 6 | Is actual resource expenditure vs. planned acceptable? | **YES** | Elaboration Iteration 1 produced complete architectural baseline + PoC-1 within budget. All 4+1 views baselined. Iteration 2 resolves review findings (SAD-F2, SAD-F3). |
+| 6 | Is actual resource expenditure vs. planned acceptable? | **YES** | Elaboration Iteration 1 produced complete architectural baseline + PoC-1 within budget. All 4+1 views baselined. Iteration 2 resolves review findings (SAD-F2, SAD-F3). Iteration 3 resolves SAD-F4 (Critical: PR #4 blocked, PoC code stays on feature branch). |
 
 ### Open Architecture Issues
 
@@ -1073,7 +1040,8 @@ The Architectural Proof-of-Concept artifact was produced by the Implementer in E
 
 ### LCA Verdict
 
-**Architecture is stable and ready for Construction.** All 4+1 views are baselined with UML diagrams. The top 3 architecturally significant use cases are validated through sequence diagrams. PoC-1 (Offline Sync) empirically validates the two highest-RPN technical risks (RISK-T01, RISK-T03) with CI Green. Two open issues (AD protocol, PoC-2) are scheduled for Construction Iteration 1 — the architecture isolates each behind interfaces so they can be resolved without structural changes.
+**Architecture is stable and ready for Construction.** All 4+1 views are baselined with UML diagrams. The top 3 architecturally significant use cases are validated through sequence diagrams. PoC-1 (Offline Sync) empirically validates the two highest-RPN technical risks (RISK-T01, RISK-T03) with CI Green. PoC code remains on feature branch `poc/E1-risk-t01-offline-sync` — PR #4 blocked with changes requested to prevent merge to main (SAD-F4 resolved). Two open issues (AD protocol, PoC-2) are scheduled for Construction Iteration 1 — the architecture isolates each behind interfaces so they can be resolved without structural changes.
+
 ## Traceability
 
 | Element | Traces From | Link Type | Traces To |
