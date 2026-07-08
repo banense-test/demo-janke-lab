@@ -15,15 +15,15 @@
 ## Tailoring Overview
 This Development Case specifies project-specific **deltas** over the IARI DC baseline. The baseline defines 24 active roles, 16 CORE artifacts, 6 OPTIONAL artifacts, and a canonical discipline-intensity matrix. This document declares only deviations from that baseline — it does not restate it.
 
-### Organization Assessment (Updated for Elaboration Iteration 2)
+### Organization Assessment (Updated for Elaboration Iteration 3)
 
 | Factor | Finding |
 |---|---|
 | Organization | Cuba Corp — 200 employees, 3 offices. Internal IT project, no external regulatory constraints. |
 | Agent roles | 24 RUP roles active per IARI baseline. AI-agent-driven process. |
-| Process maturity | Post-Inception + Elaboration Iter 1: 3 iterations completed, LCO approved. LCA verdict: CONDITIONAL NO-GO — auto-iterate to Cycle 2. Process stabilized for Requirements + Architecture. Implementation + Test disciplines entering active phase. |
-| Risk profile | Low-medium. RISK-T01 (offline sync, RPN 63 — High), RISK-T02 (AD integration, RPN 35 — Significant), RISK-T03 (data sync conflicts, RPN 48 — High). All require Elaboration mitigation. PoC-1 produced for RISK-T01. |
-| Tool baseline | Git/SCM, .NET 10 SDK, Razor Pages, PostgreSQL, Windows Server (internal hosting), Chrome/Edge only. CI via GitHub Actions workflows. |
+| Process maturity | Post-Inception + Elaboration Iter 1-2: 4 iterations completed, LCO approved. LCA verdict: CONDITIONAL NO-GO — auto-iterate to Cycle 3. SAD-F4 (Critical: open PR #4 at LCA) and IA-F2 (Major: stale Iteration Assessment) block milestone gate. Process stabilized for Requirements + Architecture. Implementation + Test disciplines entering active phase. |
+| Risk profile | Low-medium. RISK-T01 (offline sync, RPN 63 — High, PoC Validated), RISK-T02 (AD integration, RPN 35 — Significant, Mitigation Planned), RISK-T03 (data sync conflicts, RPN 48 — High, PoC Validated). All require Elaboration mitigation. PoC-1 produced for RISK-T01 — CI Green 3/3. |
+| Tool baseline | Git/SCM, .NET 10 SDK, Razor Pages, PostgreSQL, Windows Server (internal hosting), Chrome/Edge only. CI via GitHub Actions workflows. PoC-1 branch `poc/E1-risk-t01-offline-sync` — CI Green 3/3. |
 
 ### Inception Lessons Learned (Process Improvement Input)
 
@@ -43,17 +43,26 @@ This Development Case specifies project-specific **deltas** over the IARI DC bas
 | LCA milestone metadata confusion (LAM vs LCA) | Review Record SAD-F3 | Document Control milestone target corrected to LCA. Process rule: verify milestone target matches current phase exit criterion. |
 | PoC artifact produced but SAD reference stale | Review Record SAD-F2 | SAD corrected in Iteration 2. Process rule: when optional artifact is produced, all referencing artifacts must be updated in the same iteration. |
 
-### Tool Assessment (Updated for Elaboration Iteration 2)
+### Elaboration Iteration 2 Lessons Learned (Cycle 3 Process Improvement)
+
+| Lesson | Source | Process Adjustment |
+|---|---|---|
+| Open PR at LCA milestone gate | Review Record SAD-F4 (Critical) | **New process rule:** No open PRs may exist at a milestone gate. ConfigurationManager must ensure all PRs are merged or explicitly deferred with CCB approval before milestone review. This is a Configuration Management process gap — flagged for ConfigurationManager action. |
+| Stale Iteration Assessment blocks LCA | Review Record IA-F2 (Major) | **New process rule:** Iteration Assessment must be refreshed to reflect current iteration status BEFORE LCA review. ProjectManager must verify IA Document Control iteration field and objective statuses match the current iteration before submitting for review. |
+| Stakeholder custom design request deferred | Review Record DM-MR-F1 (Minor) | UI Designer to incorporate stakeholder custom design in Construction Iteration 1. Process tailoring: no DC change needed — Design Model evolution tracked via DM-MR-F1. |
+| LCA criteria all PASS but Critical finding overrides | Review Record Coordinator Override | **Process observation:** Management Reviewer assessed LCA-1 through LCA-4 as PASS, but Reviewer's Critical finding (SAD-F4) overrides the GO verdict. Process rule: Critical findings ALWAYS block milestone gates regardless of criteria assessment — this is the canonical escalation invariant. |
+
+### Tool Assessment (Updated for Elaboration Iteration 3)
 
 | Tool Category | Status | Notes |
 |---|---|---|
 | Version control | Available (Git/SCM) | Project repository initialized, branching strategy published |
-| Build pipeline | To configure | `.github/workflows` — .NET 10 build + test. ConfigurationManager to configure during Elaboration. |
+| Build pipeline | Partially configured | `.github/workflows` — .NET 10 build + test. CI triggers on all branch families. PoC-1 branch CI Green 3/3. Baseline tagging and CI gate enforcement still pending — ConfigurationManager action. |
 | Test framework | To configure | xUnit for .NET 10. Deferred to Construction per canonical intensity (Test: Medium in Elaboration, Critical in Construction). |
 | Modeling | PlantUML via process tooling | UML diagrams embedded in artifacts — verified working |
 | Requirements | Artifact-based | Use-Case Model (7 UCs, all with activity diagrams) + Supplementary Specification (fully quantified) |
 | Database | PostgreSQL on Windows Server | Npgsql EF Core provider — version resolved by SoftwareArchitect (10.0.2 confirmed in SAD) |
-| CI/CD | GitHub Actions | CI triggers on all branch families for push and PR. Baseline tagging and CI gate enforcement deferred to Elaboration. |
+| CI/CD | GitHub Actions | CI triggers on all branch families for push and PR. PoC-1 CI Green 3/3. **Gap: open PR #4 at LCA — ConfigurationManager must enforce PR merge/deferral before milestone gate.** |
 | PoC validation | Available | PoC-1 (Offline Sync) produced by Implementer on branch `poc/E1-risk-t01-offline-sync`, CI Green 3/3. Validates RISK-T01 mitigation. |
 ## Disciplines and Intensity
 
