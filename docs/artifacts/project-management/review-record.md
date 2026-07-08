@@ -85,73 +85,115 @@ note bottom of LCA4 : Overall LCA Verdict: **GO — Architecture Accepted, proce
 ```
 
 ## Findings
+### Consolidated Cross-Reviewer Findings — Elaboration Iteration 2 (LCA Milestone Review)
 
-### Management Reviewer Findings — Elaboration Iteration 2
-
-| # | Artifact | Severity | Finding | Recommendation | Verdict | Status |
-|---|---|---|---|---|---|---|
-| DM-MR-F1 | Design Model | Minor | Stakeholder has requested a custom design for the Employee Portal UI. During LCA stakeholder consultation, the stakeholder stated: "Yes stakeholder ask specially for this custom design for the Employee Portal." The current Design Model UI flows do not reflect any custom design specifications or stakeholder-validated UI design requirements. | UI Designer should consult with the stakeholder to capture specific custom design requirements (layout, color scheme, branding, navigation style) and update the Design Model UI flow sections. Address in Construction Iteration 1. | Approved | Open — for UI Designer action |
-
-### Prior MR Findings Reconciliation
-
-| # | Artifact | Finding Key | Severity | Iteration | Disposition | Resolution |
-|---|---|---|---|---|---|---|
-| MR-RL-F1 | Risk List | F1 | Major | Elaboration 1 | RESOLVED | RPN governance protocol established. Risk List is canonical source for all RPN values. PM audit enforcement at iteration boundary. DC corrected to RPN 63, TC corrected to RPN 63. |
-
-### Risk Retirement Assessment
+This section consolidates findings from ALL review lenses: Reviewer (technical), Management Reviewer (management), and Business Reviewer (business). Findings are deduplicated, cross-referenced, and prioritized by severity.
 
 ```plantuml
 @startuml
-title Risk Retirement State Machine — Inception to Elaboration End
+title Elaboration Iteration 2 — Consolidated Review Findings by Status
 skinparam state {
   BackgroundColor #E2EFDA
   BorderColor #333333
 }
 
-[*] --> Active
+[*] --> Findings
 
-state Active {
-  state "RISK-T01: Offline Sync\nRPN=63 High" as T01
-  state "RISK-T02: AD Integration\nRPN=35 Significant" as T02
-  state "RISK-T03: SQLite Concurrency\nRPN=48 High" as T03
-  state "RISK-T05: Design File Impact\nRPN=30 Moderate" as T05
+state Findings {
+  state "RESOLVED (8)" as RES {
+    state "SAD-F1 (Info)\nArtifact type note" as R1
+    state "SAD-F2 (Major)\nStale PoC note" as R2
+    state "SAD-F3 (Major)\nLAM→LCA typo" as R3
+    state "DM-F1 (Minor)\nCo-ownership attribution" as R4
+    state "RL-F1 (Major)\nRPN governance" as R5
+    state "MR-RL-F1 (Major)\nRPN enforcement" as R6
+    state "TC-F1 (Minor)\nBlocking reason column" as R7
+    state "TES-F1 (Minor)\nUC decomposition note" as R8
+  }
+
+  state "OPEN (6)" as OPN {
+    state "SAD-F4 (Critical)\nOpen PR #4 at LCA" as O1
+    state "IA-F2 (Major)\nIter Assessment not updated" as O2
+    state "DM-MR-F1 (Minor)\nCustom design request" as O3
+    state "IP-F1 (Minor)\nCycle metadata typo" as O4
+    state "IA-F1 (Minor)\nObjectives status stale" as O5
+    state "PoC-F1 (Minor)\nLAM typo + iteration" as O6
+  }
 }
 
-state Retired {
-  state "RISK-T01: RETIRED\nPoC-1 CI Green 3/3" as T01R
-  state "RISK-T03: RETIRED\nSemaphoreSlim validated" as T03R
-  state "RISK-T05: RETIRED\nDesign file assessed" as T05R
-}
+O1 --> [*] : CRITICAL — escalate to stakeholder
+O2 --> [*] : MAJOR — auto-iterate required
+O3 --> [*] : Minor — Construction Iter 1
+O4 --> [*] : Minor — metadata fix
+O5 --> [*] : Minor — metadata fix
+O6 --> [*] : Minor — metadata fix
 
-state Deferred {
-  state "RISK-T02: DEFERRED to Construction\nIsolated behind IAuthProvider" as T02D
-}
+note right of O1 : Cannot advance to Construction\nwhile Critical finding open.\nStakeholder escalation MANDATORY.
+note right of O2 : Major finding open blocks\nLCA milestone gate.
 
-T01 --> T01R : Elaboration Iter 1-2\nPoC-1 validated
-T03 --> T03R : Elaboration Iter 1-2\nPoC-1 exercised
-T05 --> T05R : Elaboration Iter 1\nAssessed & resolved
-T02 --> T02D : Elaboration\nInterface isolation
-
-T01R --> [*]
-T03R --> [*]
-T05R --> [*]
-T02D --> [*]
-
-note bottom : Trend: 3 retired, 1 deferred (mitigated). 0 escalated. Risk retirement PROGRESSING.
 @enduml
 ```
 
-### Risk Retirement Summary
+### Finding Tracker — All Open Findings
 
-| Risk ID | Description | RPN | Magnitude | Inception Status | Elaboration End Status | Trend |
-|---|---|---|---|---|---|---|
-| RISK-T01 | Offline Sync | 63 | High | Active — unmitigated | **RETIRED** — PoC-1 CI Green 3/3 | ↓ Improving |
-| RISK-T02 | AD Integration | 35 | Significant | Active — unmitigated | **DEFERRED** — isolated behind IAuthProvider | → Stable (mitigated, deferred) |
-| RISK-T03 | SQLite Concurrency | 48 | High | Active — unmitigated | **RETIRED** — SemaphoreSlim validated in PoC-1 | ↓ Improving |
-| RISK-T05 | Design File Impact | 30 | Moderate | Active — identified Elab Iter 1 | **RETIRED** — design file assessed | ↓ Improving |
+| # | Finding ID | Artifact | Severity | Reviewer Lens | Finding | Recommendation | Owner | Deadline | Status |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | SAD-F4 | Software Architecture Document | **Critical** | Reviewer | Open PR #4 (poc/E1-risk-t01-offline-sync → main) exists at LCA review time. Per RUP Ch.4/Ch.16, PoC prototype code should NOT be merged to main during Elaboration. PR has been issued REQUEST_CHANGES but remains open. | Close PR #4 without merging. Keep poc branch as referenced artifact in SAD traceability. Productive feature code belongs in Construction. | Integrator / CCM | Immediate (before LCA gate) | **OPEN — CRITICAL** |
+| 2 | IA-F2 | Iteration Assessment | **Major** | Reviewer | Iteration Assessment still at Iteration 1 metadata ("Iteration: 1 (Cycle 1)") with no Iteration 2 assessment. LCA re-review requires updated assessment documenting completion of 6 corrective actions. | Update to Iteration 2: (1) Document Control iteration to "2 (Cycle 1)"; (2) Add "Elaboration Iteration 2 — Corrective Actions Status" section; (3) Update objectives to ACHIEVED; (4) State LCA exit criteria met from PM perspective. | Project Manager | This iteration | **OPEN — MAJOR** |
+| 3 | DM-MR-F1 | Design Model | Minor | Management Reviewer | Stakeholder requested custom design for Employee Portal UI. Current Design Model UI flows do not reflect custom design specifications. | UI Designer to consult stakeholder for custom design requirements (layout, color scheme, branding, navigation). Address in Construction Iteration 1. | UI Designer | Construction Iteration 1 | **OPEN — Minor** |
+| 4 | IP-F1 | Iteration Plan | Minor | Reviewer | Document Control Iteration field states "2 (Cycle 2)" while all other artifacts use "2 (Cycle 1)". Metadata inconsistency. | Update Iteration field from "2 (Cycle 2)" to "2 (Cycle 1)". Metadata correction only. | Project Manager | This iteration | **OPEN — Minor** |
+| 5 | IA-F1 | Iteration Assessment | Minor | Reviewer | Objectives 1-3 show "NOT MET" / "0 of 4 objectives achieved" but underlying artifacts demonstrate corrective work is complete. Assessment status does not match actual artifact state. | Update objectives 1-3 status from "NOT MET" to "ACHIEVED" with evidence referencing resolved findings. | Project Manager | This iteration | **OPEN — Minor** |
+| 6 | PoC-F1 | Architectural Proof-of-Concept | Minor | Reviewer | PoC Document Control Milestone Target states "End of Elaboration (LAM)" — contains "LAM" typo (should be "LCA"). Iteration field says "1 (Cycle 1)" while project is in Iteration 2. | Update Milestone Target to "LCA (Lifecycle Architecture)" and Iteration to "2 (Cycle 1)". Metadata corrections only. | Implementer | This iteration | **OPEN — Minor** |
 
-**Assessment:** 3 of 4 top risks retired. 1 deferred with mitigation (interface isolation). No risks escalated. Risk retirement is PROGRESSING — the Elaboration iteration achieved its risk-reduction objectives.
+### Resolved Findings — Reconciliation Log
 
+| # | Finding ID | Artifact | Severity | Reviewer Lens | Iteration Raised | Iteration Resolved | Resolution Summary |
+|---|---|---|---|---|---|---|---|
+| 1 | SAD-F1 | Software Architecture Document | Info | Reviewer | Inception 1 | Inception 2 | Artifact type registration acknowledged — accessible by canonical name. No content change needed. |
+| 2 | SAD-F2 | Software Architecture Document | Major | Reviewer | Elaboration 1 | Elaboration 2 | Stale PoC trigger note removed. PoC-1 artifact produced and cross-referenced in SAD. |
+| 3 | SAD-F3 | Software Architecture Document | Major | Reviewer | Elaboration 1 | Elaboration 2 | Milestone Target corrected from "LAM" to "LCA (Lifecycle Architecture)". |
+| 4 | DM-F1 | Design Model | Minor | Reviewer | Elaboration 1 | Elaboration 2 | Document Control author field updated to list all three co-owners. |
+| 5 | RL-F1 | Risk List | Major | Reviewer | Elaboration 1 | Elaboration 2 | RISK-T01 RPN reconciled to 63 across all artifacts. RPN governance protocol established. |
+| 6 | MR-RL-F1 | Risk List | Major | Management Reviewer | Elaboration 1 | Elaboration 2 | PM established RPN Governance Protocol. Risk List is canonical source. PM audit enforcement at iteration boundary. |
+| 7 | TC-F1 | Test Case | Minor | Reviewer | Elaboration 1 | Elaboration 2 | Blocking Reason column added to execution summary. |
+| 8 | TES-F1 | Test Evaluation Summary | Minor | Reviewer | Inception 1 | Inception 2 | UC decomposition hierarchy acknowledged. AD auth modeled as cross-cutting concern ACT-003. |
+
+### Finding Lifecycle
+
+```plantuml
+@startuml
+title Finding Lifecycle — Consolidated Review Tracking
+skinparam state {
+  BackgroundColor #FFFFFF
+  BorderColor #333333
+}
+
+[*] --> Open : Finding recorded
+
+Open --> Assigned : Owner assigned
+Assigned --> InProgress : Owner begins rework
+InProgress --> Resolved : Owner completes fix
+Resolved --> Verified : Reviewer verifies fix
+Verified --> Closed : Reviewer confirms adequate
+
+Open --> Escalated : Critical/Major + deadline missed
+Escalated --> StakeholderInput : REQUIRES_USER_INPUT
+StakeholderInput --> Assigned : Stakeholder provides direction
+
+note right of Escalated : SAD-F4 (Critical) is here.\nMust escalate to stakeholder.\nCannot record requiresIteration=false.
+note right of Closed : 8 findings closed this iteration.\n6 remain open (1 Critical, 1 Major, 4 Minor).
+
+@enduml
+```
+
+### Cross-Reviewer Conflict Resolution
+
+| # | Topic | Reviewer Position | Management Reviewer Position | Consolidated Decision |
+|---|---|---|---|---|
+| 1 | RPN governance | RL-F1 (Major): RPN inconsistent across artifacts | MR-RL-F1 (Major): PM failed to enforce RPN consistency | **Consolidated:** Both findings address the same root cause. Resolved in Iteration 2 — RPN governance protocol established, all artifacts corrected to RPN 63. |
+| 2 | Design Model ownership | DM-F1 (Minor): Author field singular, should list co-owners | (no MR finding on this topic) | **Consolidated:** Reviewer finding adopted. Resolved — author field updated to list all three co-owners. |
+| 3 | Stakeholder custom design | (no Reviewer finding) | DM-MR-F1 (Minor): Stakeholder wants custom UI design | **Consolidated:** Management Reviewer finding adopted. Open — deferred to Construction Iteration 1 for UI Designer action. |
+| 4 | Open PR #4 | SAD-F4 (Critical): PoC code must not merge to main at LCA | (no MR finding — MR assessed architecture as baselined) | **Consolidated:** Reviewer finding adopted as Critical. The MR's LCA-1 PASS assessment is conditional on this finding's resolution. PR #4 must be closed without merging before LCA gate can open. |
 ## Resolutions and Actions
 
 ### Actions from This Review
