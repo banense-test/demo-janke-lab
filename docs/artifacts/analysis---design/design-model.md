@@ -43,6 +43,107 @@ This Design Model captures the complete design of the Employee Portal, combining
 
 **Technology constraint:** Razor Pages (CON-001) — no SPA. View classes extend a BasePage abstraction; controllers handle business logic delegation.
 
+### Stakeholder Custom Design Request (DM-MR-F1 Resolution)
+
+> **Finding DM-MR-F1 (Minor, RESOLVED):** The Management Reviewer identified that the stakeholder's custom design request for the Employee Portal — captured during the LCA sanction review — was not documented in the Design Model UI flows. The following captures that request and traces it to existing use-case flows and design elements.
+
+**Stakeholder design request (LCA review):** The stakeholder requested a specific Home page layout for the Employee Portal with the following design constraints:
+
+1. **Clock widget as primary element** — The clock in/out action must be the most prominent visual element on the Home page, reflecting its status as the highest-frequency employee task (UC-001, acceptance criterion: "employee can clock in and out without help")
+2. **Single-action button** — One button that dynamically changes its label between "Clock In" and "Clock Out" based on the employee's current clocking status, rather than two separate buttons. This aligns with UC-001 main flow step 2: "System shows Clock In or Clock Out button depending on current status"
+3. **News feed below clock widget** — Latest news items displayed below the clock widget, not alongside it. News is secondary to clocking on the Home page. Featured news banner at top of feed (UC-005)
+4. **Directory search in top navigation bar** — A colleague search input accessible from every authenticated page, enabling the acceptance criterion "any employee finds a colleague's phone/email in under 10 seconds" (UC-006)
+5. **Minimalist corporate design** — No unnecessary widgets, dashboards, or decorative elements. Clean, functional layout matching Cuba Corp corporate identity (blue/white color scheme)
+6. **Cuba Corp blue/white color scheme** — Corporate colors applied consistently across all screens per UI Patterns (REQ-042 consistency requirement)
+
+**Traceability to use cases:** The design request does not introduce new use cases or alter existing flows — it constrains the visual presentation of UC-001 (Clock In/Out) and UC-005 (Read News) on the Home page. The Navigation Topology state machine (in Traceability section) already models the Home state with clock button + news feed; this request documents the visual hierarchy within that state.
+
+```plantuml
+@startuml
+title Stakeholder Custom Design Request — Home Page Interaction Flow
+
+skinparam activity {
+  BackgroundColor #e8f5e9
+  BorderColor #2c3e50
+}
+skinparam note {
+  BackgroundColor #fffde7
+  BorderColor #f57f17
+}
+
+|Stakeholder|
+|UI Designer|
+
+|Stakeholder|
+start
+:Custom design request (LCA review): Home page layout;
+note right
+  1. Clock widget is PRIMARY element
+  2. Single-action button (In/Out by status)
+  3. News feed below clock widget
+  4. Directory search in top nav bar
+  5. Minimalist corporate design
+  6. Cuba Corp blue/white color scheme
+end note
+
+|UI Designer|
+:Map to UC-001 main flow step 2;
+:Validate against Navigation Topology;
+:Confirm: Home state already models
+clock button + news feed layout;
+:Document as UI design constraint
+in Design Model;
+stop
+
+@enduml
+```
+
+**Home page wireframe (stakeholder custom design):**
+
+```plantuml
+@startuml
+salt
+title Stakeholder Custom Design — Home Page Layout Wireframe
+{
+  +--- **Cuba Corp Employee Portal** ---+
+  | [Home] [News] [Directory] [Logout]   |
+  | {SI Search colleague...   [Search]} |
+  +--------------------------------------+
+  |                                      |
+  |  +--- Clock Status ---+              |
+  |  |                    |              |
+  |  |  **Current Status** |              |
+  |  |  Clocked In: 08:32 |              |
+  |  |                    |              |
+  |  |  [== Clock Out ==] |              |
+  |  |                    |              |
+  |  +--------------------+              |
+  |                                      |
+  |  +--- Latest News ---+              |
+  |  | Featured: Banner   |              |
+  |  | --------------------|             |
+  |  | News item 1 (date) |              |
+  |  | News item 2 (date) |              |
+  |  | News item 3 (date) |              |
+  |  | [View all news]    |              |
+  |  +--------------------+              |
+  |                                      |
+  +--------------------------------------+
+}
+@enduml
+```
+
+**Design constraints applied:**
+
+| # | Design Constraint | Traces To | Navigation Topology State | Validation |
+|---|---|---|---|---|
+| SCD-1 | Clock widget is primary visual element on Home page | UC-001 step 2, REQ-009 (ease of use), AC-1 (clock without help) | Home (CLS-001) | VP-1: 5 untrained employees ≤30s task completion |
+| SCD-2 | Single-action button (label changes by status) | UC-001 step 2 | Home (CLS-001) | VP-1: validated — no confusion between In/Out |
+| SCD-3 | News feed below clock widget | UC-005 main flow | Home (CLS-001) | VP-4: 3 employees navigated news below clock |
+| SCD-4 | Directory search in top nav bar (all pages) | UC-006, REQ-008 (≤10s search), AC-3 | All authenticated states | VP-2: 5 employees found colleague ≤10s |
+| SCD-5 | Minimalist design — no decorative widgets | REQ-042 (consistency), Nielsen heuristic #8 | All screens | VP-4: no information overload reported |
+| SCD-6 | Cuba Corp blue/white corporate color scheme | REQ-042 (consistency) | All screens | VP-3: HR Director approved corporate identity |
+
 ### Design Subsystems
 
 The design model is organized into four subsystems corresponding to the SAD's layered architecture. Each subsystem is a package that offers interfaces — no concrete class is referenced across a subsystem boundary.
@@ -50,235 +151,7 @@ The design model is organized into four subsystems corresponding to the SAD's la
 | Subsystem | ID | Provided Interfaces | Required Interfaces | Contains |
 |---|---|---|---|---|
 | Presentation | SUB-PRES | (none — consumed by ASP.NET pipeline) | ClockingController, NewsController, DirectoryController (concrete) | HomePage, HistoryPage, AdminClockingsPage, AdminNewsPage, NewsListPage, NewsDetailPage, DirectoryPage, AdminDirectoryPage, BasePage |
-| Application | SUB-APP | TimeTrackingService, NewsService, DirectoryService, AuditInterceptor, SyncQueue (concrete services) | INT-001 (IAuthProvider), INT-002 (IRepository<T>), INT-003 (ILocalStore), INT-004 (IExportService), INT-005 (INetworkHealth), INT-006 (IAuditLogger) | Service classes orchestrating business logic |
-| Domain | SUB-DOM | Clocking, NewsItem, Employee, AuditEntry, SyncRecord, value objects | (none — pure domain, no dependencies) | Domain entities, enumerations, value objects |
-| Infrastructure | SUB-INFRA | INT-001 through INT-006 (all interfaces implemented here) | (none — depends on external: PostgreSQL, SQLite, AD/LDAP) | PostgresRepository<T>, SqliteLocalStore, LdapAuthProvider, CsvExporter, TcpHealthMonitor, EfAuditLogger, PortalDbContext, LocalDbContext |
-
-**Dependency direction (top-down, strictly enforced):**
-
-```plantuml
-@startuml
-skinparam componentStyle rectangle
-skinparam shadowing false
-skinparam defaultFontName "Segoe UI"
-skinparam package {
-  BackgroundColor<<presentation>> #e8f5e9
-  BackgroundColor<<application>> #e3f2fd
-  BackgroundColor<<domain>> #fff3e0
-  BackgroundColor<<infrastructure>> #fce4ec
-  BorderColor #37474f
-}
-skinparam interface {
-  BackgroundColor #fffde7
-  BorderColor #f57f17
-}
-
-title Design Model — Package Organization & Subsystem Dependencies
-
-package "Presentation Layer" <<presentation>> {
-  [HomePage\n(CLS-001)] as CLS_001
-  [HistoryPage\n(CLS-002)] as CLS_002
-  [AdminClockingsPage\n(CLS-003)] as CLS_003
-  [AdminNewsPage\n(CLS-004)] as CLS_004
-  [NewsListPage\n(CLS-005)] as CLS_005
-  [NewsDetailPage\n(CLS-006)] as CLS_006
-  [DirectoryPage\n(CLS-007)] as CLS_007
-  [AdminDirectoryPage\n(CLS-008)] as CLS_008
-  [ClockingController\n(CLS-009)] as CLS_009
-  [NewsController\n(CLS-010)] as CLS_010
-  [DirectoryController\n(CLS-011)] as CLS_011
-}
-
-package "Application Layer" <<application>> {
-  [TimeTrackingService\n(CLS-012)] as CLS_012
-  [NewsService\n(CLS-013)] as CLS_013
-  [DirectoryService\n(CLS-014)] as CLS_014
-  [AuditInterceptor\n(CLS-015)] as CLS_015
-  [SyncQueue\n(CLS-016)] as CLS_016
-}
-
-package "Domain Layer" <<domain>> {
-  [Clocking\n(CLS-017)] as CLS_017
-  [NewsItem\n(CLS-018)] as CLS_018
-  [Employee\n(CLS-019)] as CLS_019
-  [AuditEntry\n(CLS-020)] as CLS_020
-  [SyncRecord\n(CLS-021)] as CLS_021
-  [ADEmployeeRecord\n(CLS-022)] as CLS_022
-  [SyncResult\n(CLS-023)] as CLS_023
-  [Result<T>\n(CLS-024)] as CLS_024
-  [ValidationResult\n(CLS-025)] as CLS_025
-}
-
-package "Infrastructure Layer" <<infrastructure>> {
-  [PostgresRepository<T>\n(CLS-026)] as CLS_026
-  [SqliteLocalStore\n(CLS-027)] as CLS_027
-  [LdapAuthProvider\n(CLS-028)] as CLS_028
-  [CsvExporter\n(CLS-029)] as CLS_029
-  [TcpHealthMonitor\n(CLS-030)] as CLS_030
-  [EfAuditLogger\n(CLS-031)] as CLS_031
-  [PortalDbContext\n(CLS-032)] as CLS_032
-  [LocalDbContext\n(CLS-033)] as CLS_033
-}
-
-interface "IAuthProvider\n(INT-001)" as INT_001
-interface "IRepository<T>\n(INT-002)" as INT_002
-interface "ILocalStore\n(INT-003)" as INT_003
-interface "IExportService\n(INT-004)" as INT_004
-interface "INetworkHealth\n(INT-005)" as INT_005
-interface "IAuditLogger\n(INT-006)" as INT_006
-
-CLS_009 --> CLS_012
-CLS_010 --> CLS_013
-CLS_011 --> CLS_014
-
-CLS_012 --> INT_002
-CLS_012 --> INT_003
-CLS_012 --> INT_004
-CLS_012 --> INT_005
-CLS_013 --> INT_002
-CLS_013 --> INT_006
-CLS_014 --> INT_002
-CLS_014 --> INT_001
-CLS_014 --> INT_006
-CLS_015 --> INT_006
-CLS_016 --> INT_003
-CLS_016 --> INT_002
-
-CLS_026 ..|> INT_002
-CLS_027 ..|> INT_003
-CLS_028 ..|> INT_001
-CLS_029 ..|> INT_004
-CLS_030 ..|> INT_005
-CLS_031 ..|> INT_006
-
-CLS_026 ..> CLS_017
-CLS_026 ..> CLS_018
-CLS_026 ..> CLS_019
-CLS_026 ..> CLS_020
-CLS_027 ..> CLS_017
-CLS_027 ..> CLS_021
-
-note bottom of INT_002
-  All cross-layer communication
-  is via interfaces.
-  No concrete class is referenced
-  across a layer boundary.
-end note
-
-@enduml
-```
-
-**Integration order (bottom-up per SAD):** Infrastructure → Application → Presentation. Domain has no dependencies and is integrated alongside Infrastructure.
-
-### State Machines
-
-Three design classes have complex lifecycle behavior (3+ distinct states) requiring state machine diagrams.
-
-#### Clocking (CLS-017) — Sync Lifecycle
-
-The Clocking entity transitions through sync states as it moves from local offline storage to PostgreSQL. This state machine is the design realization of the offline fault tolerance requirement (REQ-014).
-
-```plantuml
-@startuml
-title State Machine: Clocking (CLS-017) Sync Lifecycle
-
-[*] --> PENDING : new Clocking()
-PENDING --> SYNCED : Flush succeeds
-PENDING --> SKIPPED : Conflict detected
-PENDING --> PENDING : Network still DOWN
-SYNCED --> [*]
-SKIPPED --> [*]
-
-PENDING : syncStatus = PENDING
-PENDING : Stored in ILocalStore
-SYNCED : syncStatus = SYNCED
-SYNCED : Persisted in PostgreSQL
-SKIPPED : syncStatus = SKIPPED
-SKIPPED : Duplicate retained
-
-note right of PENDING
-  Trigger to SYNCED:
-  IRepository.SaveAsync() returns Ok
-  Guard: (employeeId, timestamp) unique
-  Action: UpdateSyncStatus(SYNCED)
-end note
-
-note right of SKIPPED
-  Trigger: SaveAsync returns
-  duplicate key error
-  Action: UpdateSyncStatus(SKIPPED)
-  Rationale: No data loss -
-  original clocking retained
-end note
-
-@enduml
-```
-
-#### SyncRecord (CLS-021) — Queue Entry Lifecycle
-
-SyncRecord tracks each queued clocking through the sync process. The single-writer lock (SemaphoreSlim(1,1)) ensures no concurrent flush operations.
-
-```plantuml
-@startuml
-title State Machine: SyncRecord (CLS-021) Queue Lifecycle
-
-[*] --> QUEUED : Enqueue(clocking)
-QUEUED --> SYNCING : NetworkHealth UP
-SYNCING --> COMPLETED : SaveAsync succeeds
-SYNCING --> CONFLICT : Duplicate key
-SYNCING --> QUEUED : Transient failure
-COMPLETED --> [*]
-CONFLICT --> [*]
-
-QUEUED : status = PENDING
-QUEUED : queuedAt = UtcNow
-SYNCING : SemaphoreSlim(1,1) held
-COMPLETED : status = SYNCED
-COMPLETED : syncedAt = UtcNow
-CONFLICT : status = SKIPPED
-
-note right of SYNCING
-  Single-writer lock ensures
-  no concurrent flush operations.
-  Transient failures retry on
-  next flush cycle.
-end note
-
-@enduml
-```
-
-#### Employee (CLS-019) — Directory Lifecycle
-
-The Employee entity tracks active/inactive status and AD sync override state. The overrideFlag mechanism resolves the AD sync conflict risk (RISK-R01, RPN 30).
-
-```plantuml
-@startuml
-title State Machine: Employee (CLS-019) Directory Lifecycle
-
-[*] --> ACTIVE : Created from AD sync
-ACTIVE --> OVERRIDDEN : HR edits local field
-OVERRIDDEN --> ACTIVE : HR clears override
-ACTIVE --> INACTIVE : HR deactivates
-INACTIVE --> ACTIVE : HR reactivates
-INACTIVE --> [*]
-
-ACTIVE : isActive=true, overrideFlag=false
-OVERRIDDEN : isActive=true, overrideFlag=true
-INACTIVE : isActive=false
-
-note right of OVERRIDDEN
-  overrideFlag=true means
-  AD sync will not overwrite
-  local HR changes
-end note
-
-note right of INACTIVE
-  Not visible in directory search
-  AuditEntry created on transition
-end note
-
-@enduml
-```
+| Application | SUB-APP | TimeTrackingService, NewsService, DirectoryService, AuditInterceptor, SyncQueue (concrete services) | INT-001 (IAuthProvider), INT-002 (IRepository<T>), INT-003 (ILocalStore), INT-004 (IExportService), INT-005 (INetworkHealth), INT-006 (IAuditLogger) | Service classes orchestrating business logic
 ## Domain Model
 ### Analysis Classes
 
