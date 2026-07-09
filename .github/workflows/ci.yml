@@ -67,11 +67,12 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-      - name: Regenerate solution from src/ and tests/ tree
+      - name: Regenerate solution from src/, tests/, and samples/poc/ tree
         run: |
           dotnet new sln --force -n EmployeePortal
           find src -name "*.csproj" -exec dotnet sln add {} \;
           find tests -name "*.csproj" -exec dotnet sln add {} \;
+          find samples -name "*.csproj" -exec dotnet sln add {} \;
       - name: Restore dependencies
         run: dotnet restore EmployeePortal.sln
       - name: Build
@@ -85,11 +86,12 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-      - name: Regenerate solution from src/ and tests/ tree
+      - name: Regenerate solution from src/, tests/, and samples/poc/ tree
         run: |
           dotnet new sln --force -n EmployeePortal
           find src -name "*.csproj" -exec dotnet sln add {} \;
           find tests -name "*.csproj" -exec dotnet sln add {} \;
+          find samples -name "*.csproj" -exec dotnet sln add {} \;
       - name: Restore dependencies
         run: dotnet restore EmployeePortal.sln
       - name: Test
