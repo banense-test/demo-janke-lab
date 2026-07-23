@@ -5,12 +5,108 @@
 | Status | Draft |
 | Iteration | 3 (Cycle 1) |
 | Milestone Target | LCA (Lifecycle Architecture) |
-| Author | Reviewer (technical lens) |
-| Review Type | LCA Milestone Review — Technical Lens (Reviewer) |
-| Review Date | 2026-07-08 |
+| Author | Review Coordinator (consolidation) — Reviewer (technical lens) |
+| Review Type | LCA Milestone Review — Consolidated (Reviewer + Review Coordinator) |
+| Review Date | 2026-07-23 |
 | Prior Iteration | Elaboration 2 (LCA: CONDITIONAL NO-GO — auto-iterate required) |
 | Verdict | **CONDITIONAL NO-GO — Auto-iterate required** (1 open Critical finding SAD-F4; 3 open Major findings SAD-F5, IA-F3, IP-F2; 5 open Minor findings) |
+| Consolidation Note | Review Coordinator verified all Reviewer findings against current artifact state on 2026-07-23. SAD, IA, and IP still contain false "SAD-F4 RESOLVED" claims. PR #4 status confirmed still OPEN. All 9 findings persist. No conflicts between reviewer lenses. LCA-6 (process discipline) and LCA-7 (metadata consistency) remain FAIL. Architecture is technically sound (LCA-1 through LCA-5 PASS) but process discipline gate is blocked. |
 
+### Consolidation Activity Diagram
+
+```plantuml
+@startuml
+!theme plain
+title LCA Milestone Review: Finding Consolidation & Verdict Flow
+
+|Review Coordinator|
+start
+:Read Reviewer findings (technical lens);
+:Read BusinessReviewer findings;
+:Read ManagementReviewer findings;
+
+:Consolidate cross-reviewer findings;
+note right
+  9 open findings identified:
+  1 Critical (SAD-F4)
+  3 Major (SAD-F5, IA-F3, IP-F2)
+  5 Minor (metadata cluster)
+end note
+
+:Check for conflicts between reviewers;
+if (Conflicts found?) then (Yes)
+  :Resolve by severity priority;
+  :Document resolution rationale;
+else (No)
+  :Proceed with unified finding set;
+endif
+
+:Verify finding status against current artifacts;
+note right
+  SAD still claims "SAD-F4 RESOLVED"
+  IA still claims "SAD-F4 RESOLVED"
+  IP still claims "SAD-F4 RESOLVED"
+  PR #4 status: still OPEN
+  => All Critical/Major findings persist
+end note
+
+:Evaluate LCA exit criteria (LCA-1 through LCA-7);
+
+if (Any open Critical finding?) then (Yes — SAD-F4)
+  :Verdict: CONDITIONAL NO-GO;
+  :Auto-iterate required;
+  |Stakeholder|
+  :Escalate Critical finding via REQUIRES_USER_INPUT;
+  |Review Coordinator|
+else (No)
+  if (Any open Major finding?) then (Yes)
+    :Verdict: CONDITIONAL NO-GO;
+    :Auto-iterate required;
+  else (No — all clear)
+    :Verdict: GO — LCA sanctioned;
+  endif
+endif
+
+:Upsert consolidated Review Record;
+:Record milestone verdict;
+stop
+
+@enduml
+```
+
+### Finding Lifecycle: SAD-F4 (Critical)
+
+```plantuml
+@startuml
+!theme plain
+title Finding Lifecycle: SAD-F4 Critical Finding State Machine
+
+[*] --> Open : Finding raised (Iter 2)
+Open --> Assigned : Review Coordinator assigns owner\n(Owner: Software Architect)
+Assigned --> InProgress : Architect addresses finding\n(changes requested on PR #4)
+InProgress --> Resolved : PR #4 closed without merge\nAND SAD Document Control corrected
+InProgress --> FalselyClaimedResolved : SAD states "RESOLVED"\nbut PR #4 still OPEN
+FalselyClaimedResolved --> InProgress : Reviewer detects false claim\n(Iter 3 — finding persists)
+Resolved --> Verified : Review Coordinator verifies\ncorrective action adequate
+Verified --> Closed : Review Record updated\nfinding marked closed
+
+note right of FalselyClaimedResolved
+  ROOT CAUSE: SAD-F4 false resolution
+  propagation to IA, IP, RL
+  4 artifacts affected
+end note
+
+note right of InProgress
+  CURRENT STATE (Iteration 3):
+  PR #4 still OPEN
+  SAD still claims RESOLVED
+  Finding persists — 2nd occurrence
+end note
+
+Open --> Closed : [invalid path — skipped verification]
+
+@enduml
+```
 ## Review Scope and Criteria
 
 ### Artifacts Reviewed (Iteration 3)
